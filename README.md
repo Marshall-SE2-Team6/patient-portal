@@ -1,4 +1,4 @@
-# patient-portal
+# Patient Portal (SE2)
 
 Django web application for our Software Engineering II group project.
 
@@ -28,3 +28,29 @@ python -m venv .venv
 pip install -r requirements.txt
 python manage.py migrate
 python manage.py runserver
+```
+
+Open: http://127.0.0.1:8000/  
+Stop server: `Ctrl + C`
+
+## Quick Start (macOS / Linux)
+
+```bash
+git clone https://github.com/Marshall-SE2-Team6/patient-portal.git
+cd patient-portal
+
+python3 -m venv .venv
+source .venv/bin/activate
+
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
+```
+
+## Contributing
+
+See `CONTRIBUTING.md` for the branch + PR workflow.
+
+
+
+
