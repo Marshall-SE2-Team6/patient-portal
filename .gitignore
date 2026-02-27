@@ -209,3 +209,22 @@ __marimo__/
 # Docker / DB local artifacts (optional)
 *.sql.gz
 *.dump
+
+# --- Project artifacts ---
+# User uploads (keep folder via .gitkeep if desired)
+media/*
+!media/.gitkeep
+
+# Collected static (if you use STATIC_ROOT=staticfiles/)
+staticfiles/
+# If you store project-wide static assets in /static, do NOT ignore /static here.
+
+# Local env variants
+.env
+dev.env
+*.env
+!.env.example
+
+# OS junk
+.DS_Store
+Thumbs.db
