@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}My Profile{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <div class="card-body">
+      <h1 class="h4">My Profile</h1>
+      <hr>
+
+      <dl class="row mb-0">
+        <dt class="col-sm-3">Username</dt>
+        <dd class="col-sm-9">{{ request.user.username }}</dd>
+
+        <dt class="col-sm-3">Email</dt>
+        <dd class="col-sm-9">{{ request.user.email|default:"(none)" }}</dd>
+      </dl>
+    </div>
+  </div>
+{% endblock %}
