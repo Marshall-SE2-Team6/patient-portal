@@ -10,116 +10,153 @@ Install:
 
 ### First-time setup
 
-IMPORTANT:
-- Run all `python manage.py ...` commands from the project root (the folder that contains `manage.py`).
+> **IMPORTANT:** Run all `python manage.py ...` commands from the project root (the folder that contains `manage.py`).
 
-1) Clone the repo
-    git clone <repo-url>
-    cd patient-portal
+#### 1) Clone the repo
+```powershell
+git clone <repo-url>
+cd patient-portal
+```
 
-2) Create a virtual environment (first time only)
-    python -m venv .venv
+#### 2) Create a virtual environment (first time only)
+```powershell
+python -m venv .venv
+```
 
-3) Activate the virtual environment (PowerShell)
+#### 3) Activate the virtual environment (PowerShell)
 
-    VS Code note (important):
-    If you use VS Code and select the correct interpreter, you don’t need to activate (.venv)
-    in the terminal just to run/debug inside VS Code.
+> **VS Code note (important):**  
+> If you use VS Code and select the correct interpreter, you don’t need to activate `(.venv)` in the terminal just to run/debug inside VS Code.
+>
+> **Select interpreter:**  
+> VS Code → Command Palette → **Python: Select Interpreter**  
+> Choose: `...\patient-portal\.venv\Scripts\python.exe`
+>
+> If you see **“import pymysql could not be resolved”**, VS Code is almost always using the wrong interpreter.  
+> Select the `.venv` interpreter and reload the window.
 
-    Select interpreter:
-    VS Code → Command Palette → Python: Select Interpreter
-    Choose: ...\patient-portal\.venv\Scripts\python.exe
+Activate in PowerShell:
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
 
-    If you see “import pymysql could not be resolved”:
-    VS Code is almost always using the wrong interpreter.
-    Select the .venv interpreter and reload the window.
+If PowerShell blocks activation, run this once per terminal session:
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\.venv\Scripts\Activate.ps1
+```
 
-    Activate in PowerShell:
-    .\.venv\Scripts\Activate.ps1
+After activation you should see `(.venv)` at the left of your prompt.
 
-    If PowerShell blocks activation, run this once per terminal session:
-    Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-    .\.venv\Scripts\Activate.ps1
+#### 4) Install Python dependencies
+```powershell
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
 
-    After activation you should see (.venv) at the left of your prompt.
+Quick sanity check:
+```powershell
+python -c "import django; print(django.get_version())"
+```
 
-4) Install Python dependencies
-    python -m pip install --upgrade pip
-    python -m pip install -r requirements.txt
+#### 5) Create `.env` from the example
+- `.env` is local-only (gitignored).
+- **Do not modify `.env` unless instructed** — the default values work for local development.
 
-    Quick sanity check:
-    python -c "import django; print(django.get_version())"
+```powershell
+copy .env.example .env
+```
 
-5) Create .env from the example
-    - .env is local-only (gitignored).
-    - Do not modify .env unless instructed — the default values work for local development.
-
-    copy .env.example .env
-
-IMPORTANT Docker/MySQL notes:
-- Docker Desktop must be running (Docker Engine/WSL backend started) before `docker compose` will work.
-  If you get errors like “cannot connect” / “file not found” / “daemon not running”, open Docker Desktop and try again.
-- If port 3306 is already in use, MySQL may fail to start. Close other MySQL/XAMPP services or change the mapped port.
+#### IMPORTANT Docker/MySQL notes
+- Docker Desktop must be running (Docker Engine/WSL backend started) before `docker compose` will work.  
+  If you get errors like **“cannot connect” / “file not found” / “daemon not running”**, open Docker Desktop and try again.
+- If port **3306** is already in use, MySQL may fail to start. Close other MySQL/XAMPP services or change the mapped port.
 - If `python manage.py migrate` fails with a MySQL connection error, confirm the container is running:
-      docker compose ps
-  Then wait ~10–20 seconds and try again.
+  ```powershell
+  docker compose ps
+  ```
+  Then wait ~10–20 seconds and try again.  
   (Optional) View logs:
-      docker compose logs mysql
+  ```powershell
+  docker compose logs mysql
+  ```
 
-6) Start MySQL (Docker)
-    docker compose up -d
-    docker compose ps
+#### 6) Start MySQL (Docker)
+```powershell
+docker compose up -d
+docker compose ps
+```
 
-    You should see the mysql container running.
+You should see the `mysql` container running.
 
-7) Run migrations (build/update schema)
-    python manage.py migrate
+#### 7) Run migrations (build/update schema)
+```powershell
+python manage.py migrate
+```
 
-8) Create an admin user (first time per machine / fresh DB)
-    python manage.py createsuperuser
+#### 8) Create an admin user (first time per machine / fresh DB)
+```powershell
+python manage.py createsuperuser
+```
 
-9) Run the Django server
-    python manage.py runserver
+#### 9) Run the Django server
+```powershell
+python manage.py runserver
+```
 
-    Stop the server:
-    Press Ctrl + C in the terminal.
+Stop the server: press **Ctrl + C** in the terminal.
 
-10) Open the site in your browser (server must be running)
-    - Login: http://127.0.0.1:8000/accounts/login/
-    - Dashboard: http://127.0.0.1:8000/dashboard/
+#### 10) Open the site in your browser
+- Login: `http://127.0.0.1:8000/accounts/login/`
+- Dashboard: `http://127.0.0.1:8000/dashboard/`
 
 ---
 
 ## Common commands (daily use)
 
-Start everything:
-    (Only activate .venv if working in PowerShell; not necessary when VS Code is using the .venv interpreter)
+### Start everything
+> Only activate `.venv` if you’re running commands in PowerShell.  
+> If VS Code is using the `.venv` interpreter, activation may not be necessary.
 
-    .\.venv\Scripts\Activate.ps1
-    docker compose up -d
-    python manage.py migrate
-    python manage.py runserver
+```powershell
+.\.venv\Scripts\Activate.ps1
+docker compose up -d
+python manage.py migrate
+python manage.py runserver
+```
 
-Stop MySQL when you’re done (saves RAM/CPU):
-    docker compose down
+Then navigate to the appropriate local URL (e.g., `http://127.0.0.1:8000/accounts/login/`) in your browser.
 
-Then navigate to the appropriate local URL (e.g., http://127.0.0.1:8000/accounts/login/) in your browser.
+### Stop MySQL when you’re done (saves RAM/CPU)
+```powershell
+docker compose down
+```
 
 ---
 
-## Terminal prompt gotchas (when things suddenly look "stuck")
+## Terminal prompt gotchas (when things suddenly look “stuck”)
 
-1) If you see `>>>`:
-   You are inside the Python interactive shell (REPL), not running normal commands.
-   Exit it with:
-       exit()
-   or:
-       quit()
-   or (Windows):
-       Ctrl + Z, then Enter
+### If you see `>>>`
+You are inside the Python interactive shell (REPL), not running normal terminal commands.
 
-2) If you see `>>` in PowerShell:
-   PowerShell thinks your previous command is incomplete (commonly an unclosed quote " or an unclosed bracket/parenthesis).
-   Cancel the incomplete command with:
-       Ctrl + C
-   Then re-type the command carefully.
+Exit it with:
+```text
+exit()
+```
+or:
+```text
+quit()
+```
+or (Windows):
+```text
+Ctrl + Z, then Enter
+```
+
+### If you see `>>` in PowerShell
+PowerShell thinks your previous command is incomplete (commonly an unclosed quote `"` or an unclosed bracket/parenthesis).
+
+Cancel the incomplete command with:
+```text
+Ctrl + C
+```
+Then re-type the command carefully.
