@@ -1,6 +1,11 @@
 {% extends "base.html" %}
 {% block title %}Dashboard{% endblock %}
+
 {% block content %}
-  <h1>Dashboard</h1>
-  <p>Welcome, {{ request.user.username }}.</p>
+  <div class="card">
+    <div class="card-body">
+      <h1 class="h4">Dashboard</h1>
+      <p class="mb-0">Logged in as <strong>{{ request.user.username }}</strong></p>
+    </div>
+  </div>
 {% endblock %}
