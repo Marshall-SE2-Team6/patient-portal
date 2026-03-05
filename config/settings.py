@@ -88,7 +88,7 @@ DATABASES = {
         "USER": "patient_user",
         "PASSWORD": "patient_pass",
         "HOST": "127.0.0.1",
-        "PORT": "3306",
+        "PORT": "3307",
     }
 }
 
@@ -133,3 +133,6 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+DEFAULT_FROM_EMAIL = "no-reply@patientportal.local"

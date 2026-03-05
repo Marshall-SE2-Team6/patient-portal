@@ -32,7 +32,16 @@
               </div>
             {% endif %}
 
-            <button class="btn btn-primary w-100" type="submit">Sign in</button>
+            <button class="btn btn-primary w-100" type="submit">Sign In</button>
+
+            <div class="text-center mt-3">
+              <a class="btn btn-primary w-100" href="/signup/">Create Account</a>
+            </div>
+
+            <div class="text-center mt-2">
+              <a href="{% url 'password_reset' %}">Forgot password?</a>
+            </div>
+
           </form>
         </div>
       </div>
