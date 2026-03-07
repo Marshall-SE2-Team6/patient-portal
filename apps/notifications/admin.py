@@ -1,3 +1,24 @@
 from django.contrib import admin
 
-# Register your models here.
+from .models import Notification
+
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "recipient",
+        "notification_type",
+        "channel",
+        "status",
+        "appointment",
+        "invoice",
+        "created_at",
+    )
+    list_filter = ("notification_type", "channel", "status")
+    search_fields = (
+        "recipient__username",
+        "recipient__email",
+        "subject",
+        "message",
+    )
