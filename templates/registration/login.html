@@ -1,50 +1,47 @@
 {% extends "base.html" %}
-{% block title %}Login{% endblock %}
+{% block title %}Sign In | Marco's Medical Portal{% endblock %}
 
-{% block content %}
-  <div class="row justify-content-center">
-    <div class="col-md-6 col-lg-5">
-      <div class="card">
-        <div class="card-body">
-          <h1 class="h4 mb-3">Login</h1>
+{% block body %}
+<div class="portal-auth-body">
+  <div class="portal-auth-card">
+    <div class="portal-logo-circle">∿</div>
 
-          <form method="post" novalidate>
-            {% csrf_token %}
+    <h1 class="portal-auth-title">Marco's Medical Portal</h1>
+    <p class="portal-auth-subtitle">Sign in to access your healthcare dashboard</p>
 
-            {# preserves redirect behavior (?next=/dashboard/) #}
-            {% if next %}
-              <input type="hidden" name="next" value="{{ next }}">
-            {% endif %}
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% if next %}
+        <input type="hidden" name="next" value="{{ next }}">
+      {% endif %}
 
-            <div class="mb-3">
-              <label class="form-label" for="id_username">Username</label>
-              <input class="form-control" type="text" name="username" id="id_username" autofocus required>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label" for="id_password">Password</label>
-              <input class="form-control" type="password" name="password" id="id_password" required>
-            </div>
-
-            {% if form.errors %}
-              <div class="alert alert-danger mb-3">
-                Invalid username or password.
-              </div>
-            {% endif %}
-
-            <button class="btn btn-primary w-100" type="submit">Sign In</button>
-
-            <div class="text-center mt-3">
-              <a class="btn btn-primary w-100" href="/signup/">Create Account</a>
-            </div>
-
-            <div class="text-center mt-2">
-              <a href="{% url 'password_reset' %}">Forgot password?</a>
-            </div>
-
-          </form>
+      {% if form.errors %}
+        <div class="alert alert-danger portal-alert">
+          Invalid username or password.
         </div>
+      {% endif %}
+
+      <div class="mb-3">
+        <label class="portal-label" for="id_username">Email</label>
+        <input class="form-control portal-input" type="text" name="username" id="id_username" placeholder="you@example.com" autofocus required>
       </div>
-    </div>
+
+      <div class="mb-3">
+        <label class="portal-label" for="id_password">Password</label>
+        <input class="form-control portal-input" type="password" name="password" id="id_password" placeholder="••••••••" required>
+      </div>
+
+      <div class="portal-forgot">
+        <a class="portal-inline-link" href="{% url 'password_reset' %}">Forgot password?</a>
+      </div>
+
+      <button class="portal-btn-primary" type="submit">Sign In</button>
+
+      <div class="portal-link-row">
+        Don't have an account?
+        <a href="{% url 'signup' %}">Register here</a>
+      </div>
+    </form>
   </div>
+</div>
 {% endblock %}

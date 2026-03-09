@@ -1,11 +1,246 @@
 {% extends "base.html" %}
-{% block title %}Dashboard{% endblock %}
+{% block title %}Dashboard | Marco's Medical Portal{% endblock %}
 
-{% block content %}
-  <div class="card">
-    <div class="card-body">
-      <h1 class="h4">Dashboard</h1>
-      <p class="mb-0">Logged in as <strong>{{ request.user.username }}</strong></p>
+{% block body %}
+<div class="portal-app-shell">
+  <aside class="portal-sidebar">
+    <div class="portal-sidebar-brand">
+      <div class="portal-brand-icon">M</div>
+      <div>
+        <p class="portal-brand-title">Marco's Medical</p>
+        <p class="portal-brand-subtitle">Patient Portal</p>
+      </div>
     </div>
+
+    <nav class="portal-nav">
+      <a class="portal-nav-link active" href="{% url 'dashboard' %}">
+        <span class="portal-nav-icon">⌂</span>
+        <span>Dashboard</span>
+      </a>
+      <a class="portal-nav-link" href="{% url 'profile' %}">
+        <span class="portal-nav-icon">◉</span>
+        <span>Profile</span>
+      </a>
+    </nav>
+
+    <div class="portal-sidebar-footer">
+      <div class="portal-user-box">
+        <div class="portal-avatar">
+          {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+        </div>
+        <div>
+          <p class="portal-user-name">
+            {% if request.user.first_name or request.user.last_name %}
+              {{ request.user.first_name }} {{ request.user.last_name }}
+            {% else %}
+              {{ request.user.username }}
+            {% endif %}
+          </p>
+          <p class="portal-user-email">{{ request.user.email|default:"No email added" }}</p>
+        </div>
+      </div>
+
+      <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit" class="portal-signout-btn">Sign Out</button>
+      </form>
+    </div>
+  </aside>
+
+  <div class="portal-main">
+    <div class="portal-topbar">
+      <h1 class="portal-topbar-title">Dashboard</h1>
+      <div class="portal-topbar-date">Welcome to your patient portal</div>
+    </div>
+
+    <main class="portal-content">
+      <h2 class="portal-page-title">
+        Welcome back,
+        {% if request.user.first_name %}
+          {{ request.user.first_name }}!
+        {% else %}
+          {{ request.user.username }}!
+        {% endif %}
+      </h2>
+      <p class="portal-page-subtitle">Here is your real account overview</p>
+
+      {% if patient_profile %}
+      <section class="portal-quick-grid">
+        <div class="portal-quick-card">
+          <div class="portal-quick-icon icon-blue">🗓</div>
+          <div>
+            <div class="portal-quick-label">Upcoming</div>
+            <div class="portal-quick-value">{{ upcoming_appointments|length }} Appointments</div>
+          </div>
+        </div>
+
+        <div class="portal-quick-card">
+          <div class="portal-quick-icon icon-purple">🧪</div>
+          <div>
+            <div class="portal-quick-label">Recent</div>
+            <div class="portal-quick-value">{{ recent_lab_results|length }} Lab Results</div>
+          </div>
+        </div>
+
+        <div class="portal-quick-card">
+          <div class="portal-quick-icon icon-orange">💳</div>
+          <div>
+            <div class="portal-quick-label">Open</div>
+            <div class="portal-quick-value">{{ open_invoices|length }} Invoices</div>
+          </div>
+        </div>
+
+        <div class="portal-quick-card">
+          <div class="portal-quick-icon icon-green">👤</div>
+          <div>
+            <div class="portal-quick-label">Patient</div>
+            <div class="portal-quick-value">{{ request.user.username }}</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="portal-dashboard-grid">
+        <div class="portal-panel">
+          <div class="portal-panel-header">
+            <div>
+              <h3 class="portal-panel-title">Upcoming Appointments</h3>
+              <p class="portal-panel-subtitle">Your scheduled visits</p>
+            </div>
+          </div>
+
+          {% if upcoming_appointments %}
+            {% for appointment in upcoming_appointments %}
+              <div class="portal-list-item">
+                <div class="portal-list-left">
+                  <div class="portal-quick-icon icon-blue" style="width:40px;height:40px;font-size:16px;">🗓</div>
+                  <div>
+                    <p class="portal-list-title">
+                      Dr.
+                      {{ appointment.provider.staff_profile.user.first_name }}
+                      {{ appointment.provider.staff_profile.user.last_name }}
+                    </p>
+                    <p class="portal-list-subtitle">
+                      {{ appointment.provider.specialty|default:"General Practice" }}
+                    </p>
+                    <p class="portal-list-meta">
+                      {{ appointment.scheduled_start|date:"F j, Y" }} at {{ appointment.scheduled_start|date:"g:i A" }}
+                    </p>
+                    {% if appointment.reason %}
+                      <p class="portal-list-meta">{{ appointment.reason }}</p>
+                    {% endif %}
+                  </div>
+                </div>
+                <span class="portal-badge badge-neutral">{{ appointment.get_status_display }}</span>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="portal-list-item">
+              <div>
+                <p class="portal-list-title">No upcoming appointments</p>
+                <p class="portal-list-subtitle">Appointments you schedule will appear here.</p>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="portal-panel">
+          <div class="portal-panel-header">
+            <div>
+              <h3 class="portal-panel-title">Recent Lab Results</h3>
+              <p class="portal-panel-subtitle">Latest lab updates</p>
+            </div>
+          </div>
+
+          {% if recent_lab_results %}
+            {% for result in recent_lab_results %}
+              <div class="portal-list-item">
+                <div class="portal-list-left">
+                  <div class="portal-quick-icon icon-purple" style="width:40px;height:40px;font-size:16px;">🧪</div>
+                  <div>
+                    <p class="portal-list-title">{{ result.lab_order.test_name }}</p>
+                    <p class="portal-list-subtitle">{{ result.result_summary }}</p>
+                    <p class="portal-list-meta">
+                      {{ result.resulted_at|date:"F j, Y" }}
+                    </p>
+                  </div>
+                </div>
+                <span class="portal-badge badge-success">{{ result.get_status_display }}</span>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="portal-list-item">
+              <div>
+                <p class="portal-list-title">No lab results yet</p>
+                <p class="portal-list-subtitle">Completed lab results will appear here.</p>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      </section>
+
+      <section class="portal-panel">
+        <div class="portal-panel-header">
+          <div>
+            <h3 class="portal-panel-title">Outstanding Invoices</h3>
+            <p class="portal-panel-subtitle">Invoices that still need attention</p>
+          </div>
+        </div>
+
+        {% if open_invoices %}
+          {% for invoice in open_invoices %}
+            <div class="portal-list-item">
+              <div class="portal-list-left">
+                <div class="portal-quick-icon icon-orange" style="width:40px;height:40px;font-size:16px;">💳</div>
+                <div>
+                  <p class="portal-list-title">{{ invoice.invoice_number }}</p>
+                  <p class="portal-list-subtitle">
+                    Status: {{ invoice.get_status_display }}
+                  </p>
+                  <p class="portal-list-meta">
+                    {% if invoice.due_date %}
+                      Due {{ invoice.due_date|date:"F j, Y" }}
+                    {% else %}
+                      Issued {{ invoice.issued_at|date:"F j, Y" }}
+                    {% endif %}
+                  </p>
+                </div>
+              </div>
+
+              <div class="portal-billing-row">
+                <span class="portal-price">${{ invoice.balance_due }}</span>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="portal-list-item">
+            <div>
+              <p class="portal-list-title">No open invoices</p>
+              <p class="portal-list-subtitle">You do not have any unpaid invoices right now.</p>
+            </div>
+          </div>
+        {% endif %}
+      </section>
+
+      {% else %}
+      <section class="portal-panel">
+        <div class="portal-panel-header">
+          <div>
+            <h3 class="portal-panel-title">Dashboard unavailable</h3>
+            <p class="portal-panel-subtitle">This dashboard is currently configured for patient accounts.</p>
+          </div>
+        </div>
+
+        <div class="portal-list-item">
+          <div>
+            <p class="portal-list-title">No patient profile found</p>
+            <p class="portal-list-subtitle">
+              You are logged in, but this user does not have a linked patient profile yet.
+            </p>
+          </div>
+        </div>
+      </section>
+      {% endif %}
+    </main>
   </div>
+</div>
 {% endblock %}
