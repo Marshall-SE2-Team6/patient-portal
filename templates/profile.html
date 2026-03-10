@@ -54,51 +54,61 @@
     </div>
 
     <main class="portal-content">
-      <h2 class="portal-page-title">My Profile</h2>
-      <p class="portal-page-subtitle">View your personal account details</p>
+  <h2 class="portal-page-title">My Profile</h2>
+  <p class="portal-page-subtitle">View your personal account details</p>
 
-      <section class="portal-panel" style="max-width: 760px;">
-        <div class="portal-panel-header">
-          <div>
-            <h3 class="portal-panel-title">Account Information</h3>
-            <p class="portal-panel-subtitle">Your current user details</p>
-          </div>
+  {% if messages %}
+    <div class="portal-messages">
+      {% for message in messages %}
+        <div class="portal-message {% if message.tags == 'success' %}portal-message-success{% elif message.tags == 'error' %}portal-message-error{% else %}portal-message-info{% endif %}">
+          {{ message }}
         </div>
+      {% endfor %}
+    </div>
+  {% endif %}
 
-        <div class="portal-list-item">
-          <div>
-            <p class="portal-list-title">Username</p>
-            <p class="portal-list-subtitle">{{ request.user.username }}</p>
-          </div>
-        </div>
+  <section class="portal-panel" style="max-width: 760px;">
+    <div class="portal-panel-header">
+      <div>
+        <h3 class="portal-panel-title">Account Information</h3>
+        <p class="portal-panel-subtitle">Your current user details</p>
+      </div>
+    </div>
 
-        <div class="portal-list-item">
-          <div>
-            <p class="portal-list-title">First Name</p>
-            <p class="portal-list-subtitle">{{ request.user.first_name|default:"Not added" }}</p>
-          </div>
-        </div>
+    <div class="portal-list-item">
+      <div>
+        <p class="portal-list-title">Username</p>
+        <p class="portal-list-subtitle">{{ request.user.username }}</p>
+      </div>
+    </div>
 
-        <div class="portal-list-item">
-          <div>
-            <p class="portal-list-title">Last Name</p>
-            <p class="portal-list-subtitle">{{ request.user.last_name|default:"Not added" }}</p>
-          </div>
-        </div>
+    <div class="portal-list-item">
+      <div>
+        <p class="portal-list-title">First Name</p>
+        <p class="portal-list-subtitle">{{ request.user.first_name|default:"Not added" }}</p>
+      </div>
+    </div>
 
-        <div class="portal-list-item">
-          <div>
-            <p class="portal-list-title">Email</p>
-            <p class="portal-list-subtitle">{{ request.user.email|default:"Not added" }}</p>
-          </div>
-        </div>
+    <div class="portal-list-item">
+      <div>
+        <p class="portal-list-title">Last Name</p>
+        <p class="portal-list-subtitle">{{ request.user.last_name|default:"Not added" }}</p>
+      </div>
+    </div>
 
-        <div class="mt-4 d-flex gap-2 flex-wrap">
-          <a class="portal-pay-btn text-decoration-none" href="{% url 'edit_profile' %}">Edit Profile</a>
-          <a class="portal-signout-btn text-decoration-none d-inline-flex align-items-center justify-content-center" href="{% url 'password_change' %}">Change Password</a>
-        </div>
-      </section>
-    </main>
+    <div class="portal-list-item">
+      <div>
+        <p class="portal-list-title">Email</p>
+        <p class="portal-list-subtitle">{{ request.user.email|default:"Not added" }}</p>
+      </div>
+    </div>
+
+    <div class="mt-4 d-flex gap-2 flex-wrap">
+      <a class="portal-pay-btn text-decoration-none" href="{% url 'edit_profile' %}">Edit Profile</a>
+      <a class="portal-signout-btn text-decoration-none d-inline-flex align-items-center justify-content-center" href="{% url 'password_change' %}">Change Password</a>
+    </div>
+  </section>
+</main>
   </div>
 </div>
 {% endblock %}

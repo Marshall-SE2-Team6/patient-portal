@@ -14,6 +14,7 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.contrib import admin
 from django.urls import path, include
 from django.views.generic.base import RedirectView
@@ -21,11 +22,11 @@ from django.views.generic.base import RedirectView
 urlpatterns = [
     path("admin/", admin.site.urls),
 
-    # Django built-in auth routes: /accounts/login, /accounts/logout, etc.
-    path("accounts/", include("django.contrib.auth.urls")),
-
-    # Your app routes, including /dashboard/
+    # Custom app routes first
     path("", include("apps.accounts.urls")),
+
+    # Django built-in auth routes
+    path("accounts/", include("django.contrib.auth.urls")),
 
     path("", RedirectView.as_view(pattern_name="login", permanent=False)),
 ]

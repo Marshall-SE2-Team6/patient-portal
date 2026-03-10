@@ -1,22 +1,50 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login
+from django.contrib.auth.views import PasswordChangeView
+from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.utils import timezone
+from django.db import transaction
+from django.urls import reverse_lazy
 
 from apps.billing.models import Invoice
 from apps.records.models import LabResult
 from apps.scheduling.models import Appointment
+from apps.profiles.models import PatientProfile
 
 from .forms import SignUpForm, ProfileForm
 
 
+class PortalPasswordChangeView(PasswordChangeView):
+    template_name = "registration/password_change_form.html"
+    success_url = reverse_lazy("profile")
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, "Password change is done.")
+        return response
+
+
 def signup(request):
     if request.method == "POST":
-        form = SignUpForm(request.POST or None)
+        form = SignUpForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            login(request, user)
-            return redirect("dashboard")
+            with transaction.atomic():
+                user = form.save(commit=False)
+                user.first_name = form.cleaned_data["first_name"]
+                user.last_name = form.cleaned_data["last_name"]
+                user.role = user.Role.PATIENT
+                user.save()
+
+                PatientProfile.objects.create(
+                    user=user,
+                    phone_number=form.cleaned_data.get("phone_number", ""),
+                    date_of_birth=form.cleaned_data.get("date_of_birth"),
+                    address_line_1=form.cleaned_data.get("address", ""),
+                )
+
+                login(request, user)
+                return redirect("dashboard")
     else:
         form = SignUpForm()
 

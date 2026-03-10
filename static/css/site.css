@@ -517,3 +517,70 @@ a {
     grid-template-columns: 1fr;
   }
 }
+
+.portal-auth-card-wide {
+  max-width: 760px;
+}
+
+.portal-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .portal-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+.portal-messages {
+  margin-bottom: 20px;
+}
+
+.portal-message {
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 10px;
+  border: 1px solid transparent;
+}
+
+.portal-message-success {
+  background: var(--portal-success-bg);
+  color: var(--portal-success-text);
+  border-color: #b7ebc6;
+}
+
+.portal-message-error {
+  background: var(--portal-danger-bg);
+  color: var(--portal-danger-text);
+  border-color: #ffc2cf;
+}
+
+.portal-message-info {
+  background: #e8f0ff;
+  color: #1d4ed8;
+  border-color: #c7dbff;
+}
+
+.portal-help-text {
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid var(--portal-border);
+  color: var(--portal-muted);
+  font-size: 14px;
+}
+
+.portal-help-text ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.portal-help-text li {
+  margin-bottom: 4px;
+}

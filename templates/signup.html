@@ -1,103 +1,167 @@
 {% extends "base.html" %}
-{% block title %}Create Account{% endblock %}
+{% block title %}Create Account | Marco's Medical Portal{% endblock %}
 
-{% block content %}
-<div class="container mt-4" style="max-width: 520px;">
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <h1 class="h4 mb-3">Create Account</h1>
+{% block body %}
+<div class="portal-auth-body">
+  <div class="portal-auth-card portal-auth-card-wide">
+    <div class="portal-logo-circle">∿</div>
 
-            <form method="post" novalidate>
-                {% csrf_token %}
+    <h1 class="portal-auth-title">Create Your Account</h1>
+    <p class="portal-auth-subtitle">Register for Marco's Medical Portal</p>
 
-                {# Show non-field errors at the top #}
-                {% if form.non_field_errors %}
-                <div class="alert alert-danger">
-                    {{ form.non_field_errors }}
-                </div>
-                {% endif %}
+    <form method="post" novalidate>
+      {% csrf_token %}
 
-                {# Username #}
-                <div class="mb-3">
-                    <label class="form-label" for="{{ form.username.id_for_label }}">Username</label>
-                    <input
-                            type="text"
-                            name="{{ form.username.html_name }}"
-                            id="{{ form.username.id_for_label }}"
-                            class="form-control {% if form.username.errors %}is-invalid{% endif %}"
-                            value="{{ form.username.value|default_if_none:'' }}"
-                            autocomplete="username"
-                            required
-                    >
-                    {% if form.username.help_text %}
-                    <div class="form-text">{{ form.username.help_text|safe }}</div>
-                    {% endif %}
-                    {% for error in form.username.errors %}
-                    <div class="invalid-feedback">{{ error }}</div>
-                    {% endfor %}
-                </div>
-
-                {# Email (only if your form includes it) #}
-                {% if form.email %}
-                <div class="mb-3">
-                    <label class="form-label" for="{{ form.email.id_for_label }}">Email</label>
-                    <input
-                            type="email"
-                            name="{{ form.email.html_name }}"
-                            id="{{ form.email.id_for_label }}"
-                            class="form-control {% if form.email.errors %}is-invalid{% endif %}"
-                            value="{{ form.email.value|default_if_none:'' }}"
-                            autocomplete="email"
-                    >
-                    {% for error in form.email.errors %}
-                    <div class="invalid-feedback">{{ error }}</div>
-                    {% endfor %}
-                </div>
-                {% endif %}
-
-                {# Password1 #}
-                <div class="mb-3">
-                    <label class="form-label" for="{{ form.password1.id_for_label }}">Password</label>
-                    <input
-                            type="password"
-                            name="{{ form.password1.html_name }}"
-                            id="{{ form.password1.id_for_label }}"
-                            class="form-control {% if form.password1.errors %}is-invalid{% endif %}"
-                            autocomplete="new-password"
-                            required
-                    >
-                    {% if form.password1.help_text %}
-                    <div class="form-text">{{ form.password1.help_text|safe }}</div>
-                    {% endif %}
-                    {% for error in form.password1.errors %}
-                    <div class="invalid-feedback">{{ error }}</div>
-                    {% endfor %}
-                </div>
-
-                {# Password2 #}
-                <div class="mb-3">
-                    <label class="form-label" for="{{ form.password2.id_for_label }}">Confirm Password</label>
-                    <input
-                            type="password"
-                            name="{{ form.password2.html_name }}"
-                            id="{{ form.password2.id_for_label }}"
-                            class="form-control {% if form.password2.errors %}is-invalid{% endif %}"
-                            autocomplete="new-password"
-                            required
-                    >
-                    {% for error in form.password2.errors %}
-                    <div class="invalid-feedback">{{ error }}</div>
-                    {% endfor %}
-                </div>
-
-                <button class="btn btn-primary w-100" type="submit">Create Account</button>
-            </form>
-
-            <div class="text-center mt-3">
-                <a href="/accounts/login/">Back to login</a>
-            </div>
-
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger portal-alert">
+          {{ form.non_field_errors }}
         </div>
+      {% endif %}
+
+      <div class="portal-form-grid">
+        <div class="mb-3">
+          <label class="portal-label" for="{{ form.first_name.id_for_label }}">First Name</label>
+          <input
+            class="form-control portal-input {% if form.first_name.errors %}is-invalid{% endif %}"
+            type="text"
+            name="{{ form.first_name.html_name }}"
+            id="{{ form.first_name.id_for_label }}"
+            value="{{ form.first_name.value|default_if_none:'' }}"
+          >
+          {% for error in form.first_name.errors %}
+            <div class="invalid-feedback">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        <div class="mb-3">
+          <label class="portal-label" for="{{ form.last_name.id_for_label }}">Last Name</label>
+          <input
+            class="form-control portal-input {% if form.last_name.errors %}is-invalid{% endif %}"
+            type="text"
+            name="{{ form.last_name.html_name }}"
+            id="{{ form.last_name.id_for_label }}"
+            value="{{ form.last_name.value|default_if_none:'' }}"
+          >
+          {% for error in form.last_name.errors %}
+            <div class="invalid-feedback">{{ error }}</div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="portal-form-grid">
+        <div class="mb-3">
+          <label class="portal-label" for="{{ form.username.id_for_label }}">Username</label>
+          <input
+            class="form-control portal-input {% if form.username.errors %}is-invalid{% endif %}"
+            type="text"
+            name="{{ form.username.html_name }}"
+            id="{{ form.username.id_for_label }}"
+            value="{{ form.username.value|default_if_none:'' }}"
+            autocomplete="username"
+            required
+          >
+          {% for error in form.username.errors %}
+            <div class="invalid-feedback">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        <div class="mb-3">
+          <label class="portal-label" for="{{ form.email.id_for_label }}">Email</label>
+          <input
+            class="form-control portal-input {% if form.email.errors %}is-invalid{% endif %}"
+            type="email"
+            name="{{ form.email.html_name }}"
+            id="{{ form.email.id_for_label }}"
+            value="{{ form.email.value|default_if_none:'' }}"
+            autocomplete="email"
+          >
+          {% for error in form.email.errors %}
+            <div class="invalid-feedback">{{ error }}</div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="portal-label" for="{{ form.password1.id_for_label }}">Password</label>
+        <input
+          class="form-control portal-input {% if form.password1.errors %}is-invalid{% endif %}"
+          type="password"
+          name="{{ form.password1.html_name }}"
+          id="{{ form.password1.id_for_label }}"
+          autocomplete="new-password"
+          required
+        >
+        {% for error in form.password1.errors %}
+          <div class="invalid-feedback">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="portal-form-grid">
+        <div class="mb-3">
+          <label class="portal-label" for="{{ form.phone_number.id_for_label }}">Phone Number</label>
+          <input
+            class="form-control portal-input {% if form.phone_number.errors %}is-invalid{% endif %}"
+            type="text"
+            name="{{ form.phone_number.html_name }}"
+            id="{{ form.phone_number.id_for_label }}"
+            value="{{ form.phone_number.value|default_if_none:'' }}"
+          >
+          {% for error in form.phone_number.errors %}
+            <div class="invalid-feedback">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        <div class="mb-3">
+          <label class="portal-label" for="{{ form.date_of_birth.id_for_label }}">Date of Birth</label>
+          <input
+            class="form-control portal-input {% if form.date_of_birth.errors %}is-invalid{% endif %}"
+            type="date"
+            name="{{ form.date_of_birth.html_name }}"
+            id="{{ form.date_of_birth.id_for_label }}"
+            value="{{ form.date_of_birth.value|default_if_none:'' }}"
+          >
+          {% for error in form.date_of_birth.errors %}
+            <div class="invalid-feedback">{{ error }}</div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="portal-label" for="{{ form.address.id_for_label }}">Address</label>
+        <input
+          class="form-control portal-input {% if form.address.errors %}is-invalid{% endif %}"
+          type="text"
+          name="{{ form.address.html_name }}"
+          id="{{ form.address.id_for_label }}"
+          value="{{ form.address.value|default_if_none:'' }}"
+        >
+        {% for error in form.address.errors %}
+          <div class="invalid-feedback">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="mb-3">
+        <label class="portal-label" for="{{ form.password2.id_for_label }}">Confirm Password</label>
+        <input
+          class="form-control portal-input {% if form.password2.errors %}is-invalid{% endif %}"
+          type="password"
+          name="{{ form.password2.html_name }}"
+          id="{{ form.password2.id_for_label }}"
+          autocomplete="new-password"
+          required
+        >
+        {% for error in form.password2.errors %}
+          <div class="invalid-feedback">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <button class="portal-btn-primary" type="submit">Create Account</button>
+    </form>
+
+    <div class="portal-link-row">
+      Already have an account?
+      <a href="{% url 'login' %}" class="portal-inline-link">Sign in here</a>
     </div>
+  </div>
 </div>
 {% endblock %}
