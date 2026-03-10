@@ -23,7 +23,7 @@ cd patient-portal
 python -m venv .venv
 ```
 
-#### 3) Activate the virtual environment (PowerShell)
+#### 3) Activate the virtual environment
 
 > **VS Code note (important):**  
 > If you use VS Code and select the correct interpreter, you don’t need to activate `(.venv)` in the terminal just to run/debug inside VS Code.
@@ -40,10 +40,18 @@ Activate in PowerShell:
 .\.venv\Scripts\Activate.ps1
 ```
 
+Depending on the Python install, a Scripts folder may not exist. If the Scripts folder does not exist, check `.venv\bin\Activate.ps1` for the activation script.
+
 If PowerShell blocks activation, run this once per terminal session:
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\.venv\Scripts\Activate.ps1
+```
+
+Activating in Linux & macOS:
+
+```console
+source .venv\bin\activate
 ```
 
 After activation you should see `(.venv)` at the left of your prompt.
@@ -64,7 +72,7 @@ python -c "import django; print(django.get_version())"
 - **Do not modify `.env` unless instructed** — the default values work for local development.
 
 ```powershell
-copy .env.example .env
+cp .env.example .env
 ```
 
 #### IMPORTANT Docker/MySQL notes
