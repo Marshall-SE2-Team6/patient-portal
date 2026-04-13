@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block title %}Request Appointment | Marco's Medical Portal{% endblock %}
+
+{% block body %}
+<div class="portal-app-shell">
+    <aside class="portal-sidebar">
+        <div class="portal-sidebar-brand">
+            <div class="portal-brand-icon">M</div>
+            <div>
+                <p class="portal-brand-title">Marco's Medical</p>
+                <p class="portal-brand-subtitle">Patient Portal</p>
+            </div>
+        </div>
+
+        <nav class="portal-nav">
+            <a class="portal-nav-link" href="{% url 'dashboard' %}">
+                <span class="portal-nav-icon">⌂</span>
+                <span>Dashboard</span>
+            </a>
+            <a class="portal-nav-link" href="{% url 'profile' %}">
+                <span class="portal-nav-icon">◉</span>
+                <span>Profile</span>
+            </a>
+        </nav>
+
+        <div class="portal-sidebar-footer">
+            <div class="portal-user-box">
+                <div class="portal-avatar">
+                    {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                </div>
+                <div>
+                    <p class="portal-user-name">
+                        {% if request.user.first_name or request.user.last_name %}
+                        {{ request.user.first_name }} {{ request.user.last_name }}
+                        {% else %}
+                        {{ request.user.username }}
+                        {% endif %}
+                    </p>
+                    <p class="portal-user-email">{{ request.user.email|default:"No email added" }}</p>
+                </div>
+            </div>
+
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="portal-signout-btn">Sign Out</button>
+            </form>
+        </div>
+    </aside>
+
+    <div class="portal-main">
+        <div class="portal-topbar">
+            <h1 class="portal-topbar-title">Request Appointment</h1>
+            <div class="portal-topbar-date">Schedule your next visit</div>
+        </div>
+
+        <main class="portal-content">
+            <section class="portal-panel">
+                <div class="portal-panel-header">
+                    <div>
+                        <h3 class="portal-panel-title">Appointment Request Form</h3>
+                        <p class="portal-panel-subtitle">Fill out the information below to schedule an appointment.</p>
+                    </div>
+                </div>
+
+                {% if profile_missing %}
+                <div class="portal-list-item">
+                    <div>
+                        <p class="portal-list-title">Patient profile missing</p>
+                        <p class="portal-list-subtitle">This user does not have a linked patient profile yet.</p>
+                    </div>
+                </div>
+                {% else %}
+                <form method="post">
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                    <div class="portal-list-item" style="border:1px solid #f1b0b7;">
+                        <div>
+                            {% for error in form.non_field_errors %}
+                            <p class="portal-list-title">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="portal-list-item">
+                        <div style="width:100%;">
+                            <p class="portal-list-title">Provider</p>
+                            {{ form.provider }}
+                            {% for error in form.provider.errors %}
+                            <p class="portal-list-subtitle">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="portal-list-item">
+                        <div style="width:100%;">
+                            <p class="portal-list-title">Appointment Start</p>
+                            {{ form.scheduled_start }}
+                            {% for error in form.scheduled_start.errors %}
+                            <p class="portal-list-subtitle">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="portal-list-item">
+                        <div style="width:100%;">
+                            <p class="portal-list-title">Appointment End</p>
+                            {{ form.scheduled_end }}
+                            {% for error in form.scheduled_end.errors %}
+                            <p class="portal-list-subtitle">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="portal-list-item">
+                        <div style="width:100%;">
+                            <p class="portal-list-title">Reason</p>
+                            {{ form.reason }}
+                            {% for error in form.reason.errors %}
+                            <p class="portal-list-subtitle">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="portal-list-item">
+                        <div style="width:100%;">
+                            <p class="portal-list-title">Notes</p>
+                            {{ form.notes }}
+                            {% for error in form.notes.errors %}
+                            <p class="portal-list-subtitle">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div style="margin-top:20px; display:flex; gap:12px;">
+                        <button type="submit" class="portal-signout-btn" style="border:none; cursor:pointer;">
+                            Submit Appointment
+                        </button>
+                        <a href="{% url 'dashboard' %}" class="portal-signout-btn" style="text-decoration:none; display:inline-block; text-align:center;">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+                {% endif %}
+            </section>
+        </main>
+    </div>
+</div>
+{% endblock %}

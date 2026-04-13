@@ -36,16 +36,7 @@ class AppointmentRequestAdmin(admin.ModelAdmin):
         "preferred_provider__staff_profile__user__username",
     )
 
-
-@admin.register(Appointment)
-class AppointmentAdmin(admin.ModelAdmin):
-    list_display = ("id", "patient", "provider", "scheduled_start", "status")
-    list_filter = ("status",)
-    search_fields = (
-        "patient__user__username",
-        "provider__staff_profile__user__username",
-    )
-
+admin.site.register(Appointment)
 
 @admin.register(CheckInRecord)
 class CheckInRecordAdmin(admin.ModelAdmin):

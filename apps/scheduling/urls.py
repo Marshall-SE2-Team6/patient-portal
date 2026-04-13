@@ -1,5 +1,7 @@
 from django.urls import path
+from . import views
 
-app_name = "scheduling"
-
-urlpatterns = []
+urlpatterns = [
+    path("appointments/request/", views.request_appointment, name="request_appointment"),
+    path("appointments/<int:appointment_id>/", views.appointment_detail, name="appointment_detail"),
+]

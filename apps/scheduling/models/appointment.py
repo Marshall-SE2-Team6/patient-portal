@@ -44,8 +44,27 @@ class Appointment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    reminder_sent = models.BooleanField(default=False)
+    reminder_sent_at = models.DateTimeField(null=True, blank=True)
+
     class Meta:
         ordering = ["scheduled_start"]
 
     def __str__(self) -> str:
         return f"Appointment<{self.patient.user.username} with {self.provider}>"
+
+    @property
+    def is_upcoming(self):
+        from django.utils import timezone
+        return self.scheduled_start >= timezone.now()
+
+
+    @property
+    def needs_reminder(self):
+        from django.utils import timezone
+        now = timezone.now()
+        return (
+            self.status == AppointmentStatus.SCHEDULED
+            and not self.reminder_sent
+            and now <= self.scheduled_start <= now + timezone.timedelta(hours=24)
+        )

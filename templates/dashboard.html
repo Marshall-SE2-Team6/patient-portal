@@ -106,40 +106,58 @@
               <h3 class="portal-panel-title">Upcoming Appointments</h3>
               <p class="portal-panel-subtitle">Your scheduled visits</p>
             </div>
+            <a href="{% url 'request_appointment' %}" class="portal-signout-btn" style="text-decoration:none; display:inline-block; text-align:center;">
+              Request Appointment
+            </a>
           </div>
 
           {% if upcoming_appointments %}
-            {% for appointment in upcoming_appointments %}
-              <div class="portal-list-item">
-                <div class="portal-list-left">
-                  <div class="portal-quick-icon icon-blue" style="width:40px;height:40px;font-size:16px;">🗓</div>
-                  <div>
-                    <p class="portal-list-title">
-                      Dr.
-                      {{ appointment.provider.staff_profile.user.first_name }}
-                      {{ appointment.provider.staff_profile.user.last_name }}
-                    </p>
-                    <p class="portal-list-subtitle">
-                      {{ appointment.provider.specialty|default:"General Practice" }}
-                    </p>
-                    <p class="portal-list-meta">
-                      {{ appointment.scheduled_start|date:"F j, Y" }} at {{ appointment.scheduled_start|date:"g:i A" }}
-                    </p>
-                    {% if appointment.reason %}
-                      <p class="portal-list-meta">{{ appointment.reason }}</p>
-                    {% endif %}
-                  </div>
-                </div>
-                <span class="portal-badge badge-neutral">{{ appointment.get_status_display }}</span>
-              </div>
-            {% endfor %}
-          {% else %}
+          {% for appointment in upcoming_appointments %}
+          <a href="{% url 'appointment_detail' appointment.id %}" class="text-decoration-none" style="color: inherit;">
             <div class="portal-list-item">
-              <div>
-                <p class="portal-list-title">No upcoming appointments</p>
-                <p class="portal-list-subtitle">Appointments you schedule will appear here.</p>
+              <div class="portal-list-left">
+                <div class="portal-quick-icon icon-blue" style="width:40px;height:40px;font-size:16px;">🗓</div>
+                <div>
+                  <p class="portal-list-title">
+                    Dr.
+                    {{ appointment.provider.staff_profile.user.first_name }}
+                    {{ appointment.provider.staff_profile.user.last_name }}
+                  </p>
+                  <p class="portal-list-subtitle">
+                    {{ appointment.provider.specialty|default:"General Practice" }}
+                  </p>
+                  <p class="portal-list-meta">
+                    {{ appointment.scheduled_start|date:"F j, Y" }} at {{ appointment.scheduled_start|date:"g:i A" }}
+                  </p>
+                  {% if appointment.reason %}
+                  <p class="portal-list-meta">{{ appointment.reason }}</p>
+                  {% endif %}
+                </div>
+              </div>
+
+              <div style="text-align:right;">
+            <span class="portal-badge badge-neutral">
+              {{ appointment.get_status_display }}
+            </span>
+                <br/>
+                {% if appointment.reminder_sent %}
+                <span class="portal-badge badge-success">Reminder Sent</span>
+                {% elif appointment.needs_reminder %}
+                <span class="portal-badge badge-warning">Reminder Due</span>
+                {% else %}
+                <span class="portal-badge badge-neutral">Upcoming</span>
+                {% endif %}
               </div>
             </div>
+          </a>
+          {% endfor %}
+          {% else %}
+          <div class="portal-list-item">
+            <div>
+              <p class="portal-list-title">No upcoming appointments</p>
+              <p class="portal-list-subtitle">Appointments you schedule will appear here.</p>
+            </div>
+          </div>
           {% endif %}
         </div>
 
