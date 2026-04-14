@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Appointments | Marco's Medical Portal{% endblock %}
+{% block title %}Billing | Marco's Medical Portal{% endblock %}
 
 {% block body %}
 <div class="portal-app-shell">
@@ -21,11 +21,11 @@
                 <span class="portal-nav-icon">◉</span>
                 <span>Profile</span>
             </a>
-            <a class="portal-nav-link active" href="{% url 'my_appointments' %}">
+            <a class="portal-nav-link" href="{% url 'my_appointments' %}">
                 <span class="portal-nav-icon">📅</span>
                 <span>Appointments</span>
             </a>
-            <a class="portal-nav-link" href="{% url 'billing:invoice_list' %}">
+            <a class="portal-nav-link active" href="{% url 'billing:invoice_list' %}">
                 <span class="portal-nav-icon">💳</span>
                 <span>Billing</span>
             </a>
@@ -57,18 +57,17 @@
 
     <div class="portal-main">
         <div class="portal-topbar">
-            <h1 class="portal-topbar-title">Appointments</h1>
-            <div class="portal-topbar-date">View your Appointments</div>
+            <h1 class="portal-topbar-title">Billing & Invoices</h1>
+            <div class="portal-topbar-date">Review your current and past invoices</div>
         </div>
 
         <main class="portal-content">
             <section class="portal-panel">
                 <div class="portal-panel-header">
                     <div>
-                        <h3 class="portal-panel-title">My Appointments</h3>
-                        <p class="portal-panel-subtitle">Review your scheduled visits and appointment details.</p>
+                        <h3 class="portal-panel-title">My Invoices</h3>
+                        <p class="portal-panel-subtitle">All invoice records tied to your patient account.</p>
                     </div>
-                    <a href="{% url 'request_appointment' %}" class="portal-panel-link">Request Appointment</a>
                 </div>
 
                 {% if profile_missing %}
@@ -78,36 +77,48 @@
                         <p class="portal-list-subtitle">This user does not have a linked patient profile yet.</p>
                     </div>
                 </div>
-                {% elif appointments %}
-                {% for appointment in appointments %}
-                <div class="portal-list-item">
+                {% elif invoices %}
+                {% for invoice in invoices %}
+                <div class="portal-list-item portal-invoice-item">
                     <div class="portal-list-left">
-                        <div class="portal-quick-icon icon-blue">⌚</div>
+                        <div class="portal-quick-icon icon-orange">💳</div>
                         <div>
-                            <p class="portal-list-title">{{ appointment.provider }}</p>
-                            <p class="portal-list-subtitle">General Practice</p>
-                            <p class="portal-list-meta">{{ appointment.scheduled_start }}</p>
-                            <p class="portal-list-meta">{{ appointment.reason }}</p>
+                            <p class="portal-list-title">{{ invoice.invoice_number }}</p>
+                            <p class="portal-list-subtitle">
+                                {{ invoice.get_status_display }}
+                            </p>
+                            <p class="portal-list-meta">
+                                Issued {{ invoice.issued_at|date:"F j, Y" }}
+                            </p>
+                            <p class="portal-list-meta">
+                                {% if invoice.due_date %}
+                                Due {{ invoice.due_date|date:"F j, Y" }}
+                                {% else %}
+                                No due date set
+                                {% endif %}
+                            </p>
                         </div>
                     </div>
 
-                    <div style="text-align: right;">
-                        <span class="portal-badge badge-neutral">{{ appointment.display_status }}</span>
-                        <p class="portal-list-meta" style="margin-top: 8px;">
-                            <a href="{% url 'appointment_detail' appointment.id %}">View Details</a>
-                        </p>
+                    <div class="portal-invoice-right">
+                        <p class="portal-price">${{ invoice.balance_due }}</p>
+                        <a href="#" class="portal-outline-btn portal-small-btn">Pay</a>
                     </div>
                 </div>
                 {% endfor %}
                 {% else %}
                 <div class="portal-list-item">
                     <div>
-                        <p class="portal-list-title">No appointments yet</p>
-                        <p class="portal-list-subtitle">You do not have any scheduled appointments right now.</p>
+                        <p class="portal-list-title">No invoices available</p>
+                        <p class="portal-list-subtitle">Invoices created by staff will appear here.</p>
                     </div>
                 </div>
                 {% endif %}
             </section>
+
+            <div class="portal-page-actions">
+                <a href="{% url 'dashboard' %}" class="portal-outline-btn">Back to Dashboard</a>
+            </div>
         </main>
     </div>
 </div>

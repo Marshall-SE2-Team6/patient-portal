@@ -22,13 +22,13 @@ from django.views.generic.base import RedirectView
 urlpatterns = [
     path("admin/", admin.site.urls),
 
-    # Custom app routes first
     path("", include("apps.accounts.urls")),
 
-    # Django built-in auth routes
     path("accounts/", include("django.contrib.auth.urls")),
 
-    path("", RedirectView.as_view(pattern_name="login", permanent=False)),
-
     path("", include("apps.scheduling.urls")),
+
+    path("", include("apps.billing.urls")),
+
+    path("", RedirectView.as_view(pattern_name="login", permanent=False)),
 ]
