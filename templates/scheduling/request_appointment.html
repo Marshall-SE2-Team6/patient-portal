@@ -21,6 +21,10 @@
                 <span class="portal-nav-icon">◉</span>
                 <span>Profile</span>
             </a>
+            <a class="portal-nav-link" href="{% url 'my_appointments' %}">
+                <span class="portal-nav-icon">📅</span>
+                <span>Appointments</span>
+            </a>
         </nav>
 
         <div class="portal-sidebar-footer">
@@ -133,11 +137,12 @@
                         </div>
                     </div>
 
-                    <div style="margin-top:20px; display:flex; gap:12px;">
-                        <button type="submit" class="portal-signout-btn" style="border:none; cursor:pointer;">
+                    <div class="appointment-action-buttons">
+                        <button type="submit" class="portal-signout-btn appointment-action-btn">
                             Submit Appointment
                         </button>
-                        <a href="{% url 'dashboard' %}" class="portal-signout-btn" style="text-decoration:none; display:inline-block; text-align:center;">
+
+                        <a href="{% url 'dashboard' %}" class="portal-signout-btn appointment-action-btn appointment-cancel-btn">
                             Cancel
                         </a>
                     </div>

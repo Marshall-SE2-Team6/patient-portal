@@ -1,4 +1,5 @@
 from django.contrib import admin
+from .models import Appointment
 
 from .models import (
     ClinicalNote,
@@ -76,3 +77,5 @@ class RecordFlagAdmin(admin.ModelAdmin):
 @admin.register(MedicalSummary)
 class MedicalSummaryAdmin(admin.ModelAdmin):
     list_display = ("id", "patient_record", "last_updated_by", "updated_at")
+
+admin.site.register(Appointment)

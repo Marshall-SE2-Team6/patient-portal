@@ -3,6 +3,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from apps.scheduling.models import Appointment
 from apps.scheduling.models.appointment import AppointmentStatus
 from .forms import AppointmentRequestForm
+from django.utils import timezone
 
 
 @login_required
@@ -32,6 +33,29 @@ def request_appointment(request):
         "profile_missing": False,
     })
 
+@login_required
+def my_appointments(request):
+    patient_profile = getattr(request.user, 'patient_profile', None)
+
+    if not patient_profile:
+        return render(request, 'scheduling/my_appointments.html', {
+            'appointments': [],
+            'profile_missing': True,
+        })
+
+    appointments = patient_profile.appointments.all().order_by('-scheduled_start')
+    now = timezone.now()
+
+    for appointment in appointments:
+        if appointment.scheduled_end and appointment.scheduled_end < now:
+            appointment.display_status = "Completed"
+        else:
+            appointment.display_status = appointment.status.capitalize()
+
+    return render(request, 'scheduling/my_appointments.html', {
+        'appointments': appointments,
+        'profile_missing': False,
+    })
 
 @login_required
 def appointment_detail(request, appointment_id):

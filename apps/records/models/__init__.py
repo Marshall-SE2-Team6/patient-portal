@@ -8,3 +8,4 @@ from .prescription import Prescription, PrescriptionStatus
 from .record_flag import RecordFlag, RecordFlagType
 from .supporting_document import SupportingDocument, SupportingDocumentType
 from .vitals_record import VitalsRecord
+from .appointment import Appointment

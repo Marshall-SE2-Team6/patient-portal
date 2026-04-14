@@ -21,6 +21,10 @@
         <span class="portal-nav-icon">◉</span>
         <span>Profile</span>
       </a>
+      <a class="portal-nav-link" href="{% url 'my_appointments' %}">
+        <span class="portal-nav-icon">📅</span>
+        <span>Appointments</span>
+      </a>
     </nav>
 
     <div class="portal-sidebar-footer">
@@ -106,9 +110,11 @@
               <h3 class="portal-panel-title">Upcoming Appointments</h3>
               <p class="portal-panel-subtitle">Your scheduled visits</p>
             </div>
-            <a href="{% url 'request_appointment' %}" class="portal-signout-btn" style="text-decoration:none; display:inline-block; text-align:center;">
-              Request Appointment
-            </a>
+            <div class="portal-request-appointment-wrap">
+              <a href="{% url 'request_appointment' %}" class="portal-outline-btn portal-request-btn">
+                Request Appointment
+              </a>
+            </div>
           </div>
 
           {% if upcoming_appointments %}

@@ -584,3 +584,96 @@ a {
 .portal-help-text li {
   margin-bottom: 4px;
 }
+
+.appointment-action-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  align-items: center;
+}
+
+.appointment-action-btn {
+  width: 180px !important;
+  min-width: 180px;
+  height: 42px;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 600;
+  box-sizing: border-box;
+  text-align: center;
+  padding: 0 14px;
+}
+
+.portal-signout-btn.appointment-action-btn {
+  width: 180px !important;
+  text-align: center;
+}
+
+a.portal-signout-btn.appointment-action-btn {
+  color: #e42323;
+}
+
+.appointment-detail-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  justify-content: center;
+}
+
+.appointment-detail-btn {
+  width: 190px !important;
+  min-width: 230px;
+  height: 48px;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  text-align: center !important;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+.portal-outline-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 18px;
+  border: 1px solid #d6dbe6;   /* <-- FORCE border */
+  border-radius: 10px;
+  background: #ffffff;
+  color: var(--portal-primary);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.portal-outline-btn:hover {
+  background: #edf3ff;
+  color: var(--portal-primary);
+  border-color: #dbe7ff;
+}
+
+.portal-request-appointment-wrap {
+  display: flex;
+  justify-content: center;
+}
+
+/* -------------------------
+   GLOBAL BUTTON HOVER EFFECT
+--------------------------*/
+
+/* Apply to all your button types */
+.portal-signout-btn:hover,
+.portal-panel-link:hover,
+.appointment-detail-btn:hover,
+a[class*="portal-"]:hover,
+button[class*="portal-"]:hover {
+  background: #edf3ff;
+  border-color: #dbe7ff;
+  color: var(--portal-primary);
+}
