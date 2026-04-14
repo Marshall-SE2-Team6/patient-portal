@@ -2,7 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login
 from django.contrib.auth.views import PasswordChangeView
 from django.contrib import messages
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.db import transaction
 from django.urls import reverse_lazy
@@ -12,7 +12,7 @@ from apps.records.models import LabResult
 from apps.scheduling.models import Appointment
 from apps.profiles.models import PatientProfile
 
-from .forms import SignUpForm, ProfileForm
+from .forms import SignUpForm, ProfileForm, AdminInvoiceForm
 
 
 class PortalPasswordChangeView(PasswordChangeView):
@@ -53,6 +53,14 @@ def signup(request):
 
 @login_required
 def dashboard(request):
+    if request.user.is_staff or request.user.is_superuser:
+        return redirect("admin_dashboard")
+
+    return redirect("patient_dashboard")
+
+
+@login_required
+def patient_dashboard(request):
     patient_profile = getattr(request.user, "patient_profile", None)
 
     upcoming_appointments = []
@@ -95,6 +103,18 @@ def dashboard(request):
 
 
 @login_required
+def admin_dashboard(request):
+    if not (request.user.is_staff or request.user.is_superuser):
+        return redirect("dashboard")
+
+    context = {
+        "admin_user": request.user,
+    }
+
+    return render(request, "dashboard_admin.html", context)
+
+
+@login_required
 def profile(request):
     return render(request, "profile.html")
 
@@ -110,3 +130,64 @@ def edit_profile(request):
         form = ProfileForm(instance=request.user)
 
     return render(request, "edit_profile.html", {"form": form})
+
+@login_required
+def admin_profile(request):
+    if not (request.user.is_staff or request.user.is_superuser):
+        return redirect("dashboard")
+
+    return render(request, "admin_profile.html", {"admin_user": request.user})
+
+
+@login_required
+def admin_billing(request):
+    if not (request.user.is_staff or request.user.is_superuser):
+        return redirect("dashboard")
+
+    invoices = (
+        Invoice.objects
+        .select_related("patient__user")
+        .order_by("due_date", "-issued_at")
+    )
+
+    context = {
+        "invoices": invoices,
+    }
+
+    return render(request, "admin_billing.html", context)
+
+
+@login_required
+def admin_create_invoice(request):
+    if not (request.user.is_staff or request.user.is_superuser):
+        return redirect("dashboard")
+
+    if request.method == "POST":
+        form = AdminInvoiceForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Invoice created successfully.")
+            return redirect("admin_billing")
+    else:
+        form = AdminInvoiceForm()
+
+    return render(request, "admin_create_invoice.html", {"form": form})
+
+from django.shortcuts import get_object_or_404
+
+
+@login_required
+def admin_delete_invoice(request, invoice_id):
+    if not (request.user.is_staff or request.user.is_superuser):
+        return redirect("dashboard")
+
+    invoice = get_object_or_404(Invoice, id=invoice_id)
+
+    if request.method == "POST":
+        invoice.delete()
+        messages.success(request, "Invoice deleted successfully.")
+        return redirect("admin_billing")
+
+    return render(request, "admin_confirm_delete.html", {
+        "invoice": invoice
+    })

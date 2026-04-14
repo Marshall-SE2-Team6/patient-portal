@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
+from apps.billing.models import Invoice
 
 User = get_user_model()
 
@@ -37,3 +38,24 @@ class ProfileForm(UserChangeForm):
     class Meta:
         model = User
         fields = ("first_name", "last_name", "email")
+
+
+class AdminInvoiceForm(forms.ModelForm):
+    class Meta:
+        model = Invoice
+        fields = (
+            "patient",
+            "appointment",
+            "invoice_number",
+            "status",
+            "due_date",
+            "subtotal",
+            "tax_amount",
+            "total_amount",
+            "balance_due",
+            "notes",
+        )
+        widgets = {
+            "due_date": forms.DateInput(attrs={"type": "date"}),
+            "notes": forms.Textarea(attrs={"rows": 3}),
+        }

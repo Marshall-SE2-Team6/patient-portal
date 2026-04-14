@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Admin Billing | Marco's Medical Portal{% endblock %}
+
+{% block body %}
+<div class="portal-app-shell">
+    <aside class="portal-sidebar">
+        <div class="portal-sidebar-brand">
+            <div class="portal-brand-icon">M</div>
+            <div>
+                <p class="portal-brand-title">Marco's Medical</p>
+                <p class="portal-brand-subtitle">Admin Portal</p>
+            </div>
+        </div>
+
+        <nav class="portal-nav">
+            <a class="portal-nav-link" href="{% url 'admin_dashboard' %}">
+                <span class="portal-nav-icon">⌂</span>
+                <span>Dashboard</span>
+            </a>
+
+            <a class="portal-nav-link" href="{% url 'admin_profile' %}">
+                <span class="portal-nav-icon">👤</span>
+                <span>Profile</span>
+            </a>
+
+            <a class="portal-nav-link" href="/admin/">
+                <span class="portal-nav-icon">⚙</span>
+                <span>Admin Panel</span>
+            </a>
+
+            <a class="portal-nav-link active" href="{% url 'admin_billing' %}">
+                <span class="portal-nav-icon">💳</span>
+                <span>Billing</span>
+            </a>
+        </nav>
+
+        <div class="portal-sidebar-footer">
+            <div class="portal-user-box">
+                <div class="portal-avatar">
+                    {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                </div>
+                <div>
+                    <p class="portal-user-name">
+                        {% if request.user.first_name or request.user.last_name %}
+                        {{ request.user.first_name }} {{ request.user.last_name }}
+                        {% else %}
+                        {{ request.user.username }}
+                        {% endif %}
+                    </p>
+                    <p class="portal-user-email">{{ request.user.email|default:"No email added" }}</p>
+                </div>
+            </div>
+
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="portal-signout-btn">Sign Out</button>
+            </form>
+        </div>
+    </aside>
+
+    <div class="portal-main">
+        <div class="portal-topbar">
+            <h1 class="portal-topbar-title">Admin Billing</h1>
+            <div class="portal-topbar-date">Manage invoices from the admin portal</div>
+        </div>
+
+        <main class="portal-content">
+            <section class="portal-panel">
+                <div class="portal-panel-header">
+                    <div>
+                        <h3 class="portal-panel-title">Invoices</h3>
+                        <p class="portal-panel-subtitle">Create and review patient invoices.</p>
+                    </div>
+                    <a href="{% url 'admin_create_invoice' %}" class="portal-outline-btn">Create Invoice</a>
+                </div>
+
+                {% if invoices %}
+                {% for invoice in invoices %}
+                <div class="portal-list-item">
+                    <div class="portal-list-left">
+                        <div class="portal-quick-icon icon-orange">💳</div>
+                        <div>
+                            <p class="portal-list-title">
+                                {{ invoice.invoice_number }} — {{ invoice.patient.user.first_name }} {{ invoice.patient.user.last_name }}
+                            </p>
+                            <p class="portal-list-subtitle">
+                                Status: {{ invoice.status }} |
+                                Total: ${{ invoice.total_amount }} |
+                                Balance Due: ${{ invoice.balance_due }} |
+                                Due: {{ invoice.due_date }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- DELETE BUTTON -->
+                    <form method="post" action="{% url 'admin_delete_invoice' invoice.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="portal-outline-btn" style="border-color: red; color: red;">
+                            Delete
+                        </button>
+                    </form>
+                </div>
+                {% endfor %}
+                {% else %}
+                <p class="portal-page-subtitle">No invoices found.</p>
+                {% endif %}
+            </section>
+        </main>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard | Marco's Medical Portal{% endblock %}
+
+{% block body %}
+<div class="portal-app-shell">
+    <aside class="portal-sidebar">
+        <div class="portal-sidebar-brand">
+            <div class="portal-brand-icon">M</div>
+            <div>
+                <p class="portal-brand-title">Marco's Medical</p>
+                <p class="portal-brand-subtitle">Admin Portal</p>
+            </div>
+        </div>
+
+        <nav class="portal-nav">
+            <a class="portal-nav-link active" href="{% url 'admin_dashboard' %}">
+                <span class="portal-nav-icon">⌂</span>
+                <span>Dashboard</span>
+            </a>
+
+            <a class="portal-nav-link {% if request.resolver_match.url_name == 'admin_profile' %}active{% endif %}"
+               href="{% url 'admin_profile' %}">
+                <span class="portal-nav-icon">👤</span>
+                <span>Profile</span>
+            </a>
+
+            <a class="portal-nav-link" href="/admin/">
+                <span class="portal-nav-icon">⚙</span>
+                <span>Admin Panel</span>
+            </a>
+
+            <a class="portal-nav-link {% if request.resolver_match.url_name == 'admin_billing' %}active{% endif %}"
+               href="{% url 'admin_billing' %}">
+                <span class="portal-nav-icon">💳</span>
+                <span>Billing</span>
+            </a>
+        </nav>
+
+        <div class="portal-sidebar-footer">
+            <div class="portal-user-box">
+                <div class="portal-avatar">
+                    {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                </div>
+                <div>
+                    <p class="portal-user-name">
+                        {% if request.user.first_name or request.user.last_name %}
+                        {{ request.user.first_name }} {{ request.user.last_name }}
+                        {% else %}
+                        {{ request.user.username }}
+                        {% endif %}
+                    </p>
+                    <p class="portal-user-email">{{ request.user.email|default:"No email added" }}</p>
+                </div>
+            </div>
+
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="portal-signout-btn">Sign Out</button>
+            </form>
+        </div>
+    </aside>
+
+    <div class="portal-main">
+        <div class="portal-topbar">
+            <h1 class="portal-topbar-title">Administrator Dashboard</h1>
+            <div class="portal-topbar-date">Manage the portal from an administrator view</div>
+        </div>
+
+        <main class="portal-content">
+            <h2 class="portal-page-title">Welcome, {{ request.user.first_name|default:request.user.username }}</h2>
+            <p class="portal-page-subtitle">This dashboard is for staff and administrators.</p>
+
+            <section class="portal-quick-grid">
+                <div class="portal-quick-card">
+                    <div class="portal-quick-icon icon-blue">👥</div>
+                    <div>
+                        <p class="portal-quick-label">User Management</p>
+                        <p class="portal-quick-value">Access Admin</p>
+                    </div>
+                </div>
+
+                <div class="portal-quick-card">
+                    <div class="portal-quick-icon icon-green">📅</div>
+                    <div>
+                        <p class="portal-quick-label">Appointments</p>
+                        <p class="portal-quick-value">Manage Records</p>
+                    </div>
+                </div>
+
+                <div class="portal-quick-card">
+                    <div class="portal-quick-icon icon-orange">💳</div>
+                    <div>
+                        <p class="portal-quick-label">Billing</p>
+                        <p class="portal-quick-value">Invoices & Payments</p>
+                    </div>
+                </div>
+
+                <div class="portal-quick-card">
+                    <div class="portal-quick-icon icon-purple">⚙</div>
+                    <div>
+                        <p class="portal-quick-label">System</p>
+                        <p class="portal-quick-value">Admin Controls</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="portal-panel">
+                <div class="portal-panel-header">
+                    <div>
+                        <h3 class="portal-panel-title">Administrator Actions</h3>
+                        <p class="portal-panel-subtitle">Quick access to common admin tasks.</p>
+                    </div>
+                </div>
+
+                <div class="portal-list-item">
+                    <div class="portal-list-left">
+                        <div class="portal-quick-icon icon-blue">⚙</div>
+                        <div>
+                            <p class="portal-list-title">Open Django Admin</p>
+                            <p class="portal-list-subtitle">Manage users, records, appointments, and invoices.</p>
+                        </div>
+                    </div>
+                    <a href="/admin/" class="portal-outline-btn">Open Admin</a>
+                </div>
+
+                <div class="portal-list-item">
+                    <div class="portal-list-left">
+                        <div class="portal-quick-icon icon-orange">💳</div>
+                        <div>
+                            <p class="portal-list-title">View Billing Page</p>
+                            <p class="portal-list-subtitle">Review invoice-related portal pages.</p>
+                        </div>
+                    </div>
+                    <a href="{% url 'admin_billing' %}" class="portal-outline-btn">Open Billing</a>
+                </div>
+            </section>
+        </main>
+    </div>
+</div>
+{% endblock %}
