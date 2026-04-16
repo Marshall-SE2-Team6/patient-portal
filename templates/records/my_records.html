@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Billing | Marco's Medical Portal{% endblock %}
+{% block title %}My Records | Marco's Medical Portal{% endblock %}
 
 {% block body %}
 <div class="portal-app-shell">
@@ -25,11 +25,11 @@
                 <span class="portal-nav-icon">📅</span>
                 <span>Appointments</span>
             </a>
-            <a class="portal-nav-link" href="{% url 'records:my_records' %}">
+            <a class="portal-nav-link active" href="{% url 'records:my_records' %}">
                 <span class="portal-nav-icon">🧪</span>
                 <span>My Records</span>
             </a>
-            <a class="portal-nav-link active" href="{% url 'billing:invoice_list' %}">
+            <a class="portal-nav-link" href="{% url 'billing:invoice_list' %}">
                 <span class="portal-nav-icon">💳</span>
                 <span>Billing</span>
             </a>
@@ -61,60 +61,66 @@
 
     <div class="portal-main">
         <div class="portal-topbar">
-            <h1 class="portal-topbar-title">Billing & Invoices</h1>
-            <div class="portal-topbar-date">Review your current and past invoices</div>
+            <h1 class="portal-topbar-title">My Records</h1>
+            <div class="portal-topbar-date">Review your lab reports and medical record updates</div>
         </div>
 
         <main class="portal-content">
             <section class="portal-panel">
                 <div class="portal-panel-header">
                     <div>
-                        <h3 class="portal-panel-title">My Invoices</h3>
-                        <p class="portal-panel-subtitle">All invoice records tied to your patient account.</p>
+                        <h3 class="portal-panel-title">Lab Results</h3>
+                        <p class="portal-panel-subtitle">All completed lab reports linked to your account.</p>
                     </div>
                 </div>
 
-                {% if profile_missing %}
+                {% if not patient_profile %}
                 <div class="portal-list-item">
                     <div>
                         <p class="portal-list-title">Patient profile missing</p>
                         <p class="portal-list-subtitle">This user does not have a linked patient profile yet.</p>
                     </div>
                 </div>
-                {% elif invoices %}
-                {% for invoice in invoices %}
-                <div class="portal-list-item portal-invoice-item">
+                {% elif not patient_record %}
+                <div class="portal-list-item">
+                    <div>
+                        <p class="portal-list-title">Medical record unavailable</p>
+                        <p class="portal-list-subtitle">A patient record has not been created for this account yet.</p>
+                    </div>
+                </div>
+                {% elif lab_results %}
+                {% for result in lab_results %}
+                <div class="portal-list-item">
                     <div class="portal-list-left">
-                        <div class="portal-quick-icon icon-orange">💳</div>
+                        <div class="portal-quick-icon icon-purple">🧪</div>
                         <div>
-                            <p class="portal-list-title">{{ invoice.invoice_number }}</p>
-                            <p class="portal-list-subtitle">
-                                {{ invoice.get_status_display }}
-                            </p>
+                            <p class="portal-list-title">{{ result.lab_order.test_name }}</p>
+                            <p class="portal-list-subtitle">{{ result.result_summary }}</p>
                             <p class="portal-list-meta">
-                                Issued {{ invoice.issued_at|date:"F j, Y" }}
-                            </p>
-                            <p class="portal-list-meta">
-                                {% if invoice.due_date %}
-                                Due {{ invoice.due_date|date:"F j, Y" }}
-                                {% else %}
-                                No due date set
+                                Resulted {{ result.resulted_at|date:"F j, Y" }}
+                                {% if result.result_value %}
+                                • {{ result.result_value }}{% if result.units %} {{ result.units }}{% endif %}
                                 {% endif %}
                             </p>
+                            {% if result.reference_range %}
+                            <p class="portal-list-meta">Reference range: {{ result.reference_range }}</p>
+                            {% endif %}
+                            {% if result.reviewed_by %}
+                            <p class="portal-list-meta">
+                                Reviewed by {{ result.reviewed_by.user.first_name }} {{ result.reviewed_by.user.last_name }}
+                            </p>
+                            {% endif %}
                         </div>
                     </div>
 
-                    <div class="portal-invoice-right">
-                        <p class="portal-price">${{ invoice.balance_due }}</p>
-                        <a href="#" class="portal-outline-btn portal-small-btn">Pay</a>
-                    </div>
+                    <span class="portal-badge badge-success">{{ result.get_status_display }}</span>
                 </div>
                 {% endfor %}
                 {% else %}
                 <div class="portal-list-item">
                     <div>
-                        <p class="portal-list-title">No invoices available</p>
-                        <p class="portal-list-subtitle">Invoices created by staff will appear here.</p>
+                        <p class="portal-list-title">No lab results yet</p>
+                        <p class="portal-list-subtitle">Completed lab reports will appear here.</p>
                     </div>
                 </div>
                 {% endif %}

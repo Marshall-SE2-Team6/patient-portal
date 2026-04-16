@@ -30,5 +30,7 @@ urlpatterns = [
 
     path("", include("apps.billing.urls")),
 
+    path("", include("apps.records.urls")),
+
     path("", RedirectView.as_view(pattern_name="login", permanent=False)),
 ]

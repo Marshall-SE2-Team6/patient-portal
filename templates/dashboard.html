@@ -25,6 +25,10 @@
         <span class="portal-nav-icon">📅</span>
         <span>Appointments</span>
       </a>
+      <a class="portal-nav-link" href="{% url 'records:my_records' %}">
+        <span class="portal-nav-icon">🧪</span>
+        <span>My Records</span>
+      </a>
       <a class="portal-nav-link" href="{% url 'billing:invoice_list' %}">
         <span class="portal-nav-icon">💳</span>
         <span>Billing</span>
@@ -82,13 +86,15 @@
           </div>
         </div>
 
-        <div class="portal-quick-card">
-          <div class="portal-quick-icon icon-purple">🧪</div>
-          <div>
-            <div class="portal-quick-label">Recent</div>
-            <div class="portal-quick-value">{{ recent_lab_results|length }} Lab Results</div>
+        <a href="{% url 'records:my_records' %}" class="text-decoration-none" style="color: inherit;">
+          <div class="portal-quick-card">
+            <div class="portal-quick-icon icon-purple">🧪</div>
+            <div>
+              <div class="portal-quick-label">Recent</div>
+              <div class="portal-quick-value">{{ recent_lab_results|length }} Lab Results</div>
+            </div>
           </div>
-        </div>
+        </a>
 
         <div class="portal-quick-card">
           <div class="portal-quick-icon icon-orange">💳</div>
