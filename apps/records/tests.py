@@ -25,3 +25,15 @@ class RecordModelTests(TestCase):
         self.assertEqual(record_flag.flag_type, RecordFlagType.ADMIN)
         self.assertTrue(record_flag.is_active)
         self.assertEqual(str(record_flag), "admin flag")
+
+
+def test_patient_record_string_representation(self) -> None:
+    user = get_user_model().objects.create_user(
+        username="recorduser",
+        password="testpass123",
+    )
+
+    patient_profile = PatientProfile.objects.create(user=user)
+    patient_record = PatientRecord.objects.create(patient=patient_profile)
+
+    self.assertEqual(str(patient_record), "PatientRecord<recorduser>")
