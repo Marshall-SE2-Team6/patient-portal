@@ -70,7 +70,7 @@
                 <div class="portal-panel-header">
                     <div>
                         <h3 class="portal-panel-title">Appointment Request Form</h3>
-                        <p class="portal-panel-subtitle">Fill out the information below. A doctor or receptionist must approve it before it becomes a scheduled appointment.</p>
+                        <p class="portal-panel-subtitle">Choose a real available time slot. A doctor or receptionist must still approve the request before it becomes a scheduled appointment.</p>
                     </div>
                 </div>
 
@@ -99,27 +99,33 @@
                         <div style="width:100%;">
                             <p class="portal-list-title">Provider</p>
                             {{ form.provider }}
+                            <p class="portal-list-meta">Choose a doctor first to load only that provider's open time slots.</p>
                             {% for error in form.provider.errors %}
                             <p class="portal-list-subtitle">{{ error }}</p>
                             {% endfor %}
+                            <div class="appointment-action-buttons">
+                                <a href="{% url 'request_appointment' %}" class="portal-outline-btn appointment-action-btn">
+                                    Clear Selection
+                                </a>
+                                <button
+                                    type="button"
+                                    class="portal-secondary-btn appointment-action-btn"
+                                    onclick="(function(){ const provider = document.getElementById('{{ form.provider.id_for_label }}').value; if(provider){ window.location = '{% url 'request_appointment' %}?provider=' + provider; } })();"
+                                >
+                                    Show Availability
+                                </button>
+                            </div>
                         </div>
                     </div>
 
                     <div class="portal-list-item">
                         <div style="width:100%;">
-                            <p class="portal-list-title">Appointment Start</p>
-                            {{ form.scheduled_start }}
-                            {% for error in form.scheduled_start.errors %}
-                            <p class="portal-list-subtitle">{{ error }}</p>
-                            {% endfor %}
-                        </div>
-                    </div>
-
-                    <div class="portal-list-item">
-                        <div style="width:100%;">
-                            <p class="portal-list-title">Appointment End</p>
-                            {{ form.scheduled_end }}
-                            {% for error in form.scheduled_end.errors %}
+                            <p class="portal-list-title">Available Time</p>
+                            {{ form.requested_slot }}
+                            {% if not selected_provider %}
+                            <p class="portal-list-meta">Select a provider above before choosing a time.</p>
+                            {% endif %}
+                            {% for error in form.requested_slot.errors %}
                             <p class="portal-list-subtitle">{{ error }}</p>
                             {% endfor %}
                         </div>
@@ -155,6 +161,41 @@
                         </a>
                     </div>
                 </form>
+
+                {% if selected_provider and available_slots %}
+                <div class="portal-panel portal-panel-spaced">
+                    <div class="portal-panel-header">
+                        <div>
+                            <h3 class="portal-panel-title">Current Availability</h3>
+                            <p class="portal-panel-subtitle">These upcoming slots can be requested right now.</p>
+                        </div>
+                    </div>
+
+                    {% for slot in available_slots %}
+                    <div class="portal-list-item">
+                        <div class="portal-list-left">
+                            <div class="portal-quick-icon icon-blue">🗓</div>
+                            <div class="portal-list-details">
+                                <p class="portal-list-title">
+                                    Dr. {{ slot.provider.staff_profile.user.first_name }} {{ slot.provider.staff_profile.user.last_name }}
+                                </p>
+                                <p class="portal-list-subtitle">{{ slot.provider.specialty|default:"General Practice" }}</p>
+                                <p class="portal-list-meta">{{ slot.start_time|date:"F j, Y" }} at {{ slot.start_time|date:"g:i A" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% elif selected_provider %}
+                <div class="portal-panel portal-panel-spaced">
+                    <div class="portal-list-item">
+                        <div>
+                            <p class="portal-list-title">No open slots for this provider</p>
+                            <p class="portal-list-subtitle">Choose another doctor to see different availability.</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
                 {% endif %}
             </section>
         </main>

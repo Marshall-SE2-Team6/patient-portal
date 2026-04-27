@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Staff Appointments | Marco's Medical Portal{% endblock %}
+
+{% block body %}
+<div class="portal-app-shell">
+    <aside class="portal-sidebar">
+        <div class="portal-sidebar-brand">
+            <div class="portal-brand-icon">M</div>
+            <div>
+                <p class="portal-brand-title">Marco's Medical</p>
+                <p class="portal-brand-subtitle">Staff Portal</p>
+            </div>
+        </div>
+
+        <nav class="portal-nav">
+            <a class="portal-nav-link" href="{% url 'admin_dashboard' %}">
+                <span class="portal-nav-icon">⌂</span>
+                <span>Dashboard</span>
+            </a>
+            <a class="portal-nav-link active" href="{% url 'staff_appointments' %}">
+                <span class="portal-nav-icon">📅</span>
+                <span>Appointments</span>
+            </a>
+            <a class="portal-nav-link" href="{% url 'staff_schedule_appointment' %}">
+                <span class="portal-nav-icon">＋</span>
+                <span>Schedule</span>
+            </a>
+        </nav>
+    </aside>
+
+    <div class="portal-main">
+        <div class="portal-topbar">
+            <h1 class="portal-topbar-title">Appointment Management</h1>
+            <div class="portal-topbar-date">Schedule, check in, and update visits</div>
+        </div>
+
+        <main class="portal-content">
+            {% if messages %}
+            <div class="portal-messages">
+                {% for message in messages %}
+                <div class="portal-message {% if message.tags == 'success' %}portal-message-success{% elif message.tags == 'error' %}portal-message-error{% else %}portal-message-info{% endif %}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <section class="portal-panel">
+                <div class="portal-panel-header">
+                    <div>
+                        <h3 class="portal-panel-title">Scheduled Appointments</h3>
+                        <p class="portal-panel-subtitle">Front desk and nursing staff can manage the visit lifecycle here.</p>
+                    </div>
+                    <a href="{% url 'staff_schedule_appointment' %}" class="portal-outline-btn">Schedule Appointment</a>
+                </div>
+
+                {% for appointment in appointments %}
+                <div class="portal-list-item">
+                    <div class="portal-list-left">
+                        <div class="portal-list-details">
+                            <p class="portal-list-title">{{ appointment.patient.user.first_name }} {{ appointment.patient.user.last_name }}</p>
+                            <p class="portal-list-subtitle">
+                                Dr. {{ appointment.provider.staff_profile.user.first_name }} {{ appointment.provider.staff_profile.user.last_name }}
+                            </p>
+                            <p class="portal-list-meta">{{ appointment.scheduled_start|date:"F j, Y" }} at {{ appointment.scheduled_start|date:"g:i A" }}</p>
+                            <p class="portal-list-meta">{{ appointment.reason|default:"No reason provided." }}</p>
+                        </div>
+                    </div>
+
+                    <div class="portal-list-actions">
+                        <span class="portal-badge badge-neutral">{{ appointment.get_status_display }}</span>
+                        {% if appointment.has_pre_check_in %}
+                        <span class="portal-badge badge-success">Pre-check-in complete</span>
+                        {% endif %}
+                        {% if appointment.status == "scheduled" %}
+                        <form method="post" action="{% url 'check_in_appointment' appointment.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="portal-pay-btn portal-small-btn">Check In</button>
+                        </form>
+                        {% endif %}
+                        {% if appointment.can_reschedule %}
+                        <a href="{% url 'reschedule_appointment' appointment.id %}" class="portal-secondary-btn">Reschedule</a>
+                        {% endif %}
+                        {% if appointment.can_cancel %}
+                        <form method="post" action="{% url 'cancel_appointment' appointment.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="portal-signout-btn portal-small-btn">Cancel</button>
+                        </form>
+                        {% endif %}
+                        {% if appointment.status == "checked_in" or appointment.status == "scheduled" %}
+                        <form method="post" action="{% url 'complete_appointment' appointment.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="portal-secondary-btn">Complete</button>
+                        </form>
+                        <form method="post" action="{% url 'mark_no_show_appointment' appointment.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="portal-outline-btn portal-small-btn">No-Show</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="portal-list-item">
+                    <div>
+                        <p class="portal-list-title">No appointments scheduled</p>
+                        <p class="portal-list-subtitle">Scheduled visits will appear here.</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </section>
+        </main>
+    </div>
+</div>
+{% endblock %}

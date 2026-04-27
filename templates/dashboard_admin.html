@@ -34,6 +34,12 @@
                 <span class="portal-nav-icon">💳</span>
                 <span>Billing</span>
             </a>
+
+            <a class="portal-nav-link {% if request.resolver_match.url_name == 'staff_appointments' or request.resolver_match.url_name == 'staff_schedule_appointment' %}active{% endif %}"
+               href="{% url 'staff_appointments' %}">
+                <span class="portal-nav-icon">📅</span>
+                <span>Appointments</span>
+            </a>
         </nav>
 
         <div class="portal-sidebar-footer">
@@ -201,6 +207,69 @@
                     </div>
                     <a href="{% url 'admin_billing' %}" class="portal-outline-btn">Open Billing</a>
                 </div>
+
+                <div class="portal-list-item">
+                    <div class="portal-list-left">
+                        <div class="portal-quick-icon icon-green">📅</div>
+                        <div>
+                            <p class="portal-list-title">Manage Appointments</p>
+                            <p class="portal-list-subtitle">Schedule, reschedule, check in, and close visits.</p>
+                        </div>
+                    </div>
+                    <a href="{% url 'staff_appointments' %}" class="portal-outline-btn">Open Schedule</a>
+                </div>
+            </section>
+
+            <section class="portal-panel">
+                <div class="portal-panel-header">
+                    <div>
+                        <h3 class="portal-panel-title">Upcoming Scheduled Visits</h3>
+                        <p class="portal-panel-subtitle">Quick front desk access for check-in and status changes.</p>
+                    </div>
+                </div>
+
+                {% for appointment in upcoming_appointments %}
+                <div class="portal-list-item">
+                    <div class="portal-list-left">
+                        <div class="portal-list-details">
+                            <p class="portal-list-title">
+                                {{ appointment.patient.user.first_name|default:appointment.patient.user.username }}
+                                {% if appointment.patient.user.last_name %}{{ appointment.patient.user.last_name }}{% endif %}
+                            </p>
+                            <p class="portal-list-subtitle">
+                                Dr. {{ appointment.provider.staff_profile.user.first_name }} {{ appointment.provider.staff_profile.user.last_name }}
+                            </p>
+                            <p class="portal-list-meta">{{ appointment.scheduled_start|date:"F j, Y" }} at {{ appointment.scheduled_start|date:"g:i A" }}</p>
+                        </div>
+                    </div>
+
+                    <div class="portal-staff-actions">
+                        <span class="portal-badge badge-neutral">{{ appointment.get_status_display }}</span>
+                        {% if appointment.status == "scheduled" %}
+                        <form method="post" action="{% url 'check_in_appointment' appointment.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="portal-pay-btn portal-small-btn">Check In</button>
+                        </form>
+                        {% endif %}
+                        {% if appointment.status == "scheduled" or appointment.status == "checked_in" %}
+                        <form method="post" action="{% url 'complete_appointment' appointment.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="portal-secondary-btn">Complete</button>
+                        </form>
+                        {% endif %}
+                        {% if appointment.can_reschedule %}
+                        <a href="{% url 'reschedule_appointment' appointment.id %}" class="portal-outline-btn portal-small-btn">Reschedule</a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="portal-list-item">
+                    <div>
+                        <p class="portal-list-title">No scheduled visits yet</p>
+                        <p class="portal-list-subtitle">Appointments will appear here once they are booked.</p>
+                    </div>
+                </div>
+                {% endfor %}
             </section>
             </div>
         </main>

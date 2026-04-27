@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Schedule Appointment | Marco's Medical Portal{% endblock %}
+
+{% block body %}
+<div class="portal-app-shell">
+    <aside class="portal-sidebar">
+        <div class="portal-sidebar-brand">
+            <div class="portal-brand-icon">M</div>
+            <div>
+                <p class="portal-brand-title">Marco's Medical</p>
+                <p class="portal-brand-subtitle">Staff Portal</p>
+            </div>
+        </div>
+
+        <nav class="portal-nav">
+            <a class="portal-nav-link" href="{% url 'admin_dashboard' %}">
+                <span class="portal-nav-icon">⌂</span>
+                <span>Dashboard</span>
+            </a>
+            <a class="portal-nav-link" href="{% url 'staff_appointments' %}">
+                <span class="portal-nav-icon">📅</span>
+                <span>Appointments</span>
+            </a>
+            <a class="portal-nav-link active" href="{% url 'staff_schedule_appointment' %}">
+                <span class="portal-nav-icon">＋</span>
+                <span>Schedule</span>
+            </a>
+        </nav>
+    </aside>
+
+    <div class="portal-main">
+        <div class="portal-topbar">
+            <h1 class="portal-topbar-title">Schedule Appointment</h1>
+            <div class="portal-topbar-date">Book a patient into an open provider slot</div>
+        </div>
+
+        <main class="portal-content">
+            <section class="portal-panel">
+                <div class="portal-panel-header">
+                    <div>
+                        <h3 class="portal-panel-title">Staff Scheduling Form</h3>
+                        <p class="portal-panel-subtitle">Reception or nursing staff can book directly from real provider availability.</p>
+                    </div>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    {% for field in form %}
+                    <div class="portal-list-item">
+                        <div style="width:100%;">
+                            <p class="portal-list-title">{{ field.label }}</p>
+                            {{ field }}
+                            {% for error in field.errors %}
+                            <p class="portal-list-subtitle">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                    <div class="appointment-detail-actions">
+                        <button type="submit" class="portal-pay-btn appointment-detail-btn">Schedule Appointment</button>
+                        <a href="{% url 'staff_appointments' %}" class="portal-signout-btn appointment-detail-btn">Back</a>
+                    </div>
+                </form>
+            </section>
+        </main>
+    </div>
+</div>
+{% endblock %}

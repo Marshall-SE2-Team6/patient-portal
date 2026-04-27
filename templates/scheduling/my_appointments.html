@@ -147,7 +147,16 @@
                         {% elif appointment.can_pre_check_in %}
                             <a href="{% url 'pre_check_in' appointment.id %}">Complete pre-check-in</a>
                         {% endif %}
-                        <a href="{% url 'appointment_detail' appointment.id %}">View Details</a>
+                        {% if appointment.can_reschedule %}
+                            <a href="{% url 'reschedule_appointment' appointment.id %}" class="portal-outline-btn portal-small-btn">Reschedule</a>
+                        {% endif %}
+                        {% if appointment.can_cancel %}
+                            <form method="post" action="{% url 'cancel_appointment' appointment.id %}" class="portal-action-form">
+                                {% csrf_token %}
+                                <button type="submit" class="portal-signout-btn portal-small-btn">Cancel</button>
+                            </form>
+                        {% endif %}
+                        <a href="{% url 'appointment_detail' appointment.id %}" class="portal-secondary-btn portal-small-btn">View Details</a>
                     </div>
                 </div>
                 {% endfor %}
