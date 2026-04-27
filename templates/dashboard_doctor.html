@@ -66,7 +66,7 @@
 
         <main class="portal-content">
             {% if profile_missing %}
-            <section class="portal-panel">
+            <section class="portal-panel portal-panel-spaced">
                 <div class="portal-panel-header">
                     <div>
                         <h3 class="portal-panel-title">Doctor portal unavailable</h3>
@@ -77,6 +77,15 @@
                 </div>
             </section>
             {% else %}
+            {% if messages %}
+            <div class="portal-messages">
+                {% for message in messages %}
+                <div class="portal-message {% if message.tags == 'success' %}portal-message-success{% elif message.tags == 'error' %}portal-message-error{% else %}portal-message-info{% endif %}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
 
             <h2 class="portal-page-title">
                 Welcome back,
@@ -91,34 +100,90 @@
                 Specialty: {{ provider.specialty|default:"General Practice" }}
             </p>
 
-            <section class="portal-quick-grid">
-                <div class="portal-quick-card">
-                    <div class="portal-quick-icon icon-blue">🗓</div>
+            <div class="portal-page-stack">
+                <section class="portal-quick-grid">
+                    <div class="portal-quick-card">
+                        <div class="portal-quick-icon icon-blue">🗓</div>
+                        <div>
+                            <div class="portal-quick-label">Upcoming</div>
+                            <div class="portal-quick-value">{{ upcoming_count }} Appointments</div>
+                        </div>
+                    </div>
+
+                    <div class="portal-quick-card">
+                        <div class="portal-quick-icon icon-green">👨‍⚕️</div>
+                        <div>
+                            <div class="portal-quick-label">Provider</div>
+                            <div class="portal-quick-value">
+                                Dr. {{ request.user.first_name }} {{ request.user.last_name }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="portal-quick-card">
+                        <div class="portal-quick-icon icon-purple">🏥</div>
+                        <div>
+                            <div class="portal-quick-label">Department</div>
+                            <div class="portal-quick-value">
+                                {{ request.user.staff_profile.department|default:"Medical Staff" }}
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            <section class="portal-panel portal-panel-spaced">
+                <div class="portal-panel-header">
                     <div>
-                        <div class="portal-quick-label">Upcoming</div>
-                        <div class="portal-quick-value">{{ upcoming_count }} Appointments</div>
+                        <h3 class="portal-panel-title">Pending Appointment Requests</h3>
+                        <p class="portal-panel-subtitle">
+                            Review patient requests waiting for your approval.
+                        </p>
                     </div>
                 </div>
 
-                <div class="portal-quick-card">
-                    <div class="portal-quick-icon icon-green">👨‍⚕️</div>
-                    <div>
-                        <div class="portal-quick-label">Provider</div>
-                        <div class="portal-quick-value">
-                            Dr. {{ request.user.first_name }} {{ request.user.last_name }}
+                {% if pending_appointment_requests %}
+                {% for appointment_request in pending_appointment_requests %}
+                <div class="portal-list-item">
+                    <div class="portal-list-left">
+                        <div class="portal-quick-icon icon-orange" style="width:40px;height:40px;font-size:16px;">⏳</div>
+                        <div class="portal-list-details">
+                            <p class="portal-list-title">
+                                {{ appointment_request.patient.user.first_name }} {{ appointment_request.patient.user.last_name }}
+                            </p>
+                            <p class="portal-list-subtitle">
+                                {{ appointment_request.requested_start|date:"F j, Y" }}
+                                at
+                                {{ appointment_request.requested_start|date:"g:i A" }}
+                            </p>
+                            <p class="portal-list-meta">Reason: {{ appointment_request.reason|default:"No reason provided" }}</p>
                         </div>
                     </div>
-                </div>
 
-                <div class="portal-quick-card">
-                    <div class="portal-quick-icon icon-purple">🏥</div>
-                    <div>
-                        <div class="portal-quick-label">Department</div>
-                        <div class="portal-quick-value">
-                            {{ request.user.staff_profile.department|default:"Medical Staff" }}
-                        </div>
+                    <div class="portal-staff-actions">
+                        <span class="portal-badge badge-warning">{{ appointment_request.get_status_display }}</span>
+                        <form method="post" action="{% url 'approve_appointment_request' appointment_request.id %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.path }}">
+                            <button type="submit" class="portal-pay-btn portal-small-btn">Approve</button>
+                        </form>
+                        <form method="post" action="{% url 'reject_appointment_request' appointment_request.id %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.path }}">
+                            <button type="submit" class="portal-signout-btn portal-small-btn">Reject</button>
+                        </form>
                     </div>
                 </div>
+                {% endfor %}
+                {% else %}
+                <div class="portal-list-item">
+                    <div>
+                        <p class="portal-list-title">No pending requests</p>
+                        <p class="portal-list-subtitle">
+                            New patient requests for your schedule will appear here.
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
             </section>
 
             <section class="portal-panel">
@@ -136,7 +201,7 @@
                 <div class="portal-list-item">
                     <div class="portal-list-left">
                         <div class="portal-quick-icon icon-blue" style="width:40px;height:40px;font-size:16px;">🗓</div>
-                        <div>
+                        <div class="portal-list-details">
                             <p class="portal-list-title">
                                 {{ appointment.patient.user.first_name }} {{ appointment.patient.user.last_name }}
                             </p>
@@ -159,15 +224,17 @@
                             </p>
                             {% endif %}
 
-                            <a href="{% url 'doctor_appointment_detail' appointment.id %}" class="portal-secondary-btn">
-                                View Details
-                            </a>
                         </div>
                     </div>
 
-                    <span class="portal-badge badge-neutral">
-                {{ appointment.get_status_display }}
-              </span>
+                    <div class="portal-list-actions">
+                        <span class="portal-badge badge-neutral">
+                            {{ appointment.get_status_display }}
+                        </span>
+                        <a href="{% url 'doctor_appointment_detail' appointment.id %}" class="portal-secondary-btn">
+                            View Details
+                        </a>
+                    </div>
                 </div>
                 {% endfor %}
                 {% else %}
@@ -181,6 +248,7 @@
                 </div>
                 {% endif %}
             </section>
+            </div>
 
             {% endif %}
         </main>

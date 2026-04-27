@@ -25,6 +25,10 @@
         <span class="portal-nav-icon">📅</span>
         <span>Appointments</span>
       </a>
+      <a class="portal-nav-link" href="{% url 'records:my_records' %}">
+        <span class="portal-nav-icon">🧪</span>
+        <span>My Records</span>
+      </a>
       <a class="portal-nav-link" href="{% url 'billing:invoice_list' %}">
         <span class="portal-nav-icon">💳</span>
         <span>Billing</span>
@@ -73,6 +77,17 @@
       <p class="portal-page-subtitle">Here is your real account overview</p>
 
       {% if patient_profile %}
+      <div class="portal-page-stack">
+      {% if messages %}
+      <div class="portal-messages">
+        {% for message in messages %}
+        <div class="portal-message {% if message.tags == 'success' %}portal-message-success{% elif message.tags == 'error' %}portal-message-error{% else %}portal-message-info{% endif %}">
+          {{ message }}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
       <section class="portal-quick-grid">
         <div class="portal-quick-card">
           <div class="portal-quick-icon icon-blue">🗓</div>
@@ -82,13 +97,15 @@
           </div>
         </div>
 
-        <div class="portal-quick-card">
-          <div class="portal-quick-icon icon-purple">🧪</div>
-          <div>
-            <div class="portal-quick-label">Recent</div>
-            <div class="portal-quick-value">{{ recent_lab_results|length }} Lab Results</div>
+        <a href="{% url 'records:my_records' %}" class="text-decoration-none" style="color: inherit;">
+          <div class="portal-quick-card">
+            <div class="portal-quick-icon icon-purple">🧪</div>
+            <div>
+              <div class="portal-quick-label">Recent</div>
+              <div class="portal-quick-value">{{ recent_lab_results|length }} Lab Results</div>
+            </div>
           </div>
-        </div>
+        </a>
 
         <div class="portal-quick-card">
           <div class="portal-quick-icon icon-orange">💳</div>
@@ -127,7 +144,7 @@
             <div class="portal-list-item">
               <div class="portal-list-left">
                 <div class="portal-quick-icon icon-blue" style="width:40px;height:40px;font-size:16px;">🗓</div>
-                <div>
+                <div class="portal-list-details">
                   <p class="portal-list-title">
                     Dr.
                     {{ appointment.provider.staff_profile.user.first_name }}
@@ -145,11 +162,15 @@
                 </div>
               </div>
 
-              <div style="text-align:right;">
-            <span class="portal-badge badge-neutral">
-              {{ appointment.get_status_display }}
-            </span>
-                <br/>
+              <div class="portal-status-stack">
+                <span class="portal-badge badge-neutral">
+                  {{ appointment.get_status_display }}
+                </span>
+                {% if appointment.has_pre_check_in %}
+                <span class="portal-badge badge-success">Pre-check-in Complete</span>
+                {% elif appointment.can_pre_check_in %}
+                <span class="portal-badge badge-warning">Pre-check-in Needed</span>
+                {% endif %}
                 {% if appointment.reminder_sent %}
                 <span class="portal-badge badge-success">Reminder Sent</span>
                 {% elif appointment.needs_reminder %}
@@ -165,7 +186,7 @@
           <div class="portal-list-item">
             <div>
               <p class="portal-list-title">No upcoming appointments</p>
-              <p class="portal-list-subtitle">Appointments you schedule will appear here.</p>
+              <p class="portal-list-subtitle">Approved appointments will appear here after staff review.</p>
             </div>
           </div>
           {% endif %}
@@ -206,7 +227,48 @@
         </div>
       </section>
 
-      <section class="portal-panel">
+      <section class="portal-panel portal-panel-spaced">
+        <div class="portal-panel-header">
+          <div>
+            <h3 class="portal-panel-title">Pending Appointment Requests</h3>
+            <p class="portal-panel-subtitle">Requests waiting for approval from a doctor or receptionist</p>
+          </div>
+        </div>
+
+        {% if pending_appointment_requests %}
+          {% for appointment_request in pending_appointment_requests %}
+            <div class="portal-list-item">
+              <div class="portal-list-left">
+                <div class="portal-quick-icon icon-orange" style="width:40px;height:40px;font-size:16px;">⏳</div>
+                <div class="portal-list-details">
+                  <p class="portal-list-title">
+                    {% if appointment_request.preferred_provider %}
+                      Dr. {{ appointment_request.preferred_provider.staff_profile.user.first_name }} {{ appointment_request.preferred_provider.staff_profile.user.last_name }}
+                    {% else %}
+                      Provider pending assignment
+                    {% endif %}
+                  </p>
+                  <p class="portal-list-subtitle">{{ appointment_request.reason|default:"No reason provided." }}</p>
+                  <p class="portal-list-meta">
+                    Requested {{ appointment_request.requested_start|date:"F j, Y" }} at {{ appointment_request.requested_start|date:"g:i A" }}
+                  </p>
+                </div>
+              </div>
+
+              <span class="portal-badge badge-warning">{{ appointment_request.get_status_display }}</span>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="portal-list-item">
+            <div>
+              <p class="portal-list-title">No pending requests</p>
+              <p class="portal-list-subtitle">Appointment requests waiting for staff approval will appear here.</p>
+            </div>
+          </div>
+        {% endif %}
+      </section>
+
+      <section class="portal-panel portal-panel-spaced">
         <div class="portal-panel-header">
           <div>
             <h3 class="portal-panel-title">Outstanding Invoices</h3>
@@ -248,25 +310,28 @@
           </div>
         {% endif %}
       </section>
+      </div>
 
       {% else %}
-      <section class="portal-panel">
-        <div class="portal-panel-header">
-          <div>
-            <h3 class="portal-panel-title">Dashboard unavailable</h3>
-            <p class="portal-panel-subtitle">This dashboard is currently configured for patient accounts.</p>
+      <div class="portal-page-stack">
+        <section class="portal-panel portal-panel-spaced">
+          <div class="portal-panel-header">
+            <div>
+              <h3 class="portal-panel-title">Dashboard unavailable</h3>
+              <p class="portal-panel-subtitle">This dashboard is currently configured for patient accounts.</p>
+            </div>
           </div>
-        </div>
 
-        <div class="portal-list-item">
-          <div>
-            <p class="portal-list-title">No patient profile found</p>
-            <p class="portal-list-subtitle">
-              You are logged in, but this user does not have a linked patient profile yet.
-            </p>
+          <div class="portal-list-item">
+            <div>
+              <p class="portal-list-title">No patient profile found</p>
+              <p class="portal-list-subtitle">
+                You are logged in, but this user does not have a linked patient profile yet.
+              </p>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
       {% endif %}
     </main>
   </div>

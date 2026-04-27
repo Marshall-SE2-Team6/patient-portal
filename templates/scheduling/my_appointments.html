@@ -25,6 +25,10 @@
                 <span class="portal-nav-icon">📅</span>
                 <span>Appointments</span>
             </a>
+            <a class="portal-nav-link" href="{% url 'records:my_records' %}">
+                <span class="portal-nav-icon">🧪</span>
+                <span>My Records</span>
+            </a>
             <a class="portal-nav-link" href="{% url 'billing:invoice_list' %}">
                 <span class="portal-nav-icon">💳</span>
                 <span>Billing</span>
@@ -62,6 +66,51 @@
         </div>
 
         <main class="portal-content">
+            {% if messages %}
+            <div class="portal-messages">
+                {% for message in messages %}
+                <div class="portal-message {% if message.tags == 'success' %}portal-message-success{% elif message.tags == 'error' %}portal-message-error{% else %}portal-message-info{% endif %}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if pending_requests %}
+            <section class="portal-panel">
+                <div class="portal-panel-header">
+                    <div>
+                        <h3 class="portal-panel-title">Pending Approval</h3>
+                        <p class="portal-panel-subtitle">These requests are waiting for a doctor or receptionist to approve them.</p>
+                    </div>
+                </div>
+
+                {% for appointment_request in pending_requests %}
+                <div class="portal-list-item">
+                    <div class="portal-list-left">
+                        <div class="portal-quick-icon icon-orange">⏳</div>
+                        <div class="portal-list-details">
+                            <p class="portal-list-title">
+                                {% if appointment_request.preferred_provider %}
+                                Dr. {{ appointment_request.preferred_provider.staff_profile.user.first_name }} {{ appointment_request.preferred_provider.staff_profile.user.last_name }}
+                                {% else %}
+                                Provider pending assignment
+                                {% endif %}
+                            </p>
+                            <p class="portal-list-subtitle">
+                                Requested for {{ appointment_request.requested_start|date:"F j, Y" }} at {{ appointment_request.requested_start|date:"g:i A" }}
+                            </p>
+                            <p class="portal-list-meta">{{ appointment_request.reason|default:"No reason provided." }}</p>
+                        </div>
+                    </div>
+                    <div class="portal-status-stack">
+                        <span class="portal-badge badge-warning">{{ appointment_request.get_status_display }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </section>
+            {% endif %}
+
             <section class="portal-panel">
                 <div class="portal-panel-header">
                     <div>
@@ -83,7 +132,7 @@
                 <div class="portal-list-item">
                     <div class="portal-list-left">
                         <div class="portal-quick-icon icon-blue">⌚</div>
-                        <div>
+                        <div class="portal-list-details">
                             <p class="portal-list-title">{{ appointment.provider }}</p>
                             <p class="portal-list-subtitle">General Practice</p>
                             <p class="portal-list-meta">{{ appointment.scheduled_start }}</p>
@@ -91,11 +140,14 @@
                         </div>
                     </div>
 
-                    <div style="text-align: right;">
+                    <div class="portal-list-actions">
                         <span class="portal-badge badge-neutral">{{ appointment.display_status }}</span>
-                        <p class="portal-list-meta" style="margin-top: 8px;">
-                            <a href="{% url 'appointment_detail' appointment.id %}">View Details</a>
-                        </p>
+                        {% if appointment.has_pre_check_in %}
+                            <span class="portal-badge badge-success">Pre-check-in complete</span>
+                        {% elif appointment.can_pre_check_in %}
+                            <a href="{% url 'pre_check_in' appointment.id %}">Complete pre-check-in</a>
+                        {% endif %}
+                        <a href="{% url 'appointment_detail' appointment.id %}">View Details</a>
                     </div>
                 </div>
                 {% endfor %}
@@ -103,7 +155,7 @@
                 <div class="portal-list-item">
                     <div>
                         <p class="portal-list-title">No appointments yet</p>
-                        <p class="portal-list-subtitle">You do not have any scheduled appointments right now.</p>
+                        <p class="portal-list-subtitle">You do not have any approved scheduled appointments right now.</p>
                     </div>
                 </div>
                 {% endif %}

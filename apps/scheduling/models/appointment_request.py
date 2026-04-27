@@ -38,3 +38,49 @@ class AppointmentRequest(models.Model):
 
     def __str__(self) -> str:
         return f"AppointmentRequest<{self.patient.user.username}>"
+
+    def approve(self):
+        from .appointment import Appointment, AppointmentStatus
+
+        if not self.preferred_provider:
+            raise ValueError("Appointment requests need a provider before approval.")
+        if not self.requested_start or not self.requested_end:
+            raise ValueError("Appointment requests need start and end times before approval.")
+
+        appointment, _ = Appointment.objects.update_or_create(
+            appointment_request=self,
+            defaults={
+                "patient": self.patient,
+                "provider": self.preferred_provider,
+                "scheduled_start": self.requested_start,
+                "scheduled_end": self.requested_end,
+                "reason": self.reason,
+                "status": AppointmentStatus.SCHEDULED,
+            },
+        )
+
+        self.status = AppointmentRequestStatus.APPROVED
+        self.save(update_fields=["status", "updated_at"])
+        return appointment
+
+    def reject(self):
+        from .appointment import AppointmentStatus
+
+        self.status = AppointmentRequestStatus.REJECTED
+        self.save(update_fields=["status", "updated_at"])
+
+        appointment = getattr(self, "appointment", None)
+        if appointment:
+            appointment.status = AppointmentStatus.CANCELLED
+            appointment.save(update_fields=["status", "updated_at"])
+
+    def cancel(self):
+        from .appointment import AppointmentStatus
+
+        self.status = AppointmentRequestStatus.CANCELLED
+        self.save(update_fields=["status", "updated_at"])
+
+        appointment = getattr(self, "appointment", None)
+        if appointment:
+            appointment.status = AppointmentStatus.CANCELLED
+            appointment.save(update_fields=["status", "updated_at"])

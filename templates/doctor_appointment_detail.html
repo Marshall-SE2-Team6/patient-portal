@@ -120,11 +120,44 @@
                 <div class="portal-list-item">
                     <div>
                         <p class="portal-list-title">Reminder Status</p>
-                        <span class="portal-badge badge-neutral">Upcoming</span>
+                        <div class="portal-status-stack portal-status-stack-left">
+                            <span class="portal-badge badge-neutral">Upcoming</span>
+                        </div>
                     </div>
                 </div>
 
-                <div style="display:flex; justify-content:center; gap:16px; margin-top:24px;">
+                <div class="portal-list-item">
+                    <div class="portal-multi-line-text">
+                        <p class="portal-list-title">Patient Pre-Check-In</p>
+                        {% if pre_check_in %}
+                        <p class="portal-list-subtitle">
+                            Submitted {{ pre_check_in.updated_at|date:"F j, Y \a\t g:i A" }}
+                        </p>
+                        <p class="portal-list-meta">Phone: {{ pre_check_in.phone_number|default:"Not provided" }}</p>
+                        <p class="portal-list-meta">
+                            Emergency contact:
+                            {{ pre_check_in.emergency_contact_name|default:"Not provided" }}
+                            {% if pre_check_in.emergency_contact_phone %}
+                            ({{ pre_check_in.emergency_contact_phone }})
+                            {% endif %}
+                        </p>
+                        <p class="portal-list-meta">Symptoms: {{ pre_check_in.symptoms|default:"Not provided" }}</p>
+                        <p class="portal-list-meta">Medications: {{ pre_check_in.current_medications|default:"Not provided" }}</p>
+                        <p class="portal-list-meta">Allergies: {{ pre_check_in.allergies|default:"Not provided" }}</p>
+                        <p class="portal-list-meta">
+                            Insurance:
+                            {{ pre_check_in.insurance_provider|default:"Not provided" }}
+                            {% if pre_check_in.insurance_member_id %}
+                            ({{ pre_check_in.insurance_member_id }})
+                            {% endif %}
+                        </p>
+                        {% else %}
+                        <p class="portal-list-subtitle">The patient has not submitted pre-check-in details yet.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="appointment-detail-actions">
                     <a href="{% url 'doctor_appointments' %}" class="portal-signout-btn appointment-detail-btn">
                         Back to Appointments
                     </a>

@@ -67,44 +67,112 @@
         </div>
 
         <main class="portal-content">
+            {% if messages %}
+            <div class="portal-messages">
+                {% for message in messages %}
+                <div class="portal-message {% if message.tags == 'success' %}portal-message-success{% elif message.tags == 'error' %}portal-message-error{% else %}portal-message-info{% endif %}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
             <h2 class="portal-page-title">Welcome, {{ request.user.first_name|default:request.user.username }}</h2>
             <p class="portal-page-subtitle">This dashboard is for staff and administrators.</p>
 
-            <section class="portal-quick-grid">
-                <div class="portal-quick-card">
-                    <div class="portal-quick-icon icon-blue">👥</div>
+            <div class="portal-page-stack">
+                <section class="portal-quick-grid">
+                    <div class="portal-quick-card">
+                        <div class="portal-quick-icon icon-blue">👥</div>
+                        <div>
+                            <p class="portal-quick-label">User Management</p>
+                            <p class="portal-quick-value">Access Admin</p>
+                        </div>
+                    </div>
+
+                    <div class="portal-quick-card">
+                        <div class="portal-quick-icon icon-green">📅</div>
+                        <div>
+                            <p class="portal-quick-label">Appointments</p>
+                            <p class="portal-quick-value">Manage Records</p>
+                        </div>
+                    </div>
+
+                    <div class="portal-quick-card">
+                        <div class="portal-quick-icon icon-orange">💳</div>
+                        <div>
+                            <p class="portal-quick-label">Billing</p>
+                            <p class="portal-quick-value">Invoices & Payments</p>
+                        </div>
+                    </div>
+
+                    <div class="portal-quick-card">
+                        <div class="portal-quick-icon icon-purple">⚙</div>
+                        <div>
+                            <p class="portal-quick-label">System</p>
+                            <p class="portal-quick-value">Admin Controls</p>
+                        </div>
+                    </div>
+                </section>
+
+            <section class="portal-panel portal-panel-spaced">
+                <div class="portal-panel-header">
                     <div>
-                        <p class="portal-quick-label">User Management</p>
-                        <p class="portal-quick-value">Access Admin</p>
+                        <h3 class="portal-panel-title">Pending Appointment Requests</h3>
+                        <p class="portal-panel-subtitle">Approve requests to create scheduled appointments, or reject requests that cannot be accommodated.</p>
                     </div>
                 </div>
 
-                <div class="portal-quick-card">
-                    <div class="portal-quick-icon icon-green">📅</div>
-                    <div>
-                        <p class="portal-quick-label">Appointments</p>
-                        <p class="portal-quick-value">Manage Records</p>
-                    </div>
-                </div>
+                {% if pending_appointment_requests %}
+                    {% for appointment_request in pending_appointment_requests %}
+                    <div class="portal-list-item">
+                        <div class="portal-list-left">
+                            <div class="portal-quick-icon icon-orange" style="width:40px;height:40px;font-size:16px;">⏳</div>
+                            <div class="portal-list-details">
+                                <p class="portal-list-title">
+                                    {{ appointment_request.patient.user.first_name|default:appointment_request.patient.user.username }}
+                                    {% if appointment_request.patient.user.last_name %}{{ appointment_request.patient.user.last_name }}{% endif %}
+                                </p>
+                                <p class="portal-list-subtitle">
+                                    {% if appointment_request.preferred_provider %}
+                                    Requested with Dr. {{ appointment_request.preferred_provider.staff_profile.user.first_name }} {{ appointment_request.preferred_provider.staff_profile.user.last_name }}
+                                    {% else %}
+                                    Provider pending assignment
+                                    {% endif %}
+                                </p>
+                                <p class="portal-list-meta">
+                                    {{ appointment_request.requested_start|date:"F j, Y" }} at {{ appointment_request.requested_start|date:"g:i A" }}
+                                </p>
+                                <p class="portal-list-meta">{{ appointment_request.reason|default:"No reason provided." }}</p>
+                            </div>
+                        </div>
 
-                <div class="portal-quick-card">
-                    <div class="portal-quick-icon icon-orange">💳</div>
-                    <div>
-                        <p class="portal-quick-label">Billing</p>
-                        <p class="portal-quick-value">Invoices & Payments</p>
+                        <div class="portal-staff-actions">
+                            <span class="portal-badge badge-warning">{{ appointment_request.get_status_display }}</span>
+                            <form method="post" action="{% url 'approve_appointment_request' appointment_request.id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.path }}">
+                                <button type="submit" class="portal-pay-btn portal-small-btn">Approve</button>
+                            </form>
+                            <form method="post" action="{% url 'reject_appointment_request' appointment_request.id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.path }}">
+                                <button type="submit" class="portal-signout-btn portal-small-btn">Reject</button>
+                            </form>
+                        </div>
                     </div>
-                </div>
-
-                <div class="portal-quick-card">
-                    <div class="portal-quick-icon icon-purple">⚙</div>
-                    <div>
-                        <p class="portal-quick-label">System</p>
-                        <p class="portal-quick-value">Admin Controls</p>
+                    {% endfor %}
+                {% else %}
+                    <div class="portal-list-item">
+                        <div>
+                            <p class="portal-list-title">No pending requests</p>
+                            <p class="portal-list-subtitle">New patient appointment requests will appear here.</p>
+                        </div>
                     </div>
-                </div>
+                {% endif %}
             </section>
 
-            <section class="portal-panel">
+            <section class="portal-panel portal-panel-spaced">
                 <div class="portal-panel-header">
                     <div>
                         <h3 class="portal-panel-title">Administrator Actions</h3>
@@ -134,6 +202,7 @@
                     <a href="{% url 'admin_billing' %}" class="portal-outline-btn">Open Billing</a>
                 </div>
             </section>
+            </div>
         </main>
     </div>
 </div>

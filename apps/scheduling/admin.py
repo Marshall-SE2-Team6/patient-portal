@@ -5,6 +5,7 @@ from .models import (
     AppointmentRequest,
     AvailabilitySlot,
     CheckInRecord,
+    PreCheckInRecord,
     Provider,
 )
 
@@ -29,14 +30,43 @@ class AvailabilitySlotAdmin(admin.ModelAdmin):
 
 @admin.register(AppointmentRequest)
 class AppointmentRequestAdmin(admin.ModelAdmin):
-    list_display = ("id", "patient", "preferred_provider", "status", "created_at")
+    list_display = ("id", "patient", "preferred_provider", "status", "created_at", "linked_appointment")
+    list_editable = ("status",)
     list_filter = ("status",)
     search_fields = (
         "patient__user__username",
         "preferred_provider__staff_profile__user__username",
     )
 
+    def linked_appointment(self, obj):
+        return getattr(obj, "appointment", None)
+
+    def save_model(self, request, obj, form, change):
+        if obj.status == "approved":
+            obj.approve()
+            return
+        if obj.status == "rejected":
+            obj.reject()
+            return
+        if obj.status == "cancelled":
+            obj.cancel()
+            return
+
+        super().save_model(request, obj, form, change)
+
 admin.site.register(Appointment)
+
+
+@admin.register(PreCheckInRecord)
+class PreCheckInRecordAdmin(admin.ModelAdmin):
+    list_display = ("id", "appointment", "phone_number", "insurance_provider", "updated_at")
+    search_fields = (
+        "appointment__patient__user__username",
+        "appointment__provider__staff_profile__user__username",
+        "phone_number",
+        "insurance_provider",
+    )
+
 
 @admin.register(CheckInRecord)
 class CheckInRecordAdmin(admin.ModelAdmin):
