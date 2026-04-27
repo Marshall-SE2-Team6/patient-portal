@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Pre-Check-In | Marco's Medical Portal{% endblock %}
+
+{% block body %}
+<div class="portal-app-shell">
+    <aside class="portal-sidebar">
+        <div class="portal-sidebar-brand">
+            <div class="portal-brand-icon">M</div>
+            <div>
+                <p class="portal-brand-title">Marco's Medical</p>
+                <p class="portal-brand-subtitle">Patient Portal</p>
+            </div>
+        </div>
+
+        <nav class="portal-nav">
+            <a class="portal-nav-link" href="{% url 'dashboard' %}">
+                <span class="portal-nav-icon">⌂</span>
+                <span>Dashboard</span>
+            </a>
+            <a class="portal-nav-link" href="{% url 'profile' %}">
+                <span class="portal-nav-icon">◉</span>
+                <span>Profile</span>
+            </a>
+            <a class="portal-nav-link active" href="{% url 'my_appointments' %}">
+                <span class="portal-nav-icon">📅</span>
+                <span>Appointments</span>
+            </a>
+            <a class="portal-nav-link" href="{% url 'records:my_records' %}">
+                <span class="portal-nav-icon">🧪</span>
+                <span>My Records</span>
+            </a>
+            <a class="portal-nav-link" href="{% url 'billing:invoice_list' %}">
+                <span class="portal-nav-icon">💳</span>
+                <span>Billing</span>
+            </a>
+        </nav>
+
+        <div class="portal-sidebar-footer">
+            <div class="portal-user-box">
+                <div class="portal-avatar">
+                    {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                </div>
+                <div>
+                    <p class="portal-user-name">
+                        {% if request.user.first_name or request.user.last_name %}
+                        {{ request.user.first_name }} {{ request.user.last_name }}
+                        {% else %}
+                        {{ request.user.username }}
+                        {% endif %}
+                    </p>
+                    <p class="portal-user-email">{{ request.user.email|default:"No email added" }}</p>
+                </div>
+            </div>
+
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="portal-signout-btn">Sign Out</button>
+            </form>
+        </div>
+    </aside>
+
+    <div class="portal-main">
+        <div class="portal-topbar">
+            <h1 class="portal-topbar-title">Pre-Check-In</h1>
+            <div class="portal-topbar-date">Finish your visit details before you arrive</div>
+        </div>
+
+        <main class="portal-content">
+            <h2 class="portal-page-title">
+                Appointment on {{ appointment.scheduled_start|date:"F j, Y" }}
+            </h2>
+            <p class="portal-page-subtitle">
+                Dr. {{ appointment.provider.staff_profile.user.first_name }}
+                {{ appointment.provider.staff_profile.user.last_name }}
+                at {{ appointment.scheduled_start|date:"g:i A" }}
+            </p>
+
+            {% if messages %}
+            <div class="portal-messages">
+                {% for message in messages %}
+                <div class="portal-message {% if message.tags == 'success' %}portal-message-success{% elif message.tags == 'error' %}portal-message-error{% else %}portal-message-info{% endif %}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if form.non_field_errors %}
+            <div class="portal-messages">
+                {% for error in form.non_field_errors %}
+                <div class="portal-message portal-message-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <section class="portal-panel">
+                <div class="portal-panel-header">
+                    <div>
+                        <h3 class="portal-panel-title">Share details before your visit</h3>
+                        <p class="portal-panel-subtitle">
+                            Update your contact information, emergency contact, symptoms, medications, and insurance so front desk and care staff can prepare ahead of time.
+                        </p>
+                    </div>
+                    {% if pre_check_in %}
+                    <span class="portal-badge badge-success">
+                        Last updated {{ pre_check_in.updated_at|date:"M j, g:i A" }}
+                    </span>
+                    {% else %}
+                    <span class="portal-badge badge-warning">Not submitted yet</span>
+                    {% endif %}
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="portal-form-grid">
+                        {% for field in form %}
+                        <div class="{% if field.name == 'symptoms' or field.name == 'current_medications' or field.name == 'allergies' or field.name == 'accommodation_notes' or field.name == 'additional_notes' %}portal-form-grid-full{% endif %}">
+                            <label class="portal-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}
+                            <div class="portal-list-meta">{{ field.help_text }}</div>
+                            {% endif %}
+                            {% for error in field.errors %}
+                            <div class="portal-message portal-message-error portal-inline-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="portal-help-text">
+                        This saves your latest visit details and also refreshes your patient profile contact information for future appointments.
+                    </div>
+
+                    <div class="appointment-detail-actions appointment-detail-actions-left">
+                        <button type="submit" class="portal-pay-btn appointment-detail-btn">
+                            {% if pre_check_in %}Update Pre-Check-In{% else %}Submit Pre-Check-In{% endif %}
+                        </button>
+                        <a href="{% url 'appointment_detail' appointment.id %}" class="portal-signout-btn appointment-detail-btn">
+                            Back to Appointment
+                        </a>
+                    </div>
+                </form>
+            </section>
+        </main>
+    </div>
+</div>
+{% endblock %}

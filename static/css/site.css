@@ -303,6 +303,32 @@ a {
   padding: 26px 32px;
 }
 
+.portal-content > section + section {
+  margin-top: 24px;
+}
+
+.portal-page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.portal-page-stack > .portal-messages {
+  margin-bottom: 0;
+}
+
+.portal-page-stack > section {
+  margin: 0;
+}
+
+.portal-panel-spaced {
+  margin: 0 0 18px 0;
+}
+
+.portal-page-stack > .portal-panel-spaced:last-child {
+  margin-bottom: 0;
+}
+
 .portal-page-title {
   font-size: 24px;
   font-weight: 700;
@@ -416,6 +442,12 @@ a {
   gap: 14px;
 }
 
+.portal-list-details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .portal-list-title {
   font-size: 15px;
   font-weight: 600;
@@ -450,6 +482,11 @@ a {
 .badge-success {
   background: var(--portal-success-bg);
   color: var(--portal-success-text);
+}
+
+.badge-warning {
+  background: #fff4cc;
+  color: #9a6700;
 }
 
 .badge-danger {
@@ -698,4 +735,88 @@ button[class*="portal-"]:hover {
 
 .portal-page-actions {
   margin-top: 20px;
+}
+
+.portal-staff-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.portal-status-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  min-width: 150px;
+}
+
+.portal-status-stack-left {
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.portal-list-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.portal-multi-line-text {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.portal-form-input {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--portal-border);
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 10px 12px;
+  color: var(--portal-text);
+}
+
+textarea.portal-form-input {
+  min-height: 108px;
+  resize: vertical;
+}
+
+.portal-form-input:focus {
+  outline: none;
+  border-color: var(--portal-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 255, 0.12);
+  background: white;
+}
+
+.portal-form-grid-full {
+  grid-column: 1 / -1;
+}
+
+.portal-inline-error {
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+
+.appointment-detail-actions-left {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .portal-list-item {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .portal-status-stack,
+  .portal-list-actions,
+  .portal-staff-actions {
+    align-items: flex-start;
+    min-width: 0;
+    width: 100%;
+  }
 }

@@ -8,12 +8,31 @@ from django.db import transaction
 from django.urls import reverse_lazy
 
 from apps.billing.models import Invoice
+from apps.profiles.models import PatientProfile, StaffRole
 from apps.records.models import LabResult, PatientRecord, VitalsRecord, Prescription
-from apps.scheduling.models import Appointment, Provider
-from apps.profiles.models import PatientProfile
+from apps.scheduling.models import Appointment, AppointmentRequest, AppointmentRequestStatus, Provider
 from apps.records.models import PatientRecord
 
 from .forms import SignUpForm, ProfileForm, AdminInvoiceForm
+
+
+def _staff_redirect_name(user):
+    staff_profile = getattr(user, "staff_profile", None)
+    if staff_profile and staff_profile.staff_role == StaffRole.PHYSICIAN:
+        return "doctor_dashboard"
+    return "admin_dashboard"
+
+
+def _staff_can_manage_request(user, appointment_request):
+    staff_profile = getattr(user, "staff_profile", None)
+    if user.is_superuser:
+        return True
+    if not staff_profile:
+        return bool(user.is_staff)
+    if staff_profile.staff_role == StaffRole.PHYSICIAN:
+        provider = getattr(staff_profile, "provider_profile", None)
+        return provider is not None and appointment_request.preferred_provider_id == provider.id
+    return True
 
 
 class PortalPasswordChangeView(PasswordChangeView):
@@ -64,6 +83,7 @@ def dashboard(request):
     patient_profile = getattr(request.user, "patient_profile", None)
 
     upcoming_appointments = []
+    pending_appointment_requests = []
     recent_lab_results = []
     open_invoices = []
 
@@ -74,8 +94,18 @@ def dashboard(request):
                 patient=patient_profile,
                 scheduled_start__gte=timezone.now(),
             )
-            .select_related("provider__staff_profile__user")
+            .select_related("provider__staff_profile__user", "pre_check_in_record")
             .order_by("scheduled_start")[:5]
+        )
+
+        pending_appointment_requests = (
+            AppointmentRequest.objects
+            .filter(
+                patient=patient_profile,
+                status=AppointmentRequestStatus.PENDING,
+            )
+            .select_related("preferred_provider__staff_profile__user")
+            .order_by("-created_at")[:5]
         )
 
         recent_lab_results = (
@@ -95,6 +125,7 @@ def dashboard(request):
     context = {
         "patient_profile": patient_profile,
         "upcoming_appointments": upcoming_appointments,
+        "pending_appointment_requests": pending_appointment_requests,
         "recent_lab_results": recent_lab_results,
         "open_invoices": open_invoices,
     }
@@ -106,6 +137,7 @@ def patient_dashboard(request):
     patient_profile = getattr(request.user, "patient_profile", None)
 
     upcoming_appointments = []
+    pending_appointment_requests = []
     recent_lab_results = []
     open_invoices = []
 
@@ -116,8 +148,18 @@ def patient_dashboard(request):
                 patient=patient_profile,
                 scheduled_start__gte=timezone.now(),
             )
-            .select_related("provider__staff_profile__user")
+            .select_related("provider__staff_profile__user", "pre_check_in_record")
             .order_by("scheduled_start")[:5]
+        )
+
+        pending_appointment_requests = (
+            AppointmentRequest.objects
+            .filter(
+                patient=patient_profile,
+                status=AppointmentRequestStatus.PENDING,
+            )
+            .select_related("preferred_provider__staff_profile__user")
+            .order_by("-created_at")[:5]
         )
 
         recent_lab_results = (
@@ -137,6 +179,7 @@ def patient_dashboard(request):
     context = {
         "patient_profile": patient_profile,
         "upcoming_appointments": upcoming_appointments,
+        "pending_appointment_requests": pending_appointment_requests,
         "recent_lab_results": recent_lab_results,
         "open_invoices": open_invoices,
     }
@@ -149,8 +192,16 @@ def admin_dashboard(request):
     if not (request.user.is_staff or request.user.is_superuser):
         return redirect("dashboard")
 
+    pending_appointment_requests = (
+        AppointmentRequest.objects
+        .filter(status=AppointmentRequestStatus.PENDING)
+        .select_related("patient__user", "preferred_provider__staff_profile__user")
+        .order_by("requested_start", "created_at")
+    )
+
     context = {
         "admin_user": request.user,
+        "pending_appointment_requests": pending_appointment_requests,
     }
 
     return render(request, "dashboard_admin.html", context)
@@ -257,8 +308,18 @@ def doctor_dashboard(request):
     appointments = (
         Appointment.objects
         .filter(provider=provider)
-        .select_related("patient__user", "provider__staff_profile__user")
+        .select_related("patient__user", "provider__staff_profile__user", "pre_check_in_record")
         .order_by("scheduled_start")
+    )
+
+    pending_appointment_requests = (
+        AppointmentRequest.objects
+        .filter(
+            preferred_provider=provider,
+            status=AppointmentRequestStatus.PENDING,
+        )
+        .select_related("patient__user", "preferred_provider__staff_profile__user")
+        .order_by("requested_start", "created_at")
     )
 
     upcoming_count = appointments.filter(
@@ -268,6 +329,7 @@ def doctor_dashboard(request):
     context = {
         "provider": provider,
         "appointments": appointments,
+        "pending_appointment_requests": pending_appointment_requests,
         "upcoming_count": upcoming_count,
         "profile_missing": False,
     }
@@ -285,7 +347,7 @@ def doctor_appointments(request):
         appointments = (
             Appointment.objects
             .filter(provider=provider)
-            .select_related("patient__user", "provider__staff_profile__user")
+            .select_related("patient__user", "provider__staff_profile__user", "pre_check_in_record")
             .order_by("scheduled_start")
         )
 
@@ -293,6 +355,54 @@ def doctor_appointments(request):
         "appointments": appointments,
         "provider": provider,
     })
+
+
+@login_required
+def approve_appointment_request(request, request_id):
+    if request.method != "POST":
+        return redirect(_staff_redirect_name(request.user))
+
+    appointment_request = get_object_or_404(
+        AppointmentRequest.objects.select_related("preferred_provider"),
+        id=request_id,
+    )
+
+    if not _staff_can_manage_request(request.user, appointment_request):
+        messages.error(request, "You do not have permission to approve this appointment request.")
+        return redirect(_staff_redirect_name(request.user))
+
+    if appointment_request.status != AppointmentRequestStatus.PENDING:
+        messages.info(request, "This appointment request has already been reviewed.")
+        return redirect(request.POST.get("next") or reverse_lazy(_staff_redirect_name(request.user)))
+
+    try:
+        appointment_request.approve()
+    except ValueError as exc:
+        messages.error(request, str(exc))
+    else:
+        messages.success(request, "Appointment request approved and scheduled successfully.")
+
+    return redirect(request.POST.get("next") or reverse_lazy(_staff_redirect_name(request.user)))
+
+
+@login_required
+def reject_appointment_request(request, request_id):
+    if request.method != "POST":
+        return redirect(_staff_redirect_name(request.user))
+
+    appointment_request = get_object_or_404(AppointmentRequest, id=request_id)
+
+    if not _staff_can_manage_request(request.user, appointment_request):
+        messages.error(request, "You do not have permission to reject this appointment request.")
+        return redirect(_staff_redirect_name(request.user))
+
+    if appointment_request.status != AppointmentRequestStatus.PENDING:
+        messages.info(request, "This appointment request has already been reviewed.")
+        return redirect(request.POST.get("next") or reverse_lazy(_staff_redirect_name(request.user)))
+
+    appointment_request.reject()
+    messages.success(request, "Appointment request rejected.")
+    return redirect(request.POST.get("next") or reverse_lazy(_staff_redirect_name(request.user)))
 
 @login_required
 def doctor_appointment_detail(request, appointment_id):
@@ -307,6 +417,7 @@ def doctor_appointment_detail(request, appointment_id):
         .select_related(
             "patient__user",
             "provider__staff_profile__user",
+            "pre_check_in_record",
         )
         .filter(
             id=appointment_id,
@@ -324,6 +435,7 @@ def doctor_appointment_detail(request, appointment_id):
         {
             "appointment": appointment,
             "provider": provider,
+            "pre_check_in": getattr(appointment, "pre_check_in_record", None),
         },
     )
 

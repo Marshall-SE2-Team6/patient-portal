@@ -58,6 +58,19 @@ class Appointment(models.Model):
         from django.utils import timezone
         return self.scheduled_start >= timezone.now()
 
+    @property
+    def can_pre_check_in(self):
+        from django.utils import timezone
+
+        return (
+            self.status == AppointmentStatus.SCHEDULED
+            and self.scheduled_end >= timezone.now()
+        )
+
+    @property
+    def has_pre_check_in(self):
+        return hasattr(self, "pre_check_in_record")
+
 
     @property
     def needs_reminder(self):

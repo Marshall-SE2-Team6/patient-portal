@@ -56,7 +56,7 @@
                 {% for appointment in appointments %}
                 <div class="portal-list-item">
                     <div class="portal-list-left">
-                        <div>
+                        <div class="portal-list-details">
                             <p class="portal-list-title">
                                 {{ appointment.patient.user.first_name }}
                                 {{ appointment.patient.user.last_name }}
@@ -71,10 +71,19 @@
                             <p class="portal-list-meta">
                                 Reason: {{ appointment.reason|default:"No reason provided" }}
                             </p>
+
+                            <p class="portal-list-meta">
+                                {% if appointment.has_pre_check_in %}Pre-check-in complete{% else %}Pre-check-in pending{% endif %}
+                            </p>
                         </div>
                     </div>
 
-                    <div>
+                    <div class="portal-list-actions">
+                        {% if appointment.has_pre_check_in %}
+                        <span class="portal-badge badge-success">Pre-check-in complete</span>
+                        {% else %}
+                        <span class="portal-badge badge-warning">Pre-check-in pending</span>
+                        {% endif %}
                         <a
                                 href="{% url 'doctor_appointment_detail' appointment.id %}"
                                 class="portal-secondary-btn"
