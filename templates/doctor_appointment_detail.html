@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}Doctor Appointment Details{% endblock %}
+
+{% block body %}
+<div class="portal-app-shell">
+
+    <aside class="portal-sidebar">
+        <div class="portal-sidebar-brand">
+            <div class="portal-brand-icon">M</div>
+            <div>
+                <p class="portal-brand-title">Marco's Medical</p>
+                <p class="portal-brand-subtitle">Doctor Portal</p>
+            </div>
+        </div>
+
+        <nav class="portal-nav">
+            <a class="portal-nav-link" href="{% url 'doctor_dashboard' %}">
+                <span class="portal-nav-icon">⌂</span>
+                <span>Dashboard</span>
+            </a>
+
+            <a class="portal-nav-link active" href="{% url 'doctor_appointments' %}">
+                <span class="portal-nav-icon">🗓</span>
+                <span>Appointments</span>
+            </a>
+
+            <a class="portal-nav-link" href="{% url 'doctor_records' %}">
+                <span class="portal-nav-icon">▣</span>
+                <span>Medical Records</span>
+            </a>
+
+            <a class="portal-nav-link" href="{% url 'doctor_billing' %}">
+                <span class="portal-nav-icon">💳</span>
+                <span>Billing</span>
+            </a>
+        </nav>
+
+        <div class="portal-sidebar-footer">
+            <div class="portal-user-box">
+                <div class="portal-avatar">
+                    {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                </div>
+                <div>
+                    <p class="portal-user-name">Dr. {{ request.user.first_name }} {{ request.user.last_name }}</p>
+                    <p class="portal-user-email">{{ request.user.email|default:"No email added" }}</p>
+                </div>
+            </div>
+
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="portal-signout-btn">Sign Out</button>
+            </form>
+        </div>
+    </aside>
+
+    <div class="portal-main">
+        <div class="portal-topbar">
+            <h1 class="portal-topbar-title">Appointment Details</h1>
+            <div class="portal-topbar-date">Review scheduled patient visit</div>
+        </div>
+
+        <main class="portal-content">
+            <section class="portal-panel">
+
+                <h2 class="portal-page-title">
+                    {{ appointment.patient.user.first_name }} {{ appointment.patient.user.last_name }}
+                </h2>
+
+                <p class="portal-page-subtitle">
+                    Provider:
+                    Dr. {{ appointment.provider.staff_profile.user.first_name }}
+                    {{ appointment.provider.staff_profile.user.last_name }}
+                </p>
+
+                <div class="portal-list-item">
+                    <div>
+                        <p class="portal-list-title">Appointment Start</p>
+                        <p class="portal-list-subtitle">
+                            {{ appointment.scheduled_start|date:"F j, Y \a\t g:i A" }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="portal-list-item">
+                    <div>
+                        <p class="portal-list-title">Appointment End</p>
+                        <p class="portal-list-subtitle">
+                            {{ appointment.scheduled_end|date:"F j, Y \a\t g:i A" }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="portal-list-item">
+                    <div>
+                        <p class="portal-list-title">Status</p>
+                        <p class="portal-list-subtitle">
+                            {{ appointment.get_status_display }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="portal-list-item">
+                    <div>
+                        <p class="portal-list-title">Reason</p>
+                        <p class="portal-list-subtitle">
+                            {{ appointment.reason|default:"No reason provided." }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="portal-list-item">
+                    <div>
+                        <p class="portal-list-title">Notes</p>
+                        <p class="portal-list-subtitle">
+                            {{ appointment.notes|default:"No notes available." }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="portal-list-item">
+                    <div>
+                        <p class="portal-list-title">Reminder Status</p>
+                        <span class="portal-badge badge-neutral">Upcoming</span>
+                    </div>
+                </div>
+
+                <div style="display:flex; justify-content:center; gap:16px; margin-top:24px;">
+                    <a href="{% url 'doctor_appointments' %}" class="portal-signout-btn appointment-detail-btn">
+                        Back to Appointments
+                    </a>
+
+                    <a href="{% url 'doctor_dashboard' %}" class="portal-signout-btn appointment-detail-btn">
+                        Back to Dashboard
+                    </a>
+                </div>
+
+            </section>
+        </main>
+    </div>
+</div>
+{% endblock %}

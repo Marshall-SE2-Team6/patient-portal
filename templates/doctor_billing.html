@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}Doctor Billing | Marco's Medical Portal{% endblock %}
+
+{% block body %}
+<div class="portal-app-shell">
+    <aside class="portal-sidebar">
+        <div class="portal-sidebar-brand">
+            <div class="portal-brand-icon">M</div>
+            <div>
+                <p class="portal-brand-title">Marco's Medical</p>
+                <p class="portal-brand-subtitle">Doctor Portal</p>
+            </div>
+        </div>
+
+        <nav class="portal-nav">
+            <a class="portal-nav-link" href="{% url 'doctor_dashboard' %}">
+                <span class="portal-nav-icon">⌂</span>
+                <span>Dashboard</span>
+            </a>
+
+            <a class="portal-nav-link" href="{% url 'doctor_appointments' %}">
+                <span class="portal-nav-icon">🗓</span>
+                <span>Appointments</span>
+            </a>
+
+            <a class="portal-nav-link" href="{% url 'doctor_records' %}">
+                <span class="portal-nav-icon">▣</span>
+                <span>Medical Records</span>
+            </a>
+
+            <a class="portal-nav-link active" href="{% url 'doctor_billing' %}">
+                <span class="portal-nav-icon">💳</span>
+                <span>Billing</span>
+            </a>
+        </nav>
+
+        <div class="portal-sidebar-footer">
+            <div class="portal-user-box">
+                <div class="portal-avatar">
+                    {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                </div>
+                <div>
+                    <p class="portal-user-name">Dr. {{ request.user.first_name }} {{ request.user.last_name }}</p>
+                    <p class="portal-user-email">{{ request.user.email|default:"No email added" }}</p>
+                </div>
+            </div>
+
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="portal-signout-btn">Sign Out</button>
+            </form>
+        </div>
+    </aside>
+
+    <div class="portal-main">
+        <div class="portal-topbar">
+            <h1 class="portal-topbar-title">Doctor Billing</h1>
+            <div class="portal-topbar-date">View billing for your assigned patients</div>
+        </div>
+
+        <main class="portal-content">
+            <section class="portal-panel">
+                <div class="portal-panel-header">
+                    <div>
+                        <h3 class="portal-panel-title">Patient Invoices</h3>
+                        <p class="portal-panel-subtitle">
+                            View-only billing records for patients connected to this doctor.
+                        </p>
+                    </div>
+                </div>
+
+                {% for invoice in invoices %}
+                <div class="portal-list-item">
+                    <div class="portal-list-left">
+                        <div class="portal-quick-icon icon-yellow">💳</div>
+
+                        <div>
+                            <p class="portal-list-title">
+                                {{ invoice.invoice_number }} —
+                                {{ invoice.patient.user.first_name }} {{ invoice.patient.user.last_name }}
+                            </p>
+
+                            <p class="portal-list-subtitle">
+                                Status: {{ invoice.get_status_display }}
+                                |
+                                Total: ${{ invoice.total_amount }}
+                                |
+                                Balance Due: ${{ invoice.balance_due }}
+                                |
+                                Due: {{ invoice.due_date|date:"F j, Y" }}
+                            </p>
+
+                            {% if invoice.appointment %}
+                            <p class="portal-list-meta">
+                                Appointment:
+                                {{ invoice.appointment.scheduled_start|date:"F j, Y" }}
+                                at
+                                {{ invoice.appointment.scheduled_start|date:"g:i A" }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <span class="portal-badge badge-neutral">
+              {{ invoice.get_status_display }}
+            </span>
+                </div>
+                {% empty %}
+                <div class="portal-list-item">
+                    <div>
+                        <p class="portal-list-title">No invoices found</p>
+                        <p class="portal-list-subtitle">
+                            Billing records for this doctor’s assigned patients will appear here.
+                        </p>
+                    </div>
+                </div>
+                {% endfor %}
+            </section>
+        </main>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}Medical Records | Marco's Medical Portal{% endblock %}
+
+{% block body %}
+<div class="portal-app-shell">
+  <aside class="portal-sidebar">
+    <div class="portal-sidebar-brand">
+      <div class="portal-brand-icon">M</div>
+      <div>
+        <p class="portal-brand-title">Marco's Medical</p>
+        <p class="portal-brand-subtitle">Doctor Portal</p>
+      </div>
+    </div>
+
+    <nav class="portal-nav">
+      <a class="portal-nav-link" href="{% url 'doctor_dashboard' %}">
+        <span class="portal-nav-icon">⌂</span>
+        <span>Dashboard</span>
+      </a>
+
+      <a class="portal-nav-link" href="{% url 'doctor_appointments' %}">
+        <span class="portal-nav-icon">🗓</span>
+        <span>Appointments</span>
+      </a>
+
+      <a class="portal-nav-link active" href="{% url 'doctor_records' %}">
+        <span class="portal-nav-icon">▣</span>
+        <span>Medical Records</span>
+      </a>
+
+      <a class="portal-nav-link" href="{% url 'doctor_billing' %}">
+        <span class="portal-nav-icon">💳</span>
+        <span>Billing</span>
+      </a>
+    </nav>
+
+    <div class="portal-sidebar-footer">
+      <div class="portal-user-box">
+        <div class="portal-avatar">
+          {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+        </div>
+        <div>
+          <p class="portal-user-name">Dr. {{ request.user.first_name }} {{ request.user.last_name }}</p>
+          <p class="portal-user-email">{{ request.user.email|default:"No email added" }}</p>
+        </div>
+      </div>
+
+      <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit" class="portal-signout-btn">Sign Out</button>
+      </form>
+    </div>
+  </aside>
+
+  <div class="portal-main">
+    <div class="portal-topbar">
+      <h1 class="portal-topbar-title">Medical Records</h1>
+      <div class="portal-topbar-date">Welcome to the doctor portal</div>
+    </div>
+
+    <main class="portal-content">
+      <section class="portal-panel">
+        <div class="portal-panel-header">
+          <div>
+            <h3 class="portal-panel-title">Add Patient to Doctor</h3>
+            <p class="portal-panel-subtitle">Assign an existing patient to this doctor.</p>
+          </div>
+        </div>
+
+        <form method="post" class="portal-form">
+          {% csrf_token %}
+          <div class="portal-form-row">
+            <select name="patient_id" class="portal-form-input" required>
+              <option value="">Select a patient</option>
+              {% for patient in all_patients %}
+              <option value="{{ patient.id }}">
+                {{ patient.user.first_name }} {{ patient.user.last_name }} — {{ patient.user.username }}
+              </option>
+              {% endfor %}
+            </select>
+
+            <button type="submit" class="portal-primary-btn">Add Patient</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="portal-panel">
+        <div class="portal-panel-header">
+          <div>
+            <h3 class="portal-panel-title">Patient Records</h3>
+            <p class="portal-panel-subtitle">Patients currently connected to this doctor.</p>
+          </div>
+        </div>
+
+        {% for record in records %}
+        <div class="portal-list-item">
+          <div>
+            <p class="portal-list-title">
+              {{ record.patient.user.first_name }} {{ record.patient.user.last_name }}
+            </p>
+
+            <p class="portal-list-subtitle">
+              Username: {{ record.patient.user.username }}
+            </p>
+
+            <p class="portal-list-meta">
+              Phone: {{ record.patient.phone_number|default:"Not listed" }}
+            </p>
+
+            <p class="portal-list-meta">
+              Age:
+              {% if record.age %}
+              {{ record.age }}
+              {% else %}
+              Not listed
+              {% endif %}
+            </p>
+
+            <p class="portal-list-meta">
+              Height:
+              {% if record.latest_vitals and record.latest_vitals.height_cm %}
+              {{ record.latest_vitals.height_cm }} cm
+              {% else %}
+              Not listed
+              {% endif %}
+            </p>
+
+            <p class="portal-list-meta">
+              Weight:
+              {% if record.latest_vitals and record.latest_vitals.weight_kg %}
+              {{ record.latest_vitals.weight_kg }} kg
+              {% else %}
+              Not listed
+              {% endif %}
+            </p>
+
+            <a href="{% url 'doctor_patient_record_detail' record.patient.id %}" class="portal-signout-btn appointment-detail-btn">
+              View Details
+            </a>
+          </div>
+        </div>
+        {% empty %}
+        <div class="portal-list-item">
+          <div>
+            <p class="portal-list-title">No patients assigned yet</p>
+            <p class="portal-list-subtitle">Use the form above to add a patient.</p>
+          </div>
+        </div>
+        {% endfor %}
+      </section>
+    </main>
+  </div>
+</div>
+{% endblock %}
