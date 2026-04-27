@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Doctor Appointments{% endblock %}
+
+{% block body %}
+<div class="portal-app-shell">
+
+    <aside class="portal-sidebar">
+        <div class="portal-sidebar-brand">
+            <div class="portal-brand-icon">M</div>
+            <div>
+                <p class="portal-brand-title">Marco's Medical</p>
+                <p class="portal-brand-subtitle">Doctor Portal</p>
+            </div>
+        </div>
+
+        <nav class="portal-nav">
+            <a class="portal-nav-link" href="{% url 'doctor_dashboard' %}">
+                <span class="portal-nav-icon">⌂</span>
+                <span>Dashboard</span>
+            </a>
+
+            <a class="portal-nav-link active" href="{% url 'doctor_appointments' %}">
+                <span class="portal-nav-icon">🗓</span>
+                <span>Appointments</span>
+            </a>
+
+            <a class="portal-nav-link" href="{% url 'doctor_records' %}">
+                <span class="portal-nav-icon">▣</span>
+                <span>Medical Records</span>
+            </a>
+
+            <a class="portal-nav-link" href="{% url 'doctor_billing' %}">
+                <span class="portal-nav-icon">💳</span>
+                <span>Billing</span>
+            </a>
+        </nav>
+    </aside>
+
+    <div class="portal-main">
+        <div class="portal-topbar">
+            <h1 class="portal-topbar-title">Appointments</h1>
+            <div class="portal-topbar-date">Review scheduled patient visits</div>
+        </div>
+
+        <main class="portal-content">
+            <section class="portal-panel">
+                <div class="portal-panel-header">
+                    <div>
+                        <h3 class="portal-panel-title">Scheduled Appointments</h3>
+                        <p class="portal-panel-subtitle">
+                            Review appointments scheduled with your patients.
+                        </p>
+                    </div>
+                </div>
+
+                {% for appointment in appointments %}
+                <div class="portal-list-item">
+                    <div class="portal-list-left">
+                        <div>
+                            <p class="portal-list-title">
+                                {{ appointment.patient.user.first_name }}
+                                {{ appointment.patient.user.last_name }}
+                            </p>
+
+                            <p class="portal-list-subtitle">
+                                {{ appointment.scheduled_start|date:"F j, Y" }}
+                                at
+                                {{ appointment.scheduled_start|date:"g:i A" }}
+                            </p>
+
+                            <p class="portal-list-meta">
+                                Reason: {{ appointment.reason|default:"No reason provided" }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <a
+                                href="{% url 'doctor_appointment_detail' appointment.id %}"
+                                class="portal-secondary-btn"
+                        >
+                            View Details
+                        </a>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="portal-list-item">
+                    <div>
+                        <p class="portal-list-title">No appointments scheduled</p>
+                        <p class="portal-list-subtitle">
+                            Patient appointments will appear here.
+                        </p>
+                    </div>
+                </div>
+                {% endfor %}
+            </section>
+        </main>
+    </div>
+</div>
+{% endblock %}

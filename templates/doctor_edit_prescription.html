@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Edit Prescription{% endblock %}
+
+{% block body %}
+<div class="portal-app-shell">
+    <aside class="portal-sidebar">
+        <div class="portal-sidebar-brand">
+            <div class="portal-brand-icon">M</div>
+            <div>
+                <p class="portal-brand-title">Marco's Medical</p>
+                <p class="portal-brand-subtitle">Doctor Portal</p>
+            </div>
+        </div>
+
+        <nav class="portal-nav">
+            <a class="portal-nav-link" href="{% url 'doctor_dashboard' %}">
+                <span class="portal-nav-icon">⌂</span>
+                <span>Dashboard</span>
+            </a>
+            <a class="portal-nav-link" href="{% url 'doctor_appointments' %}">
+                <span class="portal-nav-icon">🗓</span>
+                <span>Appointments</span>
+            </a>
+            <a class="portal-nav-link active" href="{% url 'doctor_records' %}">
+                <span class="portal-nav-icon">▣</span>
+                <span>Medical Records</span>
+            </a>
+            <a class="portal-nav-link" href="{% url 'doctor_billing' %}">
+                <span class="portal-nav-icon">💳</span>
+                <span>Billing</span>
+            </a>
+        </nav>
+
+        <div class="portal-sidebar-footer">
+            <div class="portal-user-box">
+                <div class="portal-avatar">
+                    {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                </div>
+                <div>
+                    <p class="portal-user-name">Dr. {{ request.user.first_name }} {{ request.user.last_name }}</p>
+                    <p class="portal-user-email">{{ request.user.email|default:"No email added" }}</p>
+                </div>
+            </div>
+
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="portal-signout-btn">Sign Out</button>
+            </form>
+        </div>
+    </aside>
+
+    <div class="portal-main">
+        <div class="portal-topbar">
+            <h1 class="portal-topbar-title">Edit Prescription</h1>
+            <div class="portal-topbar-date">Welcome to the doctor portal</div>
+        </div>
+
+        <main class="portal-content">
+            <section class="portal-panel">
+                <h2 class="portal-page-title">
+                    {{ patient.user.first_name }} {{ patient.user.last_name }}
+                </h2>
+
+                <p class="portal-page-subtitle">
+                    Update this patient's prescription information.
+                </p>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="portal-list-item">
+                        <div style="width: 100%;">
+                            <p class="portal-list-title">Prescription Information</p>
+
+                            <p class="portal-list-subtitle">Medication Name</p>
+                            <input class="portal-form-input" type="text" name="medication_name" value="{{ prescription.medication_name }}">
+
+                            <p class="portal-list-subtitle">Dosage</p>
+                            <input class="portal-form-input" type="text" name="dosage" value="{{ prescription.dosage }}">
+
+                            <p class="portal-list-subtitle">Frequency</p>
+                            <input class="portal-form-input" type="text" name="frequency" value="{{ prescription.frequency }}">
+
+                            <p class="portal-list-subtitle">Instructions</p>
+                            <textarea class="portal-form-input" name="instructions">{{ prescription.instructions }}</textarea>
+
+                            <p class="portal-list-subtitle">Status</p>
+
+                            <select class="portal-form-input" name="status">
+                                <option value="active" {% if prescription.status == 'active' %}selected{% endif %}>
+                                Active
+                                </option>
+
+                                <option value="completed" {% if prescription.status == 'completed' %}selected{% endif %}>
+                                Completed
+                                </option>
+
+                                <option value="cancelled" {% if prescription.status == 'cancelled' %}selected{% endif %}>
+                                Cancelled
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; justify-content:center; gap:16px; margin-top:24px;">
+                        <button type="submit" class="portal-signout-btn appointment-detail-btn">
+                            Save Changes
+                        </button>
+
+                        <a href="{% url 'doctor_patient_record_detail' patient.id %}" class="portal-signout-btn appointment-detail-btn">
+                            Back to Patient Record
+                        </a>
+                    </div>
+                </form>
+            </section>
+        </main>
+    </div>
+</div>
+{% endblock %}

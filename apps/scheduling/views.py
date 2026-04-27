@@ -24,6 +24,7 @@ def request_appointment(request):
             appointment.status = AppointmentStatus.SCHEDULED
             appointment.reminder_sent = False
             appointment.save()
+            appointment.provider.patients.add(patient_profile)
             return redirect("dashboard")
     else:
         form = AppointmentRequestForm()

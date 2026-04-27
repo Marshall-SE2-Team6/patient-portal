@@ -169,7 +169,6 @@ Ctrl + C
 ```
 Then re-type the command carefully.
 
-
 Seed User:
 username: alice, bob, frontdesk, drlee
 Password for all useranme is : DevPass123!

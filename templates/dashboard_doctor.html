@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% block title %}Doctor Dashboard | Marco's Medical Portal{% endblock %}
+
+{% block body %}
+<div class="portal-app-shell">
+    <aside class="portal-sidebar">
+        <div class="portal-sidebar-brand">
+            <div class="portal-brand-icon">M</div>
+            <div>
+                <p class="portal-brand-title">Marco's Medical</p>
+                <p class="portal-brand-subtitle">Doctor Portal</p>
+            </div>
+        </div>
+
+        <nav class="portal-nav">
+            <a class="portal-nav-link active" href="{% url 'doctor_dashboard' %}">
+                <span class="portal-nav-icon">⌂</span>
+                <span>Dashboard</span>
+            </a>
+
+            <a class="portal-nav-link" href="{% url 'doctor_appointments' %}">
+                <span class="portal-nav-icon">🗓</span>
+                <span>Appointments</span>
+            </a>
+
+            <a class="portal-nav-link" href="{% url 'doctor_records' %}">
+                <span class="portal-nav-icon">▣</span>
+                <span>Medical Records</span>
+            </a>
+
+            <a class="portal-nav-link" href="{% url 'doctor_billing' %}">
+                <span class="portal-nav-icon">💳</span>
+                <span>Billing</span>
+            </a>
+        </nav>
+
+        <div class="portal-sidebar-footer">
+            <div class="portal-user-box">
+                <div class="portal-avatar">
+                    {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                </div>
+                <div>
+                    <p class="portal-user-name">
+                        {% if request.user.first_name or request.user.last_name %}
+                        Dr. {{ request.user.first_name }} {{ request.user.last_name }}
+                        {% else %}
+                        {{ request.user.username }}
+                        {% endif %}
+                    </p>
+                    <p class="portal-user-email">{{ request.user.email|default:"No email added" }}</p>
+                </div>
+            </div>
+
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="portal-signout-btn">Sign Out</button>
+            </form>
+        </div>
+    </aside>
+
+    <div class="portal-main">
+        <div class="portal-topbar">
+            <h1 class="portal-topbar-title">Doctor Dashboard</h1>
+            <div class="portal-topbar-date">Welcome to the doctor dashboard</div>
+        </div>
+
+        <main class="portal-content">
+            {% if profile_missing %}
+            <section class="portal-panel">
+                <div class="portal-panel-header">
+                    <div>
+                        <h3 class="portal-panel-title">Doctor portal unavailable</h3>
+                        <p class="portal-panel-subtitle">
+                            This account does not have a linked staff/provider profile yet.
+                        </p>
+                    </div>
+                </div>
+            </section>
+            {% else %}
+
+            <h2 class="portal-page-title">
+                Welcome back,
+                {% if request.user.first_name %}
+                Dr. {{ request.user.last_name }}
+                {% else %}
+                {{ request.user.username }}
+                {% endif %}
+            </h2>
+
+            <p class="portal-page-subtitle">
+                Specialty: {{ provider.specialty|default:"General Practice" }}
+            </p>
+
+            <section class="portal-quick-grid">
+                <div class="portal-quick-card">
+                    <div class="portal-quick-icon icon-blue">🗓</div>
+                    <div>
+                        <div class="portal-quick-label">Upcoming</div>
+                        <div class="portal-quick-value">{{ upcoming_count }} Appointments</div>
+                    </div>
+                </div>
+
+                <div class="portal-quick-card">
+                    <div class="portal-quick-icon icon-green">👨‍⚕️</div>
+                    <div>
+                        <div class="portal-quick-label">Provider</div>
+                        <div class="portal-quick-value">
+                            Dr. {{ request.user.first_name }} {{ request.user.last_name }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="portal-quick-card">
+                    <div class="portal-quick-icon icon-purple">🏥</div>
+                    <div>
+                        <div class="portal-quick-label">Department</div>
+                        <div class="portal-quick-value">
+                            {{ request.user.staff_profile.department|default:"Medical Staff" }}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="portal-panel">
+                <div class="portal-panel-header">
+                    <div>
+                        <h3 class="portal-panel-title">Scheduled Patient Appointments</h3>
+                        <p class="portal-panel-subtitle">
+                            Appointments requested by patients will appear here.
+                        </p>
+                    </div>
+                </div>
+
+                {% if appointments %}
+                {% for appointment in appointments %}
+                <div class="portal-list-item">
+                    <div class="portal-list-left">
+                        <div class="portal-quick-icon icon-blue" style="width:40px;height:40px;font-size:16px;">🗓</div>
+                        <div>
+                            <p class="portal-list-title">
+                                {{ appointment.patient.user.first_name }} {{ appointment.patient.user.last_name }}
+                            </p>
+
+                            <p class="portal-list-subtitle">
+                                {{ appointment.scheduled_start|date:"F j, Y" }}
+                                at
+                                {{ appointment.scheduled_start|date:"g:i A" }}
+                            </p>
+
+                            {% if appointment.reason %}
+                            <p class="portal-list-meta">
+                                Reason: {{ appointment.reason }}
+                            </p>
+                            {% endif %}
+
+                            {% if appointment.notes %}
+                            <p class="portal-list-meta">
+                                Notes: {{ appointment.notes }}
+                            </p>
+                            {% endif %}
+
+                            <a href="{% url 'doctor_appointment_detail' appointment.id %}" class="portal-secondary-btn">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+
+                    <span class="portal-badge badge-neutral">
+                {{ appointment.get_status_display }}
+              </span>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="portal-list-item">
+                    <div>
+                        <p class="portal-list-title">No appointments yet</p>
+                        <p class="portal-list-subtitle">
+                            When a patient schedules with you, it will appear here.
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
+            </section>
+
+            {% endif %}
+        </main>
+    </div>
+</div>
+{% endblock %}
