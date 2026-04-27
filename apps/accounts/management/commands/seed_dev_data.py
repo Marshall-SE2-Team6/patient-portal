@@ -80,6 +80,7 @@ class Command(BaseCommand):
             email="drsmith@patientportal.local",
             password=dev_password,
             is_staff=True,
+            role=User.Role.PHYSICIAN,
             first_name="John",
             last_name="Smith",
         )
@@ -89,8 +90,18 @@ class Command(BaseCommand):
             email="drlee@patientportal.local",
             password=dev_password,
             is_staff=True,
+            role=User.Role.PHYSICIAN,
             first_name="Maya",
             last_name="Lee",
+        )
+
+        nurse_jane_user = self._upsert_user(
+            username="nursejane",
+            email="nursejane@patientportal.local",
+            password=dev_password,
+            is_staff=True,
+            first_name="Jane",
+            last_name="Miller",
         )
 
         frontdesk_user = self._upsert_user(
@@ -116,6 +127,14 @@ class Command(BaseCommand):
             password=dev_password,
             first_name="Bob",
             last_name="Nguyen",
+        )
+
+        charlie_user = self._upsert_user(
+            username="charlie",
+            email="charlie@patientportal.local",
+            password=dev_password,
+            first_name="Charlie",
+            last_name="Lopez",
         )
 
         # ------------------------------------------------------------------
@@ -146,6 +165,20 @@ class Command(BaseCommand):
                 "postal_code": "25301",
                 "emergency_contact_name": "Liam Nguyen",
                 "emergency_contact_phone": "304-555-2002",
+            },
+        )
+
+        charlie_profile, _ = PatientProfile.objects.update_or_create(
+            user=charlie_user,
+            defaults={
+                "phone_number": "304-555-1003",
+                "date_of_birth": "1978-02-21",
+                "address_line_1": "303 Cedar Lane",
+                "city": "Morgantown",
+                "state": "WV",
+                "postal_code": "26505",
+                "emergency_contact_name": "Mia Lopez",
+                "emergency_contact_phone": "304-555-2003",
             },
         )
 
@@ -185,6 +218,18 @@ class Command(BaseCommand):
             },
         )
 
+        nurse_jane_profile, _ = StaffProfile.objects.update_or_create(
+            user=nurse_jane_user,
+            defaults={
+                "staff_role": StaffRole.NURSE,
+                "phone_number": "304-555-3004",
+                "department": "Clinical Support",
+                "license_number": "NUR-1004",
+                "employee_id": "EMP-1004",
+                "is_active_staff": True,
+            },
+        )
+
         # ------------------------------------------------------------------
         # Providers
         # ------------------------------------------------------------------
@@ -215,26 +260,53 @@ class Command(BaseCommand):
         slot_2_end = self._dt(days=1, hour=11)
         slot_3_start = self._dt(days=2, hour=13)
         slot_3_end = self._dt(days=2, hour=14)
+        slot_4_start = self._dt(days=0, hour=15)
+        slot_4_end = self._dt(days=0, hour=16)
+        slot_5_start = self._dt(days=4, hour=11)
+        slot_5_end = self._dt(days=4, hour=12)
+        slot_6_start = self._dt(days=5, hour=14)
+        slot_6_end = self._dt(days=5, hour=15)
 
-        AvailabilitySlot.objects.get_or_create(
+        slot_1, _ = AvailabilitySlot.objects.update_or_create(
             provider=dr_smith_provider,
             start_time=slot_1_start,
             end_time=slot_1_end,
             defaults={"is_booked": True, "notes": "Seeded slot"},
         )
 
-        AvailabilitySlot.objects.get_or_create(
+        slot_2, _ = AvailabilitySlot.objects.update_or_create(
             provider=dr_smith_provider,
             start_time=slot_2_start,
             end_time=slot_2_end,
             defaults={"is_booked": False, "notes": "Seeded slot"},
         )
 
-        AvailabilitySlot.objects.get_or_create(
+        slot_3, _ = AvailabilitySlot.objects.update_or_create(
             provider=dr_lee_provider,
             start_time=slot_3_start,
             end_time=slot_3_end,
             defaults={"is_booked": True, "notes": "Seeded slot"},
+        )
+
+        slot_4, _ = AvailabilitySlot.objects.update_or_create(
+            provider=dr_smith_provider,
+            start_time=slot_4_start,
+            end_time=slot_4_end,
+            defaults={"is_booked": True, "notes": "Today clinic slot"},
+        )
+
+        slot_5, _ = AvailabilitySlot.objects.update_or_create(
+            provider=dr_lee_provider,
+            start_time=slot_5_start,
+            end_time=slot_5_end,
+            defaults={"is_booked": False, "notes": "Future open slot"},
+        )
+
+        slot_6, _ = AvailabilitySlot.objects.update_or_create(
+            provider=dr_smith_provider,
+            start_time=slot_6_start,
+            end_time=slot_6_end,
+            defaults={"is_booked": False, "notes": "Future open slot"},
         )
 
         # ------------------------------------------------------------------
@@ -245,6 +317,7 @@ class Command(BaseCommand):
             preferred_provider=dr_smith_provider,
             requested_start=self._dt(days=-1, hour=9),
             defaults={
+                "requested_slot": None,
                 "requested_end": self._dt(days=-1, hour=10),
                 "reason": "Annual wellness visit",
                 "status": AppointmentRequestStatus.APPROVED,
@@ -256,9 +329,22 @@ class Command(BaseCommand):
             preferred_provider=dr_lee_provider,
             requested_start=self._dt(days=2, hour=13),
             defaults={
+                "requested_slot": slot_3,
                 "requested_end": self._dt(days=2, hour=14),
                 "reason": "Blood pressure follow-up",
                 "status": AppointmentRequestStatus.APPROVED,
+            },
+        )
+
+        charlie_pending_request, _ = AppointmentRequest.objects.update_or_create(
+            patient=charlie_profile,
+            preferred_provider=dr_smith_provider,
+            requested_start=slot_6.start_time,
+            defaults={
+                "requested_slot": slot_6,
+                "requested_end": slot_6.end_time,
+                "reason": "New patient consultation request",
+                "status": AppointmentRequestStatus.PENDING,
             },
         )
 
@@ -268,6 +354,7 @@ class Command(BaseCommand):
             scheduled_start=self._dt(days=-1, hour=9),
             defaults={
                 "appointment_request": alice_request,
+                "availability_slot": None,
                 "scheduled_end": self._dt(days=-1, hour=10),
                 "reason": "Annual wellness visit",
                 "notes": "Completed seeded visit.",
@@ -281,6 +368,7 @@ class Command(BaseCommand):
             scheduled_start=self._dt(days=2, hour=13),
             defaults={
                 "appointment_request": bob_request,
+                "availability_slot": slot_3,
                 "scheduled_end": self._dt(days=2, hour=14),
                 "reason": "Blood pressure follow-up",
                 "notes": "Upcoming seeded appointment.",
@@ -288,11 +376,45 @@ class Command(BaseCommand):
             },
         )
 
+        charlie_appointment, _ = Appointment.objects.update_or_create(
+            patient=charlie_profile,
+            provider=dr_smith_provider,
+            scheduled_start=slot_4.start_time,
+            defaults={
+                "availability_slot": slot_4,
+                "scheduled_end": slot_4.end_time,
+                "reason": "Same-day sick visit",
+                "notes": "Patient already arrived and is waiting in exam room.",
+                "status": AppointmentStatus.CHECKED_IN,
+            },
+        )
+
+        slot_1.is_booked = True
+        slot_1.save(update_fields=["is_booked"])
+        slot_3.is_booked = True
+        slot_3.save(update_fields=["is_booked"])
+        slot_4.is_booked = True
+        slot_4.save(update_fields=["is_booked"])
+        slot_2.is_booked = False
+        slot_2.save(update_fields=["is_booked"])
+        slot_5.is_booked = False
+        slot_5.save(update_fields=["is_booked"])
+        slot_6.is_booked = False
+        slot_6.save(update_fields=["is_booked"])
+
         CheckInRecord.objects.update_or_create(
             appointment=alice_appointment,
             defaults={
                 "checked_in_by": frontdesk_profile,
                 "notes": "Patient arrived on time.",
+            },
+        )
+
+        CheckInRecord.objects.update_or_create(
+            appointment=charlie_appointment,
+            defaults={
+                "checked_in_by": nurse_jane_profile,
+                "notes": "Vitals pending room assignment complete.",
             },
         )
 
@@ -318,6 +440,17 @@ class Command(BaseCommand):
                 "allergies": "",
                 "chronic_conditions": "Hypertension",
                 "general_notes": "Seeded demo patient record.",
+            },
+        )
+
+        charlie_record, _ = PatientRecord.objects.update_or_create(
+            patient=charlie_profile,
+            defaults={
+                "primary_provider": dr_smith_provider,
+                "blood_type": "B+",
+                "allergies": "Latex",
+                "chronic_conditions": "Asthma",
+                "general_notes": "Seeded patient currently checked in for same-day visit.",
             },
         )
 
@@ -437,6 +570,14 @@ class Command(BaseCommand):
             },
         )
 
+        MedicalSummary.objects.update_or_create(
+            patient_record=charlie_record,
+            defaults={
+                "summary_text": "Asthma patient with same-day respiratory follow-up.",
+                "last_updated_by": dr_smith_profile,
+            },
+        )
+
         # ------------------------------------------------------------------
         # Billing
         # ------------------------------------------------------------------
@@ -470,6 +611,21 @@ class Command(BaseCommand):
             },
         )
 
+        charlie_payment_method, _ = PaymentMethod.objects.update_or_create(
+            patient=charlie_profile,
+            nickname="Charlie HSA",
+            defaults={
+                "method_type": PaymentMethodType.DEBIT_CARD,
+                "cardholder_name": "Charlie Lopez",
+                "brand": "Visa",
+                "last4": "3333",
+                "expiration_month": 4,
+                "expiration_year": 2029,
+                "is_default": True,
+                "is_active": True,
+            },
+        )
+
         alice_invoice, _ = Invoice.objects.update_or_create(
             invoice_number="INV-1001",
             defaults={
@@ -489,6 +645,17 @@ class Command(BaseCommand):
                 "status": InvoiceStatus.ISSUED,
                 "due_date": timezone.localdate() + timedelta(days=14),
                 "notes": "Seeded open invoice.",
+            },
+        )
+
+        charlie_invoice, _ = Invoice.objects.update_or_create(
+            invoice_number="INV-1003",
+            defaults={
+                "patient": charlie_profile,
+                "appointment": charlie_appointment,
+                "status": InvoiceStatus.ISSUED,
+                "due_date": timezone.localdate() + timedelta(days=21),
+                "notes": "Seeded checked-in visit invoice preview.",
             },
         )
 
@@ -525,8 +692,20 @@ class Command(BaseCommand):
             },
         )
 
+        InvoiceLineItem.objects.update_or_create(
+            invoice=charlie_invoice,
+            description="Same-Day Visit",
+            defaults={
+                "quantity": 1,
+                "unit_price": Decimal("140.00"),
+                "line_total": Decimal("140.00"),
+                "service_date": timezone.localdate(),
+            },
+        )
+
         self._refresh_invoice_totals(alice_invoice)
         self._refresh_invoice_totals(bob_invoice)
+        self._refresh_invoice_totals(charlie_invoice)
 
         Payment.objects.update_or_create(
             invoice=alice_invoice,
@@ -540,6 +719,19 @@ class Command(BaseCommand):
         )
 
         self._refresh_invoice_totals(alice_invoice)
+
+        Payment.objects.update_or_create(
+            invoice=charlie_invoice,
+            transaction_reference="TXN-INV-1003-PARTIAL",
+            defaults={
+                "payment_method": charlie_payment_method,
+                "amount": Decimal("40.00"),
+                "status": PaymentStatus.COMPLETED,
+                "notes": "Seeded partial payment for demo purposes.",
+            },
+        )
+
+        self._refresh_invoice_totals(charlie_invoice)
 
         # ------------------------------------------------------------------
         # Notifications
@@ -574,6 +766,47 @@ class Command(BaseCommand):
         )
 
         Notification.objects.update_or_create(
+            recipient=charlie_user,
+            subject="You have been checked in",
+            defaults={
+                "notification_type": NotificationType.APPOINTMENT_STATUS,
+                "channel": NotificationChannel.IN_APP,
+                "status": NotificationStatus.SENT,
+                "message": "Front desk staff checked you in for today's visit.",
+                "appointment": charlie_appointment,
+                "invoice": None,
+                "sent_at": timezone.now(),
+            },
+        )
+
+        Notification.objects.update_or_create(
+            recipient=charlie_user,
+            subject="Invoice INV-1003 is available",
+            defaults={
+                "notification_type": NotificationType.BILLING_UPDATE,
+                "channel": NotificationChannel.IN_APP,
+                "status": NotificationStatus.SENT,
+                "message": "A visit invoice with a partial payment example is now on your account.",
+                "appointment": charlie_appointment,
+                "invoice": charlie_invoice,
+                "sent_at": timezone.now(),
+            },
+        )
+
+        Notification.objects.update_or_create(
+            recipient=frontdesk_user,
+            subject="Pending appointment request waiting",
+            defaults={
+                "notification_type": NotificationType.GENERAL,
+                "channel": NotificationChannel.IN_APP,
+                "status": NotificationStatus.PENDING,
+                "message": "Charlie Lopez has a pending appointment request awaiting approval.",
+                "appointment": None,
+                "invoice": None,
+            },
+        )
+
+        Notification.objects.update_or_create(
             recipient=bob_user,
             subject="Invoice INV-1002 is ready",
             defaults={
@@ -600,7 +833,7 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS("Development data seeded successfully."))
         self.stdout.write(self.style.SUCCESS(f"Demo password for all seeded users: {dev_password}"))
-        self.stdout.write("Seeded users: admin, drsmith, drlee, frontdesk, alice, bob")
+        self.stdout.write("Seeded users: admin, drsmith, drlee, nursejane, frontdesk, alice, bob, charlie")
 
     def _upsert_user(
         self,
@@ -609,6 +842,7 @@ class Command(BaseCommand):
         password,
         is_staff=False,
         is_superuser=False,
+        role=User.Role.PATIENT,
         first_name="",
         last_name="",
     ):
@@ -618,6 +852,8 @@ class Command(BaseCommand):
         user.is_staff = is_staff
         user.is_superuser = is_superuser
         user.is_active = True
+        if hasattr(user, "role"):
+            user.role = role
 
         if hasattr(user, "first_name"):
             user.first_name = first_name

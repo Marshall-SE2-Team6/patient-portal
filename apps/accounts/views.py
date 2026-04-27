@@ -8,6 +8,7 @@ from django.db import transaction
 from django.urls import reverse_lazy
 
 from apps.billing.models import Invoice
+from apps.notifications.models import Notification
 from apps.profiles.models import PatientProfile, StaffRole
 from apps.records.models import LabResult, PatientRecord, VitalsRecord, Prescription
 from apps.scheduling.models import Appointment, AppointmentRequest, AppointmentRequestStatus, Provider
@@ -86,6 +87,7 @@ def dashboard(request):
     pending_appointment_requests = []
     recent_lab_results = []
     open_invoices = []
+    recent_notifications = []
 
     if patient_profile:
         upcoming_appointments = (
@@ -122,12 +124,19 @@ def dashboard(request):
             .order_by("due_date", "-issued_at")[:5]
         )
 
+        recent_notifications = (
+            Notification.objects
+            .filter(recipient=request.user)
+            .order_by("-created_at")[:5]
+        )
+
     context = {
         "patient_profile": patient_profile,
         "upcoming_appointments": upcoming_appointments,
         "pending_appointment_requests": pending_appointment_requests,
         "recent_lab_results": recent_lab_results,
         "open_invoices": open_invoices,
+        "recent_notifications": recent_notifications,
     }
 
     return render(request, "dashboard.html", context)
@@ -140,6 +149,7 @@ def patient_dashboard(request):
     pending_appointment_requests = []
     recent_lab_results = []
     open_invoices = []
+    recent_notifications = []
 
     if patient_profile:
         upcoming_appointments = (
@@ -176,12 +186,19 @@ def patient_dashboard(request):
             .order_by("due_date", "-issued_at")[:5]
         )
 
+        recent_notifications = (
+            Notification.objects
+            .filter(recipient=request.user)
+            .order_by("-created_at")[:5]
+        )
+
     context = {
         "patient_profile": patient_profile,
         "upcoming_appointments": upcoming_appointments,
         "pending_appointment_requests": pending_appointment_requests,
         "recent_lab_results": recent_lab_results,
         "open_invoices": open_invoices,
+        "recent_notifications": recent_notifications,
     }
 
     return render(request, "dashboard.html", context)
@@ -198,10 +215,16 @@ def admin_dashboard(request):
         .select_related("patient__user", "preferred_provider__staff_profile__user")
         .order_by("requested_start", "created_at")
     )
+    upcoming_appointments = (
+        Appointment.objects
+        .select_related("patient__user", "provider__staff_profile__user", "pre_check_in_record")
+        .order_by("scheduled_start")[:10]
+    )
 
     context = {
         "admin_user": request.user,
         "pending_appointment_requests": pending_appointment_requests,
+        "upcoming_appointments": upcoming_appointments,
     }
 
     return render(request, "dashboard_admin.html", context)

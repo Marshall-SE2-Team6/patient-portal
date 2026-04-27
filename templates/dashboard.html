@@ -310,6 +310,35 @@
           </div>
         {% endif %}
       </section>
+
+      <section class="portal-panel portal-panel-spaced">
+        <div class="portal-panel-header">
+          <div>
+            <h3 class="portal-panel-title">Recent Appointment Updates</h3>
+            <p class="portal-panel-subtitle">Scheduling notifications saved to your account.</p>
+          </div>
+        </div>
+
+        {% if recent_notifications %}
+          {% for notification in recent_notifications %}
+            <div class="portal-list-item">
+              <div>
+                <p class="portal-list-title">{{ notification.subject|default:"Portal update" }}</p>
+                <p class="portal-list-subtitle">{{ notification.message }}</p>
+                <p class="portal-list-meta">{{ notification.created_at|date:"F j, Y g:i A" }}</p>
+              </div>
+              <span class="portal-badge badge-neutral">{{ notification.get_status_display }}</span>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="portal-list-item">
+            <div>
+              <p class="portal-list-title">No updates yet</p>
+              <p class="portal-list-subtitle">Appointment confirmations and status updates will appear here.</p>
+            </div>
+          </div>
+        {% endif %}
+      </section>
       </div>
 
       {% else %}

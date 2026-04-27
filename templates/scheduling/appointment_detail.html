@@ -112,6 +112,9 @@
                     <div>
                         <p class="portal-list-title">Status</p>
                         <p class="portal-list-subtitle">{{ appointment.get_status_display }}</p>
+                        {% if appointment.availability_slot %}
+                        <p class="portal-list-meta">Reserved from provider availability.</p>
+                        {% endif %}
                     </div>
                 </div>
 
@@ -188,6 +191,21 @@
                     <a href="{% url 'pre_check_in' appointment.id %}" class="portal-pay-btn appointment-detail-btn">
                         {% if pre_check_in %}Update Pre-Check-In{% else %}Start Pre-Check-In{% endif %}
                     </a>
+                    {% endif %}
+
+                    {% if appointment.can_reschedule %}
+                    <a href="{% url 'reschedule_appointment' appointment.id %}" class="portal-outline-btn appointment-detail-btn">
+                        Reschedule
+                    </a>
+                    {% endif %}
+
+                    {% if appointment.can_cancel %}
+                    <form method="post" action="{% url 'cancel_appointment' appointment.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="portal-signout-btn appointment-detail-btn">
+                            Cancel Appointment
+                        </button>
+                    </form>
                     {% endif %}
 
                     <a href="{% url 'my_appointments' %}" class="portal-signout-btn appointment-detail-btn">

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Reschedule Appointment | Marco's Medical Portal{% endblock %}
+
+{% block body %}
+<div class="portal-app-shell">
+    <aside class="portal-sidebar">
+        <div class="portal-sidebar-brand">
+            <div class="portal-brand-icon">M</div>
+            <div>
+                <p class="portal-brand-title">Marco's Medical</p>
+                <p class="portal-brand-subtitle">{% if is_patient_owner %}Patient Portal{% else %}Staff Portal{% endif %}</p>
+            </div>
+        </div>
+
+        <nav class="portal-nav">
+            <a class="portal-nav-link" href="{% if is_patient_owner %}{% url 'dashboard' %}{% else %}{% url 'admin_dashboard' %}{% endif %}">
+                <span class="portal-nav-icon">⌂</span>
+                <span>Dashboard</span>
+            </a>
+            <a class="portal-nav-link active" href="{% if is_patient_owner %}{% url 'my_appointments' %}{% else %}{% url 'staff_appointments' %}{% endif %}">
+                <span class="portal-nav-icon">📅</span>
+                <span>Appointments</span>
+            </a>
+        </nav>
+    </aside>
+
+    <div class="portal-main">
+        <div class="portal-topbar">
+            <h1 class="portal-topbar-title">Reschedule Appointment</h1>
+            <div class="portal-topbar-date">Choose a new available slot</div>
+        </div>
+
+        <main class="portal-content">
+            {% if messages %}
+            <div class="portal-messages">
+                {% for message in messages %}
+                <div class="portal-message {% if message.tags == 'success' %}portal-message-success{% elif message.tags == 'error' %}portal-message-error{% else %}portal-message-info{% endif %}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <section class="portal-panel">
+                <div class="portal-panel-header">
+                    <div>
+                        <h3 class="portal-panel-title">{{ appointment.patient.user.first_name }} {{ appointment.patient.user.last_name }}</h3>
+                        <p class="portal-panel-subtitle">Current time: {{ appointment.scheduled_start|date:"F j, Y g:i A" }}</p>
+                    </div>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                    <div class="portal-list-item">
+                        <div>
+                            {% for error in form.non_field_errors %}
+                            <p class="portal-list-title">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="portal-list-item">
+                        <div style="width:100%;">
+                            <p class="portal-list-title">New Available Time</p>
+                            {{ form.slot }}
+                            {% for error in form.slot.errors %}
+                            <p class="portal-list-subtitle">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="appointment-detail-actions">
+                        <button type="submit" class="portal-pay-btn appointment-detail-btn">Save New Time</button>
+                        <a href="{% if is_patient_owner %}{% url 'appointment_detail' appointment.id %}{% else %}{% url 'staff_appointments' %}{% endif %}" class="portal-signout-btn appointment-detail-btn">Back</a>
+                    </div>
+                </form>
+            </section>
+        </main>
+    </div>
+</div>
+{% endblock %}

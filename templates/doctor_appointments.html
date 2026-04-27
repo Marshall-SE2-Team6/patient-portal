@@ -84,6 +84,16 @@
                         {% else %}
                         <span class="portal-badge badge-warning">Pre-check-in pending</span>
                         {% endif %}
+                        {% if appointment.status == "scheduled" or appointment.status == "checked_in" %}
+                        <form method="post" action="{% url 'complete_appointment' appointment.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="portal-secondary-btn">Complete</button>
+                        </form>
+                        <form method="post" action="{% url 'mark_no_show_appointment' appointment.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="portal-outline-btn portal-small-btn">No-Show</button>
+                        </form>
+                        {% endif %}
                         <a
                                 href="{% url 'doctor_appointment_detail' appointment.id %}"
                                 class="portal-secondary-btn"
