@@ -144,6 +144,13 @@ a {
   font-size: 14px;
 }
 
+.portal-auth-helper {
+  color: var(--portal-muted);
+  margin-top: 8px;
+  margin-bottom: 0;
+  font-size: 13px;
+}
+
 .portal-alert {
   border-radius: 10px;
 }

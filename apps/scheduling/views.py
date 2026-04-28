@@ -15,6 +15,41 @@ from .forms import (
 )
 
 
+def _split_appointments_by_priority(appointments):
+    now = timezone.now()
+    today = timezone.localdate()
+    today_appointments = []
+    upcoming_appointments = []
+    history_appointments = []
+
+    for appointment in appointments:
+        appointment_date = appointment.scheduled_start.astimezone(
+            timezone.get_current_timezone()
+        ).date()
+        is_historical_status = appointment.status in {
+            AppointmentStatus.COMPLETED,
+            AppointmentStatus.CANCELLED,
+            AppointmentStatus.NO_SHOW,
+        }
+        is_past = (
+            is_historical_status
+            or (appointment.scheduled_end and appointment.scheduled_end < now)
+        )
+
+        if is_past:
+            history_appointments.append(appointment)
+        elif appointment_date == today:
+            today_appointments.append(appointment)
+        else:
+            upcoming_appointments.append(appointment)
+
+    return {
+        "today_appointments": today_appointments,
+        "upcoming_appointments": upcoming_appointments,
+        "history_appointments": history_appointments,
+    }
+
+
 def _staff_profile(user):
     return getattr(user, "staff_profile", None)
 
@@ -202,10 +237,13 @@ def my_appointments(request):
         else:
             appointment.display_status = appointment.status.capitalize()
 
+    appointment_sections = _split_appointments_by_priority(list(appointments))
+
     return render(request, 'scheduling/my_appointments.html', {
         'appointments': appointments,
         'pending_requests': pending_requests,
         'profile_missing': False,
+        **appointment_sections,
     })
 
 @login_required
@@ -298,11 +336,12 @@ def staff_appointments(request):
     if not _is_non_physician_staff(request.user):
         return redirect("dashboard")
 
-    appointments = (
+    appointments = list(
         Appointment.objects
         .select_related("patient__user", "provider__staff_profile__user", "pre_check_in_record")
         .order_by("scheduled_start")
     )
+    appointment_sections = _split_appointments_by_priority(appointments)
 
     meta = _staff_portal_meta(request.user)
     staff_profile = _staff_profile(request.user)
@@ -319,6 +358,7 @@ def staff_appointments(request):
         "can_mark_no_show": True if request.user.is_superuser else bool(
             staff_profile and staff_profile.staff_role in {StaffRole.RECEPTIONIST, StaffRole.ADMIN}
         ),
+        **appointment_sections,
     })
 
 

@@ -77,21 +77,14 @@
             <section class="portal-panel">
                 <div class="portal-panel-header">
                     <div>
-                        <h3 class="portal-panel-title">Scheduled Appointments</h3>
-                        <p class="portal-panel-subtitle">
-                            {% if can_schedule %}
-                            Front desk and support staff can manage the visit lifecycle here.
-                            {% else %}
-                            Review scheduled visits, pre-check-in status, and patient arrivals.
-                            {% endif %}
-                        </p>
+                        <h3 class="portal-panel-title">Today's Appointments</h3>
                     </div>
                     {% if can_schedule %}
                     <a href="{% url 'staff_schedule_appointment' %}" class="portal-outline-btn">Schedule Appointment</a>
                     {% endif %}
                 </div>
 
-                {% for appointment in appointments %}
+                {% for appointment in today_appointments %}
                 <div class="portal-list-item">
                     <div class="portal-list-left">
                         <div class="portal-list-details">
@@ -145,8 +138,110 @@
                 {% empty %}
                 <div class="portal-list-item">
                     <div>
-                        <p class="portal-list-title">No appointments scheduled</p>
-                        <p class="portal-list-subtitle">Scheduled visits will appear here.</p>
+                        <p class="portal-list-title">No appointments today</p>
+                        <p class="portal-list-subtitle">Today's patient queue will appear here first.</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </section>
+
+            <section class="portal-panel">
+                <div class="portal-panel-header">
+                    <div>
+                        <h3 class="portal-panel-title">Upcoming Appointments</h3>
+                    </div>
+                </div>
+
+                {% for appointment in upcoming_appointments %}
+                <div class="portal-list-item">
+                    <div class="portal-list-left">
+                        <div class="portal-list-details">
+                            <p class="portal-list-title">{{ appointment.patient.user.first_name }} {{ appointment.patient.user.last_name }}</p>
+                            <p class="portal-list-subtitle">
+                                Dr. {{ appointment.provider.staff_profile.user.first_name }} {{ appointment.provider.staff_profile.user.last_name }}
+                            </p>
+                            <p class="portal-list-meta">{{ appointment.scheduled_start|date:"F j, Y" }} at {{ appointment.scheduled_start|date:"g:i A" }}</p>
+                            <p class="portal-list-meta">{{ appointment.reason|default:"No reason provided." }}</p>
+                        </div>
+                    </div>
+
+                    <div class="portal-list-actions">
+                        <span class="portal-badge badge-neutral">{{ appointment.get_status_display }}</span>
+                        {% if appointment.has_pre_check_in %}
+                        <span class="portal-badge badge-success">Pre-check-in complete</span>
+                        {% endif %}
+                        {% if appointment.can_check_in %}
+                        <form method="post" action="{% url 'check_in_appointment' appointment.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="portal-pay-btn portal-small-btn">Check In</button>
+                        </form>
+                        {% endif %}
+                        {% if can_manage_updates and appointment.can_reschedule %}
+                        <a href="{% url 'reschedule_appointment' appointment.id %}" class="portal-secondary-btn">Reschedule</a>
+                        {% endif %}
+                        {% if can_manage_updates and appointment.can_cancel %}
+                        <form method="post" action="{% url 'cancel_appointment' appointment.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="portal-signout-btn portal-small-btn">Cancel</button>
+                        </form>
+                        {% endif %}
+                        {% if can_complete %}
+                        {% if appointment.status == "checked_in" or appointment.status == "scheduled" %}
+                        <form method="post" action="{% url 'complete_appointment' appointment.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="portal-secondary-btn">Complete</button>
+                        </form>
+                        {% endif %}
+                        {% endif %}
+                        {% if can_mark_no_show %}
+                        {% if appointment.status == "checked_in" or appointment.status == "scheduled" %}
+                        <form method="post" action="{% url 'mark_no_show_appointment' appointment.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="portal-outline-btn portal-small-btn">No-Show</button>
+                        </form>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="portal-list-item">
+                    <div>
+                        <p class="portal-list-title">No future appointments scheduled</p>
+                        <p class="portal-list-subtitle">Future visits will appear here after today's queue.</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </section>
+
+            <section class="portal-panel">
+                <div class="portal-panel-header">
+                    <div>
+                        <h3 class="portal-panel-title">Appointment History</h3>
+                    </div>
+                </div>
+
+                {% for appointment in history_appointments %}
+                <div class="portal-list-item">
+                    <div class="portal-list-left">
+                        <div class="portal-list-details">
+                            <p class="portal-list-title">{{ appointment.patient.user.first_name }} {{ appointment.patient.user.last_name }}</p>
+                            <p class="portal-list-subtitle">
+                                Dr. {{ appointment.provider.staff_profile.user.first_name }} {{ appointment.provider.staff_profile.user.last_name }}
+                            </p>
+                            <p class="portal-list-meta">{{ appointment.scheduled_start|date:"F j, Y" }} at {{ appointment.scheduled_start|date:"g:i A" }}</p>
+                            <p class="portal-list-meta">{{ appointment.reason|default:"No reason provided." }}</p>
+                        </div>
+                    </div>
+
+                    <div class="portal-list-actions">
+                        <span class="portal-badge badge-neutral">{{ appointment.get_status_display }}</span>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="portal-list-item">
+                    <div>
+                        <p class="portal-list-title">No appointment history yet</p>
+                        <p class="portal-list-subtitle">Completed, cancelled, and no-show visits will appear here.</p>
                     </div>
                 </div>
                 {% endfor %}

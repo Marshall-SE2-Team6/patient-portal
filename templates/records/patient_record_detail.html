@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+{% block title %}My Medical Record | Marco's Medical Portal{% endblock %}
+
+{% block body %}
+<div class="portal-app-shell">
+    <aside class="portal-sidebar">
+        <div class="portal-sidebar-brand">
+            <div class="portal-brand-icon">M</div>
+            <div>
+                <p class="portal-brand-title">Marco's Medical</p>
+                <p class="portal-brand-subtitle">Patient Portal</p>
+            </div>
+        </div>
+
+        <nav class="portal-nav">
+            <a class="portal-nav-link" href="{% url 'dashboard' %}">
+                <span class="portal-nav-icon">⌂</span>
+                <span>Dashboard</span>
+            </a>
+            <a class="portal-nav-link" href="{% url 'profile' %}">
+                <span class="portal-nav-icon">◉</span>
+                <span>Profile</span>
+            </a>
+            <a class="portal-nav-link" href="{% url 'my_appointments' %}">
+                <span class="portal-nav-icon">📅</span>
+                <span>Appointments</span>
+            </a>
+            <a class="portal-nav-link active" href="{% url 'records:my_records' %}">
+                <span class="portal-nav-icon">🧪</span>
+                <span>My Records</span>
+            </a>
+            <a class="portal-nav-link" href="{% url 'billing:invoice_list' %}">
+                <span class="portal-nav-icon">💳</span>
+                <span>Billing</span>
+            </a>
+        </nav>
+
+        <div class="portal-sidebar-footer">
+            <div class="portal-user-box">
+                <div class="portal-avatar">
+                    {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                </div>
+                <div>
+                    <p class="portal-user-name">
+                        {% if request.user.first_name or request.user.last_name %}
+                        {{ request.user.first_name }} {{ request.user.last_name }}
+                        {% else %}
+                        {{ request.user.username }}
+                        {% endif %}
+                    </p>
+                    <p class="portal-user-email">{{ request.user.email|default:"No email added" }}</p>
+                </div>
+            </div>
+
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="portal-signout-btn">Sign Out</button>
+            </form>
+        </div>
+    </aside>
+
+    <div class="portal-main">
+        <div class="portal-topbar">
+            <h1 class="portal-topbar-title">My Medical Record</h1>
+        </div>
+
+        <main class="portal-content">
+            <section class="portal-panel">
+                <h2 class="portal-page-title">Read-Only Health Chart</h2>
+
+                {% if not patient_profile %}
+                <div class="portal-list-item">
+                    <div>
+                        <p class="portal-list-title">Patient profile missing</p>
+                        <p class="portal-list-subtitle">This user does not have a linked patient profile yet.</p>
+                    </div>
+                </div>
+                {% elif not patient_record %}
+                <div class="portal-list-item">
+                    <div>
+                        <p class="portal-list-title">Medical record unavailable</p>
+                        <p class="portal-list-subtitle">A patient record has not been created for this account yet.</p>
+                    </div>
+                </div>
+                {% else %}
+                <div class="portal-detail-grid">
+                    <div class="portal-detail-card">
+                        <p class="portal-list-title">Health Profile</p>
+                        <div class="portal-data-stack">
+                            <div class="portal-data-row">
+                                <p class="portal-data-label">Full Name</p>
+                                <p class="portal-data-value">{{ patient_profile.user.first_name }} {{ patient_profile.user.last_name }}</p>
+                            </div>
+                            <div class="portal-data-row">
+                                <p class="portal-data-label">Date of Birth</p>
+                                <p class="portal-data-value">{{ patient_profile.date_of_birth|date:"F j, Y"|default:"Not listed" }}</p>
+                            </div>
+                            <div class="portal-data-row">
+                                <p class="portal-data-label">Age</p>
+                                <p class="portal-data-value">{% if age %}{{ age }} years old{% else %}Not listed{% endif %}</p>
+                            </div>
+                            <div class="portal-data-row">
+                                <p class="portal-data-label">Phone Number</p>
+                                <p class="portal-data-value">{{ patient_profile.phone_number|default:"Not listed" }}</p>
+                            </div>
+                            <div class="portal-data-row">
+                                <p class="portal-data-label">Address</p>
+                                <p class="portal-data-value">
+                                    {{ patient_profile.address_line_1|default:"Not listed" }}
+                                    {% if patient_profile.address_line_2 %}<br>{{ patient_profile.address_line_2 }}{% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="portal-detail-card">
+                        <p class="portal-list-title">Medical Snapshot</p>
+                        <div class="portal-data-stack">
+                            <div class="portal-data-row">
+                                <p class="portal-data-label">Blood Type</p>
+                                <p class="portal-data-value">{{ patient_record.blood_type|default:"Not listed" }}</p>
+                            </div>
+                            <div class="portal-data-row">
+                                <p class="portal-data-label">Allergies</p>
+                                <p class="portal-data-value">{{ patient_record.allergies|default:"Not listed" }}</p>
+                            </div>
+                            <div class="portal-data-row">
+                                <p class="portal-data-label">Chronic Conditions</p>
+                                <p class="portal-data-value">{{ patient_record.chronic_conditions|default:"Not listed" }}</p>
+                            </div>
+                            <div class="portal-data-row">
+                                <p class="portal-data-label">General Notes</p>
+                                <p class="portal-data-value">{{ patient_record.general_notes|default:"Not listed" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="portal-detail-grid portal-inline-action">
+                    <div class="portal-detail-card">
+                        <p class="portal-list-title">Latest Vitals</p>
+                        {% if latest_vitals %}
+                        <div class="portal-data-stack">
+                            <div class="portal-data-row">
+                                <p class="portal-data-label">Height</p>
+                                <p class="portal-data-value">{{ latest_vitals.height_cm|default:"-" }} cm</p>
+                            </div>
+                            <div class="portal-data-row">
+                                <p class="portal-data-label">Weight</p>
+                                <p class="portal-data-value">{{ latest_vitals.weight_kg|default:"-" }} kg</p>
+                            </div>
+                            <div class="portal-data-row">
+                                <p class="portal-data-label">Temperature</p>
+                                <p class="portal-data-value">{{ latest_vitals.temperature_c|default:"-" }} C</p>
+                            </div>
+                            <div class="portal-data-row">
+                                <p class="portal-data-label">Blood Pressure</p>
+                                <p class="portal-data-value">{{ latest_vitals.systolic_bp|default:"-" }}/{{ latest_vitals.diastolic_bp|default:"-" }}</p>
+                            </div>
+                            <div class="portal-data-row">
+                                <p class="portal-data-label">Pulse</p>
+                                <p class="portal-data-value">{{ latest_vitals.pulse_bpm|default:"-" }} bpm</p>
+                            </div>
+                            <div class="portal-data-row">
+                                <p class="portal-data-label">Oxygen Saturation</p>
+                                <p class="portal-data-value">{{ latest_vitals.oxygen_saturation|default:"-" }}%</p>
+                            </div>
+                            {% if latest_vitals.recorded_at %}
+                            <div class="portal-data-row">
+                                <p class="portal-data-label">Last Recorded</p>
+                                <p class="portal-data-value">{{ latest_vitals.recorded_at|date:"F j, Y g:i A" }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <p class="portal-data-value">No vitals recorded yet.</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="portal-detail-card">
+                        <p class="portal-list-title">Record Summary</p>
+                        <div class="portal-data-stack">
+                            <div class="portal-data-row">
+                                <p class="portal-data-label">Prescriptions</p>
+                                <p class="portal-data-value">{{ prescriptions|length }} item{{ prescriptions|length|pluralize }}</p>
+                            </div>
+                            <div class="portal-data-row">
+                                <p class="portal-data-label">Doctor Notes</p>
+                                <p class="portal-data-value">{{ clinical_notes|length }} note{{ clinical_notes|length|pluralize }}</p>
+                            </div>
+                            <div class="portal-data-row">
+                                <p class="portal-data-label">Lab Results</p>
+                                <p class="portal-data-value">{{ lab_results|length }} result{{ lab_results|length|pluralize }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </section>
+
+            <section class="portal-panel">
+                <div class="portal-panel-header">
+                    <div>
+                        <h3 class="portal-panel-title">Prescriptions</h3>
+                    </div>
+                </div>
+
+                {% if prescriptions %}
+                {% for prescription in prescriptions %}
+                <div class="portal-list-item">
+                    <div class="portal-section-fill">
+                        <p class="portal-list-title">{{ prescription.medication_name }}</p>
+                        <p class="portal-list-subtitle">{{ prescription.dosage|default:"No dosage listed" }} • {{ prescription.frequency|default:"No frequency listed" }}</p>
+                        <p class="portal-list-meta">{{ prescription.instructions|default:"No instructions provided." }}</p>
+                        {% if prescription.prescribed_by %}
+                        <p class="portal-list-meta">Prescribed by {{ prescription.prescribed_by.user.first_name }} {{ prescription.prescribed_by.user.last_name }}</p>
+                        {% endif %}
+                    </div>
+                    <span class="portal-badge badge-neutral">{{ prescription.get_status_display }}</span>
+                </div>
+                {% empty %}
+                <div class="portal-list-item">
+                    <div>
+                        <p class="portal-list-title">No prescriptions yet</p>
+                        <p class="portal-list-subtitle">Prescriptions from your providers will appear here.</p>
+                    </div>
+                </div>
+                {% endfor %}
+                {% endif %}
+            </section>
+
+            <section class="portal-panel">
+                <div class="portal-panel-header">
+                    <div>
+                        <h3 class="portal-panel-title">Doctor Notes</h3>
+                    </div>
+                </div>
+
+                {% for note in clinical_notes %}
+                <div class="portal-list-item">
+                    <div class="portal-section-fill">
+                        <p class="portal-list-title">{{ note.title }}</p>
+                        <p class="portal-list-subtitle">{{ note.get_note_type_display }}</p>
+                        <p class="portal-list-meta portal-note-block">{{ note.content }}</p>
+                        {% if note.author %}
+                        <p class="portal-list-meta">By {{ note.author.user.first_name }} {{ note.author.user.last_name }} on {{ note.updated_at|date:"F j, Y" }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="portal-list-item">
+                    <div>
+                        <p class="portal-list-title">No doctor notes yet</p>
+                        <p class="portal-list-subtitle">Clinical notes will appear here after your visits.</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </section>
+
+            <section class="portal-panel">
+                <div class="portal-panel-header">
+                    <div>
+                        <h3 class="portal-panel-title">Lab History</h3>
+                    </div>
+                </div>
+
+                {% for result in lab_results %}
+                <div class="portal-list-item">
+                    <div class="portal-section-fill">
+                        <p class="portal-list-title">{{ result.lab_order.test_name }}</p>
+                        <p class="portal-list-subtitle">{{ result.result_summary }}</p>
+                        <p class="portal-list-meta">Resulted {{ result.resulted_at|date:"F j, Y" }}</p>
+                        {% if result.result_value %}
+                        <p class="portal-list-meta">Value: {{ result.result_value }}{% if result.units %} {{ result.units }}{% endif %}</p>
+                        {% endif %}
+                        {% if result.reference_range %}
+                        <p class="portal-list-meta">Reference range: {{ result.reference_range }}</p>
+                        {% endif %}
+                    </div>
+                    <span class="portal-badge badge-success">{{ result.get_status_display }}</span>
+                </div>
+                {% empty %}
+                <div class="portal-list-item">
+                    <div>
+                        <p class="portal-list-title">No lab results yet</p>
+                        <p class="portal-list-subtitle">Completed lab reports will appear here.</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </section>
+
+            <div class="portal-page-actions">
+                <a href="{% url 'records:my_records' %}" class="portal-outline-btn">Back to Records Overview</a>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}

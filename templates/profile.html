@@ -112,6 +112,54 @@
       </div>
     </div>
 
+    {% if patient_profile %}
+    <div class="portal-list-item">
+      <div>
+        <p class="portal-list-title">Phone Number</p>
+        <p class="portal-list-subtitle">{{ patient_profile.phone_number|default:"Not added" }}</p>
+      </div>
+    </div>
+
+    <div class="portal-list-item">
+      <div>
+        <p class="portal-list-title">Date of Birth</p>
+        <p class="portal-list-subtitle">{{ patient_profile.date_of_birth|date:"F j, Y"|default:"Not added" }}</p>
+      </div>
+    </div>
+
+    <div class="portal-list-item">
+      <div>
+        <p class="portal-list-title">Address</p>
+        <p class="portal-list-subtitle">
+          {% if patient_profile.address_line_1 %}
+            {{ patient_profile.address_line_1 }}
+            {% if patient_profile.address_line_2 %}<br>{{ patient_profile.address_line_2 }}{% endif %}
+            {% if patient_profile.city or patient_profile.state or patient_profile.postal_code %}
+              <br>
+              {{ patient_profile.city }}{% if patient_profile.city and patient_profile.state %}, {% endif %}{{ patient_profile.state }} {{ patient_profile.postal_code }}
+            {% endif %}
+          {% else %}
+            Not added
+          {% endif %}
+        </p>
+      </div>
+    </div>
+
+    <div class="portal-list-item">
+      <div>
+        <p class="portal-list-title">Emergency Contact</p>
+        <p class="portal-list-subtitle">
+          {% if patient_profile.emergency_contact_name %}
+            {{ patient_profile.emergency_contact_name }}
+            {% if patient_profile.emergency_contact_phone %}<br>{{ patient_profile.emergency_contact_phone }}{% endif %}
+          {% else %}
+            Not added
+          {% endif %}
+        </p>
+      </div>
+    </div>
+    {% endif %}
+
     <div class="portal-action-row portal-page-actions">
       <a class="portal-pay-btn" href="{% url 'edit_profile' %}">Edit Profile</a>
       <a class="portal-outline-btn" href="{% url 'password_change' %}">Change Password</a>

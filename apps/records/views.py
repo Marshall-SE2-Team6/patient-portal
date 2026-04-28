@@ -1,7 +1,9 @@
+from datetime import date
+
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 
-from .models import ClinicalNote, LabResult, Prescription
+from .models import ClinicalNote, LabResult, Prescription, VitalsRecord
 
 
 @login_required
@@ -43,3 +45,67 @@ def my_records(request):
         "clinical_notes": clinical_notes,
     }
     return render(request, "records/my_records.html", context)
+
+
+@login_required
+def patient_record_detail(request):
+    if request.user.is_staff or request.user.is_superuser:
+        return redirect("admin_dashboard")
+
+    patient_profile = getattr(request.user, "patient_profile", None)
+    patient_record = getattr(patient_profile, "record", None) if patient_profile else None
+
+    latest_vitals = None
+    prescriptions = []
+    clinical_notes = []
+    lab_results = []
+    age = None
+
+    if patient_profile and patient_profile.date_of_birth:
+        today = date.today()
+        age = (
+            today.year
+            - patient_profile.date_of_birth.year
+            - (
+                (today.month, today.day)
+                < (patient_profile.date_of_birth.month, patient_profile.date_of_birth.day)
+            )
+        )
+
+    if patient_record:
+        latest_vitals = (
+            VitalsRecord.objects
+            .filter(patient_record=patient_record)
+            .select_related("recorded_by__user")
+            .order_by("-recorded_at")
+            .first()
+        )
+        prescriptions = (
+            Prescription.objects
+            .filter(patient_record=patient_record)
+            .select_related("prescribed_by__user")
+            .order_by("-created_at")
+        )
+        clinical_notes = (
+            ClinicalNote.objects
+            .filter(patient_record=patient_record)
+            .select_related("author__user")
+            .order_by("-updated_at")
+        )
+        lab_results = (
+            LabResult.objects
+            .filter(lab_order__patient_record=patient_record)
+            .select_related("lab_order", "reviewed_by__user")
+            .order_by("-resulted_at")
+        )
+
+    context = {
+        "patient_profile": patient_profile,
+        "patient_record": patient_record,
+        "latest_vitals": latest_vitals,
+        "prescriptions": prescriptions,
+        "clinical_notes": clinical_notes,
+        "lab_results": lab_results,
+        "age": age,
+    }
+    return render(request, "records/patient_record_detail.html", context)

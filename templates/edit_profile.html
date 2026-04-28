@@ -67,7 +67,7 @@
     <main class="portal-content">
       <h2 class="portal-page-title">Edit Profile</h2>
 
-      <section class="portal-panel" style="max-width: 760px;">
+      <section class="portal-panel portal-page-frame">
         <div class="portal-panel-header">
           <div>
             <h3 class="portal-panel-title">Update Information</h3>
@@ -116,14 +116,131 @@
                 <div class="invalid-feedback">{{ error }}</div>
               {% endfor %}
             </div>
+
+            <div class="col-md-6">
+              <label class="portal-label" for="{{ form.phone_number.id_for_label }}">Phone Number</label>
+              <input
+                type="text"
+                name="{{ form.phone_number.html_name }}"
+                id="{{ form.phone_number.id_for_label }}"
+                value="{{ form.phone_number.value|default_if_none:'' }}"
+                class="form-control portal-input {% if form.phone_number.errors %}is-invalid{% endif %}">
+              {% for error in form.phone_number.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+              {% endfor %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="portal-label" for="{{ form.date_of_birth.id_for_label }}">Date of Birth</label>
+              <input
+                type="date"
+                name="{{ form.date_of_birth.html_name }}"
+                id="{{ form.date_of_birth.id_for_label }}"
+                value="{{ form.date_of_birth.value|default_if_none:'' }}"
+                class="form-control portal-input {% if form.date_of_birth.errors %}is-invalid{% endif %}">
+              {% for error in form.date_of_birth.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+              {% endfor %}
+            </div>
+
+            <div class="col-12">
+              <label class="portal-label" for="{{ form.address_line_1.id_for_label }}">Address Line 1</label>
+              <input
+                type="text"
+                name="{{ form.address_line_1.html_name }}"
+                id="{{ form.address_line_1.id_for_label }}"
+                value="{{ form.address_line_1.value|default_if_none:'' }}"
+                class="form-control portal-input {% if form.address_line_1.errors %}is-invalid{% endif %}">
+              {% for error in form.address_line_1.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+              {% endfor %}
+            </div>
+
+            <div class="col-12">
+              <label class="portal-label" for="{{ form.address_line_2.id_for_label }}">Address Line 2</label>
+              <input
+                type="text"
+                name="{{ form.address_line_2.html_name }}"
+                id="{{ form.address_line_2.id_for_label }}"
+                value="{{ form.address_line_2.value|default_if_none:'' }}"
+                class="form-control portal-input {% if form.address_line_2.errors %}is-invalid{% endif %}">
+              {% for error in form.address_line_2.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+              {% endfor %}
+            </div>
+
+            <div class="col-md-4">
+              <label class="portal-label" for="{{ form.city.id_for_label }}">City</label>
+              <input
+                type="text"
+                name="{{ form.city.html_name }}"
+                id="{{ form.city.id_for_label }}"
+                value="{{ form.city.value|default_if_none:'' }}"
+                class="form-control portal-input {% if form.city.errors %}is-invalid{% endif %}">
+              {% for error in form.city.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+              {% endfor %}
+            </div>
+
+            <div class="col-md-4">
+              <label class="portal-label" for="{{ form.state.id_for_label }}">State</label>
+              <input
+                type="text"
+                name="{{ form.state.html_name }}"
+                id="{{ form.state.id_for_label }}"
+                value="{{ form.state.value|default_if_none:'' }}"
+                class="form-control portal-input {% if form.state.errors %}is-invalid{% endif %}">
+              {% for error in form.state.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+              {% endfor %}
+            </div>
+
+            <div class="col-md-4">
+              <label class="portal-label" for="{{ form.postal_code.id_for_label }}">Postal Code</label>
+              <input
+                type="text"
+                name="{{ form.postal_code.html_name }}"
+                id="{{ form.postal_code.id_for_label }}"
+                value="{{ form.postal_code.value|default_if_none:'' }}"
+                class="form-control portal-input {% if form.postal_code.errors %}is-invalid{% endif %}">
+              {% for error in form.postal_code.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+              {% endfor %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="portal-label" for="{{ form.emergency_contact_name.id_for_label }}">Emergency Contact Name</label>
+              <input
+                type="text"
+                name="{{ form.emergency_contact_name.html_name }}"
+                id="{{ form.emergency_contact_name.id_for_label }}"
+                value="{{ form.emergency_contact_name.value|default_if_none:'' }}"
+                class="form-control portal-input {% if form.emergency_contact_name.errors %}is-invalid{% endif %}">
+              {% for error in form.emergency_contact_name.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+              {% endfor %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="portal-label" for="{{ form.emergency_contact_phone.id_for_label }}">Emergency Contact Phone</label>
+              <input
+                type="text"
+                name="{{ form.emergency_contact_phone.html_name }}"
+                id="{{ form.emergency_contact_phone.id_for_label }}"
+                value="{{ form.emergency_contact_phone.value|default_if_none:'' }}"
+                class="form-control portal-input {% if form.emergency_contact_phone.errors %}is-invalid{% endif %}">
+              {% for error in form.emergency_contact_phone.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+              {% endfor %}
+            </div>
           </div>
 
-          <div class="mt-4 d-flex gap-2 flex-wrap">
+          <div class="portal-action-row portal-page-actions">
             <button class="portal-pay-btn" type="submit">Save Changes</button>
-            <a href="{% url 'password_change' %}" class="portal-signout-btn text-decoration-none d-inline-flex align-items-center justify-content-center">
+            <a href="{% url 'password_change' %}" class="portal-outline-btn">
               Change Password
             </a>
-            <a href="{% url 'profile' %}" class="portal-signout-btn text-decoration-none d-inline-flex align-items-center justify-content-center">
+            <a href="{% url 'profile' %}" class="portal-outline-btn">
               Back to Profile
             </a>
           </div>

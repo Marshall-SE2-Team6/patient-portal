@@ -2,6 +2,7 @@ from datetime import timedelta
 
 from django.test import TestCase
 from django.urls import reverse
+from django.core import mail
 
 from django.contrib.auth import get_user_model
 from django.utils import timezone
@@ -16,6 +17,86 @@ class AccountsViewTests(TestCase):
         response = self.client.get(reverse("login"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "registration/login.html")
+
+    def test_signup_saves_patient_email(self) -> None:
+        response = self.client.post(
+            reverse("signup"),
+            {
+                "first_name": "Alice",
+                "last_name": "Portal",
+                "username": "portalalice",
+                "email": "alice@example.com",
+                "phone_number": "555-111-2222",
+                "date_of_birth": "1998-04-21",
+                "address": "123 Main Street",
+                "password1": "StrongPass123!",
+                "password2": "StrongPass123!",
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        user = get_user_model().objects.get(username="portalalice")
+        self.assertEqual(user.email, "alice@example.com")
+        self.assertTrue(PatientProfile.objects.filter(user=user, phone_number="555-111-2222").exists())
+
+    def test_password_reset_request_sends_email(self) -> None:
+        user = get_user_model().objects.create_user(
+            username="resetuser",
+            password="testpass123",
+            email="reset@example.com",
+        )
+        PatientProfile.objects.create(user=user)
+
+        response = self.client.post(
+            reverse("password_reset"),
+            {"email": "reset@example.com"},
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "registration/password_reset_done.html")
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("Marco's Medical Portal password reset", mail.outbox[0].subject)
+
+    def test_edit_profile_updates_patient_profile_fields(self) -> None:
+        user = get_user_model().objects.create_user(
+            username="profileuser",
+            password="testpass123",
+            email="old@example.com",
+            first_name="Old",
+            last_name="Name",
+        )
+        PatientProfile.objects.create(user=user)
+
+        self.client.login(username="profileuser", password="testpass123")
+        response = self.client.post(
+            reverse("edit_profile"),
+            {
+                "first_name": "New",
+                "last_name": "Patient",
+                "email": "new@example.com",
+                "phone_number": "555-333-4444",
+                "date_of_birth": "1995-06-15",
+                "address_line_1": "10 Market Street",
+                "address_line_2": "Unit 5",
+                "city": "Boston",
+                "state": "MA",
+                "postal_code": "02110",
+                "emergency_contact_name": "Jordan Patient",
+                "emergency_contact_phone": "555-999-0000",
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        user.refresh_from_db()
+        user.patient_profile.refresh_from_db()
+        self.assertEqual(user.first_name, "New")
+        self.assertEqual(user.email, "new@example.com")
+        self.assertEqual(user.patient_profile.phone_number, "555-333-4444")
+        self.assertEqual(user.patient_profile.city, "Boston")
+        self.assertEqual(user.patient_profile.emergency_contact_name, "Jordan Patient")
 
 
 class StaffPortalRoutingTests(TestCase):
