@@ -62,7 +62,6 @@
     <div class="portal-main">
         <div class="portal-topbar">
             <h1 class="portal-topbar-title">Appointments</h1>
-            <div class="portal-topbar-date">View your Appointments</div>
         </div>
 
         <main class="portal-content">
@@ -81,7 +80,6 @@
                 <div class="portal-panel-header">
                     <div>
                         <h3 class="portal-panel-title">Pending Approval</h3>
-                        <p class="portal-panel-subtitle">These requests are waiting for a doctor or receptionist to approve them.</p>
                     </div>
                 </div>
 
@@ -115,7 +113,6 @@
                 <div class="portal-panel-header">
                     <div>
                         <h3 class="portal-panel-title">My Appointments</h3>
-                        <p class="portal-panel-subtitle">Review your scheduled visits and appointment details.</p>
                     </div>
                     <a href="{% url 'request_appointment' %}" class="portal-panel-link">Request Appointment</a>
                 </div>
@@ -131,7 +128,7 @@
                 {% for appointment in appointments %}
                 <div class="portal-list-item">
                     <div class="portal-list-left">
-                        <div class="portal-quick-icon icon-blue">⌚</div>
+                        <div class="portal-quick-icon portal-quick-icon-sm icon-blue">⌚</div>
                         <div class="portal-list-details">
                             <p class="portal-list-title">{{ appointment.provider }}</p>
                             <p class="portal-list-subtitle">General Practice</p>
@@ -145,7 +142,7 @@
                         {% if appointment.has_pre_check_in %}
                             <span class="portal-badge badge-success">Pre-check-in complete</span>
                         {% elif appointment.can_pre_check_in %}
-                            <a href="{% url 'pre_check_in' appointment.id %}">Complete pre-check-in</a>
+                            <a href="{% url 'pre_check_in' appointment.id %}" class="portal-outline-btn portal-small-btn">Complete pre-check-in</a>
                         {% endif %}
                         {% if appointment.can_reschedule %}
                             <a href="{% url 'reschedule_appointment' appointment.id %}" class="portal-outline-btn portal-small-btn">Reschedule</a>

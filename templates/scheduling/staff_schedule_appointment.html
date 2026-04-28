@@ -8,12 +8,12 @@
             <div class="portal-brand-icon">M</div>
             <div>
                 <p class="portal-brand-title">Marco's Medical</p>
-                <p class="portal-brand-subtitle">Staff Portal</p>
+                <p class="portal-brand-subtitle">{{ staff_portal_label }}</p>
             </div>
         </div>
 
         <nav class="portal-nav">
-            <a class="portal-nav-link" href="{% url 'admin_dashboard' %}">
+            <a class="portal-nav-link" href="{% url staff_home_url %}">
                 <span class="portal-nav-icon">⌂</span>
                 <span>Dashboard</span>
             </a>
@@ -31,7 +31,6 @@
     <div class="portal-main">
         <div class="portal-topbar">
             <h1 class="portal-topbar-title">Schedule Appointment</h1>
-            <div class="portal-topbar-date">Book a patient into an open provider slot</div>
         </div>
 
         <main class="portal-content">
@@ -39,7 +38,7 @@
                 <div class="portal-panel-header">
                     <div>
                         <h3 class="portal-panel-title">Staff Scheduling Form</h3>
-                        <p class="portal-panel-subtitle">Reception or nursing staff can book directly from real provider availability.</p>
+                        <p class="portal-panel-subtitle">Front desk and administrative staff can book directly from real provider availability.</p>
                     </div>
                 </div>
 

@@ -8,12 +8,12 @@
             <div class="portal-brand-icon">M</div>
             <div>
                 <p class="portal-brand-title">Marco's Medical</p>
-                <p class="portal-brand-subtitle">Staff Portal</p>
+                <p class="portal-brand-subtitle">{{ staff_portal_label }}</p>
             </div>
         </div>
 
         <nav class="portal-nav">
-            <a class="portal-nav-link" href="{% url 'admin_dashboard' %}">
+            <a class="portal-nav-link" href="{% url staff_home_url %}">
                 <span class="portal-nav-icon">⌂</span>
                 <span>Dashboard</span>
             </a>
@@ -21,17 +21,46 @@
                 <span class="portal-nav-icon">📅</span>
                 <span>Appointments</span>
             </a>
+            {% if can_schedule %}
             <a class="portal-nav-link" href="{% url 'staff_schedule_appointment' %}">
                 <span class="portal-nav-icon">＋</span>
                 <span>Schedule</span>
             </a>
+            {% else %}
+            <a class="portal-nav-link" href="{% url 'nurse_records' %}">
+                <span class="portal-nav-icon">▣</span>
+                <span>Patient Records</span>
+            </a>
+            {% endif %}
         </nav>
+
+        <div class="portal-sidebar-footer">
+            <div class="portal-user-box">
+                <div class="portal-avatar">
+                    {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                </div>
+                <div>
+                    <p class="portal-user-name">
+                        {% if request.user.first_name or request.user.last_name %}
+                        {{ request.user.first_name }} {{ request.user.last_name }}
+                        {% else %}
+                        {{ request.user.username }}
+                        {% endif %}
+                    </p>
+                    <p class="portal-user-email">{{ request.user.email|default:"No email added" }}</p>
+                </div>
+            </div>
+
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="portal-signout-btn">Sign Out</button>
+            </form>
+        </div>
     </aside>
 
     <div class="portal-main">
         <div class="portal-topbar">
             <h1 class="portal-topbar-title">Appointment Management</h1>
-            <div class="portal-topbar-date">Schedule, check in, and update visits</div>
         </div>
 
         <main class="portal-content">
@@ -49,9 +78,17 @@
                 <div class="portal-panel-header">
                     <div>
                         <h3 class="portal-panel-title">Scheduled Appointments</h3>
-                        <p class="portal-panel-subtitle">Front desk and nursing staff can manage the visit lifecycle here.</p>
+                        <p class="portal-panel-subtitle">
+                            {% if can_schedule %}
+                            Front desk and support staff can manage the visit lifecycle here.
+                            {% else %}
+                            Review scheduled visits, pre-check-in status, and patient arrivals.
+                            {% endif %}
+                        </p>
                     </div>
+                    {% if can_schedule %}
                     <a href="{% url 'staff_schedule_appointment' %}" class="portal-outline-btn">Schedule Appointment</a>
+                    {% endif %}
                 </div>
 
                 {% for appointment in appointments %}
@@ -72,30 +109,36 @@
                         {% if appointment.has_pre_check_in %}
                         <span class="portal-badge badge-success">Pre-check-in complete</span>
                         {% endif %}
-                        {% if appointment.status == "scheduled" %}
+                        {% if appointment.can_check_in %}
                         <form method="post" action="{% url 'check_in_appointment' appointment.id %}">
                             {% csrf_token %}
                             <button type="submit" class="portal-pay-btn portal-small-btn">Check In</button>
                         </form>
                         {% endif %}
-                        {% if appointment.can_reschedule %}
+                        {% if can_manage_updates and appointment.can_reschedule %}
                         <a href="{% url 'reschedule_appointment' appointment.id %}" class="portal-secondary-btn">Reschedule</a>
                         {% endif %}
-                        {% if appointment.can_cancel %}
+                        {% if can_manage_updates and appointment.can_cancel %}
                         <form method="post" action="{% url 'cancel_appointment' appointment.id %}">
                             {% csrf_token %}
                             <button type="submit" class="portal-signout-btn portal-small-btn">Cancel</button>
                         </form>
                         {% endif %}
+                        {% if can_complete %}
                         {% if appointment.status == "checked_in" or appointment.status == "scheduled" %}
                         <form method="post" action="{% url 'complete_appointment' appointment.id %}">
                             {% csrf_token %}
                             <button type="submit" class="portal-secondary-btn">Complete</button>
                         </form>
+                        {% endif %}
+                        {% endif %}
+                        {% if can_mark_no_show %}
+                        {% if appointment.status == "checked_in" or appointment.status == "scheduled" %}
                         <form method="post" action="{% url 'mark_no_show_appointment' appointment.id %}">
                             {% csrf_token %}
                             <button type="submit" class="portal-outline-btn portal-small-btn">No-Show</button>
                         </form>
+                        {% endif %}
                         {% endif %}
                     </div>
                 </div>

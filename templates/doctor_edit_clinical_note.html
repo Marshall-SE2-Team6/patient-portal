@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Edit Clinical Note{% endblock %}
+
+{% block body %}
+<div class="portal-app-shell">
+    <aside class="portal-sidebar">
+        <div class="portal-sidebar-brand">
+            <div class="portal-brand-icon">M</div>
+            <div>
+                <p class="portal-brand-title">Marco's Medical</p>
+                <p class="portal-brand-subtitle">Doctor Portal</p>
+            </div>
+        </div>
+    </aside>
+
+    <div class="portal-main">
+        <div class="portal-topbar">
+            <h1 class="portal-topbar-title">Edit Clinical Note</h1>
+            <div class="portal-topbar-date">{{ patient.user.first_name }} {{ patient.user.last_name }}</div>
+        </div>
+
+        <main class="portal-content">
+            <section class="portal-panel">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="portal-list-item">
+                        <div class="portal-section-fill portal-form-stack">
+                            <p class="portal-list-title">Title</p>
+                            {{ form.title }}
+                            <p class="portal-list-subtitle">Note Type</p>
+                            {{ form.note_type }}
+                            <p class="portal-list-subtitle">Content</p>
+                            {{ form.content }}
+                        </div>
+                    </div>
+
+                    <div class="portal-form-actions">
+                        <button type="submit" class="portal-pay-btn appointment-detail-btn">Save Note</button>
+                        <a href="{% url 'doctor_patient_record_detail' patient.id %}" class="portal-signout-btn appointment-detail-btn">Back</a>
+                    </div>
+                </form>
+            </section>
+        </main>
+    </div>
+</div>
+{% endblock %}

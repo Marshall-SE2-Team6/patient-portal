@@ -146,7 +146,7 @@ class AppointmentLifecycleTests(TestCase):
             staff_role=StaffRole.RECEPTIONIST,
         )
 
-        start = timezone.now() + timedelta(days=4)
+        start = timezone.now() + timedelta(minutes=30)
         self.original_slot = AvailabilitySlot.objects.create(
             provider=self.provider,
             start_time=start,
@@ -215,6 +215,25 @@ class AppointmentLifecycleTests(TestCase):
         self.appointment.refresh_from_db()
         self.assertEqual(self.appointment.status, AppointmentStatus.CHECKED_IN)
         self.assertTrue(CheckInRecord.objects.filter(appointment=self.appointment).exists())
+
+    def test_receptionist_cannot_check_in_future_day_appointment(self) -> None:
+        self.appointment.scheduled_start = timezone.now() + timedelta(days=2)
+        self.appointment.scheduled_end = timezone.now() + timedelta(days=2, hours=1)
+        self.appointment.save(update_fields=["scheduled_start", "scheduled_end"])
+
+        self.client.login(username="frontdesk2", password="testpass123")
+        response = self.client.post(
+            reverse("check_in_appointment", args=[self.appointment.id]),
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.appointment.refresh_from_db()
+        self.assertEqual(self.appointment.status, AppointmentStatus.SCHEDULED)
+        self.assertContains(
+            response,
+            "Patients can only be checked in for scheduled appointments happening today.",
+        )
 
     def test_staff_can_directly_schedule_appointment_from_slot(self) -> None:
         self.client.login(username="frontdesk2", password="testpass123")

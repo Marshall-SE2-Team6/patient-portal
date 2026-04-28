@@ -8,7 +8,7 @@
             <div class="portal-brand-icon">M</div>
             <div>
                 <p class="portal-brand-title">Marco's Medical</p>
-                <p class="portal-brand-subtitle">Admin Portal</p>
+                <p class="portal-brand-subtitle">{{ portal_label }}</p>
             </div>
         </div>
 
@@ -68,8 +68,7 @@
 
     <div class="portal-main">
         <div class="portal-topbar">
-            <h1 class="portal-topbar-title">Administrator Dashboard</h1>
-            <div class="portal-topbar-date">Manage the portal from an administrator view</div>
+            <h1 class="portal-topbar-title">{{ portal_title }} Dashboard</h1>
         </div>
 
         <main class="portal-content">
@@ -84,7 +83,6 @@
             {% endif %}
 
             <h2 class="portal-page-title">Welcome, {{ request.user.first_name|default:request.user.username }}</h2>
-            <p class="portal-page-subtitle">This dashboard is for staff and administrators.</p>
 
             <div class="portal-page-stack">
                 <section class="portal-quick-grid">
@@ -245,7 +243,7 @@
 
                     <div class="portal-staff-actions">
                         <span class="portal-badge badge-neutral">{{ appointment.get_status_display }}</span>
-                        {% if appointment.status == "scheduled" %}
+                        {% if appointment.can_check_in %}
                         <form method="post" action="{% url 'check_in_appointment' appointment.id %}">
                             {% csrf_token %}
                             <button type="submit" class="portal-pay-btn portal-small-btn">Check In</button>

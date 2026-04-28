@@ -55,113 +55,122 @@
 
     <div class="portal-main">
         <div class="portal-topbar">
-            <h1 class="portal-topbar-title">Patient Record Details</h1>
-            <div class="portal-topbar-date">Welcome to the doctor portal</div>
+            <div class="portal-topbar-stack">
+                <h1 class="portal-topbar-title">Patient Record Details</h1>
+            </div>
         </div>
 
         <main class="portal-content">
+            {% if messages %}
+            <div class="portal-messages">
+                {% for message in messages %}
+                <div class="portal-message {% if message.tags == 'success' %}portal-message-success{% elif message.tags == 'error' %}portal-message-error{% else %}portal-message-info{% endif %}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
             <section class="portal-panel">
                 <h2 class="portal-page-title">
                     {{ patient.user.first_name }} {{ patient.user.last_name }}
                 </h2>
 
-                <p class="portal-page-subtitle">
-                    Username: {{ patient.user.username }}
-                </p>
-
-                <form method="post">
+                <form method="post" class="portal-record-form">
                     {% csrf_token %}
+                    <input type="hidden" name="action" value="save_record">
 
-                    <div class="portal-list-item">
-                        <div style="width: 100%;">
+                    <div class="portal-record-form-grid">
+                        <div class="portal-detail-card portal-section-stack">
                             <p class="portal-list-title">Patient Demographics</p>
-
-                            <p class="portal-list-subtitle">Date of Birth</p>
-                            <input
-                                    class="portal-form-input"
-                                    type="date"
-                                    name="date_of_birth"
-                                    value="{{ patient.date_of_birth|date:'Y-m-d' }}"
-                            >
-
-                            <p class="portal-list-subtitle">Age</p>
-                            <p class="portal-list-meta">
-                                {% if age %}
-                                {{ age }} years old
-                                {% else %}
-                                Not listed
-                                {% endif %}
-                            </p>
+                            <div class="portal-field-group">
+                                <p class="portal-field-label">Date of Birth</p>
+                                <input
+                                        class="portal-form-input"
+                                        type="date"
+                                        name="date_of_birth"
+                                        value="{{ patient.date_of_birth|date:'Y-m-d' }}"
+                                >
+                            </div>
+                            <div class="portal-data-row">
+                                <p class="portal-data-label">Age</p>
+                                <p class="portal-data-value">
+                                    {% if age %}
+                                    {{ age }} years old
+                                    {% else %}
+                                    Not listed
+                                    {% endif %}
+                                </p>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="portal-list-item">
-                        <div style="width: 100%;">
+                        <div class="portal-detail-card portal-section-stack">
+                            <p class="portal-list-title">Vitals Snapshot</p>
+                            <div class="portal-data-stack">
+                                <div class="portal-data-row">
+                                    <p class="portal-data-label">Latest Height</p>
+                                    <p class="portal-data-value">
+                                        {% if latest_vitals and latest_vitals.height_cm %}{{ latest_vitals.height_cm }} cm{% else %}Not listed{% endif %}
+                                    </p>
+                                </div>
+                                <div class="portal-data-row">
+                                    <p class="portal-data-label">Latest Weight</p>
+                                    <p class="portal-data-value">
+                                        {% if latest_vitals and latest_vitals.weight_kg %}{{ latest_vitals.weight_kg }} kg{% else %}Not listed{% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="portal-field-group">
+                                <p class="portal-field-label">New Height in cm</p>
+                                <input class="portal-form-input" type="number" step="0.01" name="height_cm">
+                            </div>
+                            <div class="portal-field-group">
+                                <p class="portal-field-label">New Weight in kg</p>
+                                <input class="portal-form-input" type="number" step="0.01" name="weight_kg">
+                            </div>
+                        </div>
+
+                        <div class="portal-detail-card portal-section-stack">
                             <p class="portal-list-title">Basic Medical Information</p>
-
-                            <p class="portal-list-subtitle">Blood Type</p>
-                            <input class="portal-form-input" type="text" name="blood_type" value="{{ record.blood_type }}">
-
-                            <p class="portal-list-subtitle">Allergies</p>
-                            <textarea class="portal-form-input" name="allergies">{{ record.allergies }}</textarea>
-
-                            <p class="portal-list-subtitle">Chronic Conditions</p>
-                            <textarea class="portal-form-input" name="chronic_conditions">{{ record.chronic_conditions }}</textarea>
-
-                            <p class="portal-list-subtitle">General Notes</p>
-                            <textarea class="portal-form-input" name="general_notes">{{ record.general_notes }}</textarea>
+                            <div class="portal-field-group">
+                                <p class="portal-field-label">Blood Type</p>
+                                <input class="portal-form-input" type="text" name="blood_type" value="{{ record.blood_type }}">
+                            </div>
+                            <div class="portal-field-group">
+                                <p class="portal-field-label">Allergies</p>
+                                <textarea class="portal-form-input" name="allergies">{{ record.allergies }}</textarea>
+                            </div>
+                            <div class="portal-field-group">
+                                <p class="portal-field-label">Chronic Conditions</p>
+                                <textarea class="portal-form-input" name="chronic_conditions">{{ record.chronic_conditions }}</textarea>
+                            </div>
+                            <div class="portal-field-group">
+                                <p class="portal-field-label">General Notes</p>
+                                <textarea class="portal-form-input" name="general_notes">{{ record.general_notes }}</textarea>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="portal-list-item">
-                        <div style="width: 100%;">
-                            <p class="portal-list-title">Vitals</p>
-
-                            <p class="portal-list-subtitle">
-                                Latest Height:
-                                {% if latest_vitals and latest_vitals.height_cm %}
-                                {{ latest_vitals.height_cm }} cm
-                                {% else %}
-                                Not listed
-                                {% endif %}
-                            </p>
-
-                            <p class="portal-list-subtitle">
-                                Latest Weight:
-                                {% if latest_vitals and latest_vitals.weight_kg %}
-                                {{ latest_vitals.weight_kg }} kg
-                                {% else %}
-                                Not listed
-                                {% endif %}
-                            </p>
-
-                            <p class="portal-list-subtitle">New Height in cm</p>
-                            <input class="portal-form-input" type="number" step="0.01" name="height_cm">
-
-                            <p class="portal-list-subtitle">New Weight in kg</p>
-                            <input class="portal-form-input" type="number" step="0.01" name="weight_kg">
-                        </div>
-                    </div>
-
-                    <div class="portal-list-item">
-                        <div style="width: 100%;">
+                        <div class="portal-detail-card portal-section-stack">
                             <p class="portal-list-title">Add Prescription</p>
-
-                            <p class="portal-list-subtitle">Medication Name</p>
-                            <input class="portal-form-input" type="text" name="medication_name">
-
-                            <p class="portal-list-subtitle">Dosage</p>
-                            <input class="portal-form-input" type="text" name="dosage">
-
-                            <p class="portal-list-subtitle">Frequency</p>
-                            <input class="portal-form-input" type="text" name="frequency">
-
-                            <p class="portal-list-subtitle">Instructions</p>
-                            <textarea class="portal-form-input" name="instructions"></textarea>
+                            <div class="portal-field-group">
+                                <p class="portal-field-label">Medication Name</p>
+                                <input class="portal-form-input" type="text" name="medication_name">
+                            </div>
+                            <div class="portal-field-group">
+                                <p class="portal-field-label">Dosage</p>
+                                <input class="portal-form-input" type="text" name="dosage">
+                            </div>
+                            <div class="portal-field-group">
+                                <p class="portal-field-label">Frequency</p>
+                                <input class="portal-form-input" type="text" name="frequency">
+                            </div>
+                            <div class="portal-field-group">
+                                <p class="portal-field-label">Instructions</p>
+                                <textarea class="portal-form-input" name="instructions"></textarea>
+                            </div>
                         </div>
                     </div>
 
-                    <button type="submit" class="portal-signout-btn appointment-detail-btn">
+                    <button type="submit" class="portal-secondary-btn appointment-detail-btn">
                         Save Record
                     </button>
                 </form>
@@ -171,14 +180,13 @@
                 <div class="portal-panel-header">
                     <div>
                         <h3 class="portal-panel-title">Prescriptions</h3>
-                        <p class="portal-panel-subtitle">Current and previous prescriptions for this patient.</p>
                     </div>
                 </div>
 
                 {% for prescription in prescriptions %}
-                <div class="portal-list-item">
-                    <div>
-                        <p class="portal-list-title">{{ prescription.medication_name }}</p>
+                    <div class="portal-list-item">
+                        <div class="portal-section-fill">
+                            <p class="portal-list-title">{{ prescription.medication_name }}</p>
 
                         <p class="portal-list-subtitle">
                             {{ prescription.dosage|default:"No dosage listed" }}
@@ -190,7 +198,7 @@
                             {{ prescription.instructions|default:"No instructions listed" }}
                         </p>
 
-                        <a href="{% url 'doctor_edit_prescription' patient.id prescription.id %}" class="portal-signout-btn appointment-detail-btn">
+                        <a href="{% url 'doctor_edit_prescription' patient.id prescription.id %}" class="portal-outline-btn portal-small-btn portal-inline-action">
                             Edit Prescription
                         </a>
                     </div>
@@ -209,12 +217,160 @@
                 {% endfor %}
             </section>
 
-            <div style="display:flex; justify-content:center; gap:16px; margin-top:24px;">
-                <a href="{% url 'doctor_records' %}" class="portal-signout-btn appointment-detail-btn">
+            <section class="portal-panel">
+                <div class="portal-panel-header">
+                    <div>
+                        <h3 class="portal-panel-title">Clinical Notes</h3>
+                    </div>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="add_note">
+                    <div class="portal-list-item">
+                        <div class="portal-section-fill portal-form-stack">
+                            <p class="portal-list-title">New Clinical Note</p>
+                            <div class="portal-field-group">
+                                <p class="portal-field-label">Title</p>
+                                {{ note_form.title }}
+                            </div>
+                            <div class="portal-field-group">
+                                <p class="portal-field-label">Note Type</p>
+                                {{ note_form.note_type }}
+                            </div>
+                            <div class="portal-field-group">
+                                <p class="portal-field-label">Content</p>
+                                {{ note_form.content }}
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="portal-pay-btn appointment-detail-btn">Add Note</button>
+                </form>
+
+                {% for note in clinical_notes %}
+                <div class="portal-list-item">
+                    <div class="portal-section-fill">
+                        <p class="portal-list-title">{{ note.title }}</p>
+                        <p class="portal-list-subtitle">{{ note.get_note_type_display }}</p>
+                        <p class="portal-list-meta portal-note-block">{{ note.content }}</p>
+                        <p class="portal-list-meta">
+                            {% if note.author %}By {{ note.author.user.first_name }} {{ note.author.user.last_name }}{% endif %}
+                            • {{ note.updated_at|date:"F j, Y g:i A" }}
+                        </p>
+                        <a href="{% url 'doctor_edit_clinical_note' patient.id note.id %}" class="portal-outline-btn portal-small-btn portal-inline-action">
+                            Edit Note
+                        </a>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="portal-list-item">
+                    <div>
+                        <p class="portal-list-title">No clinical notes yet</p>
+                        <p class="portal-list-subtitle">Use the form above to add one.</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </section>
+
+            <section class="portal-panel">
+                <div class="portal-panel-header">
+                    <div>
+                        <h3 class="portal-panel-title">Lab Orders & Results</h3>
+                    </div>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="add_lab_order">
+                    <div class="portal-list-item">
+                        <div class="portal-section-fill portal-form-stack">
+                            <p class="portal-list-title">Create Lab Order</p>
+                            <div class="portal-field-group">
+                                <p class="portal-field-label">Test Name</p>
+                                {{ lab_order_form.test_name }}
+                            </div>
+                            <div class="portal-field-group">
+                                <p class="portal-field-label">Instructions</p>
+                                {{ lab_order_form.instructions }}
+                            </div>
+                            <div class="portal-field-group">
+                                <p class="portal-field-label">Status</p>
+                                {{ lab_order_form.status }}
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="portal-pay-btn appointment-detail-btn">Place Lab Order</button>
+                </form>
+
+                {% for lab_order in lab_orders %}
+                <div class="portal-list-item">
+                    <div class="portal-section-fill">
+                        <p class="portal-list-title">{{ lab_order.test_name }}</p>
+                        <p class="portal-list-subtitle">{{ lab_order.get_status_display }}</p>
+                        <p class="portal-list-meta">{{ lab_order.instructions|default:"No instructions provided." }}</p>
+                        {% if lab_order.ordered_by %}
+                        <p class="portal-list-meta">Ordered by {{ lab_order.ordered_by.user.first_name }} {{ lab_order.ordered_by.user.last_name }} on {{ lab_order.ordered_at|date:"F j, Y" }}</p>
+                        {% endif %}
+
+                        <form method="post" class="portal-vertical-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="review_lab_result">
+                            <input type="hidden" name="lab_order_id" value="{{ lab_order.id }}">
+                            {% with lab_order.result as result %}
+                            <div class="portal-field-group">
+                                <p class="portal-field-label">Result Summary</p>
+                                <textarea class="portal-form-input" name="lab-result-{{ lab_order.id }}-result_summary" rows="3">{% if result %}{{ result.result_summary }}{% endif %}</textarea>
+                            </div>
+                            <div class="portal-form-grid portal-inline-action">
+                                <div class="portal-field-group">
+                                    <p class="portal-field-label">Result Value</p>
+                                    <input class="portal-form-input" type="text" name="lab-result-{{ lab_order.id }}-result_value" value="{% if result %}{{ result.result_value }}{% endif %}">
+                                </div>
+                                <div class="portal-field-group">
+                                    <p class="portal-field-label">Units</p>
+                                    <input class="portal-form-input" type="text" name="lab-result-{{ lab_order.id }}-units" value="{% if result %}{{ result.units }}{% endif %}">
+                                </div>
+                            </div>
+                            <div class="portal-form-grid portal-inline-action">
+                                <div class="portal-field-group">
+                                    <p class="portal-field-label">Reference Range</p>
+                                    <input class="portal-form-input" type="text" name="lab-result-{{ lab_order.id }}-reference_range" value="{% if result %}{{ result.reference_range }}{% endif %}">
+                                </div>
+                                <div class="portal-field-group">
+                                    <p class="portal-field-label">Result Status</p>
+                                    <select class="portal-form-input" name="lab-result-{{ lab_order.id }}-status">
+                                        {% for value, label in lab_result_statuses %}
+                                        <option value="{{ value }}" {% if result and result.status == value %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="submit" class="portal-outline-btn portal-inline-action">
+                                {% if result %}Update Reviewed Result{% else %}Add Result & Mark Reviewed{% endif %}
+                            </button>
+                            {% if result and result.reviewed_by %}
+                            <p class="portal-list-meta portal-inline-action">Reviewed by {{ result.reviewed_by.user.first_name }} {{ result.reviewed_by.user.last_name }} on {{ result.resulted_at|date:"F j, Y g:i A" }}</p>
+                            {% endif %}
+                            {% endwith %}
+                        </form>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="portal-list-item">
+                    <div>
+                        <p class="portal-list-title">No lab orders yet</p>
+                        <p class="portal-list-subtitle">Use the form above to create the first lab order.</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </section>
+
+            <div class="portal-form-actions">
+                <a href="{% url 'doctor_records' %}" class="portal-outline-btn appointment-detail-btn">
                     Back to Medical Records
                 </a>
 
-                <a href="{% url 'doctor_dashboard' %}" class="portal-signout-btn appointment-detail-btn">
+                <a href="{% url 'doctor_dashboard' %}" class="portal-outline-btn appointment-detail-btn">
                     Back to Dashboard
                 </a>
             </div>

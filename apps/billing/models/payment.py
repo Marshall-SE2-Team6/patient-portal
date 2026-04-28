@@ -13,6 +13,7 @@ class PaymentStatus(models.TextChoices):
 
 
 class Payment(models.Model):
+    Status = PaymentStatus
     invoice = models.ForeignKey(
         Invoice,
         on_delete=models.CASCADE,

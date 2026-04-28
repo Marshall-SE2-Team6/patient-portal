@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Nurse Dashboard | Marco's Medical Portal{% endblock %}
+
+{% block body %}
+<div class="portal-app-shell">
+    <aside class="portal-sidebar">
+        <div class="portal-sidebar-brand">
+            <div class="portal-brand-icon">M</div>
+            <div>
+                <p class="portal-brand-title">Marco's Medical</p>
+                <p class="portal-brand-subtitle">Nurse Portal</p>
+            </div>
+        </div>
+
+        <nav class="portal-nav">
+            <a class="portal-nav-link active" href="{% url 'nurse_dashboard' %}">
+                <span class="portal-nav-icon">⌂</span>
+                <span>Dashboard</span>
+            </a>
+            <a class="portal-nav-link" href="{% url 'staff_appointments' %}">
+                <span class="portal-nav-icon">📅</span>
+                <span>Appointments</span>
+            </a>
+            <a class="portal-nav-link" href="{% url 'nurse_records' %}">
+                <span class="portal-nav-icon">▣</span>
+                <span>Patient Records</span>
+            </a>
+        </nav>
+
+        <div class="portal-sidebar-footer">
+            <div class="portal-user-box">
+                <div class="portal-avatar">
+                    {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                </div>
+                <div>
+                    <p class="portal-user-name">{{ request.user.first_name }} {{ request.user.last_name }}</p>
+                    <p class="portal-user-email">{{ request.user.email|default:"No email added" }}</p>
+                </div>
+            </div>
+
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="portal-signout-btn">Sign Out</button>
+            </form>
+        </div>
+    </aside>
+
+    <div class="portal-main">
+        <div class="portal-topbar">
+            <div class="portal-topbar-stack">
+                <h1 class="portal-topbar-title">Nurse Dashboard</h1>
+            </div>
+        </div>
+
+        <main class="portal-content">
+            <h2 class="portal-page-title">Today's Clinic Overview</h2>
+
+            <section class="portal-quick-grid">
+                <div class="portal-quick-card">
+                    <div class="portal-quick-icon icon-blue">🗓</div>
+                    <div>
+                        <div class="portal-quick-label">Today's Visits</div>
+                        <div class="portal-quick-value">{{ upcoming_count }}</div>
+                    </div>
+                </div>
+
+                <div class="portal-quick-card">
+                    <div class="portal-quick-icon icon-green">✅</div>
+                    <div>
+                        <div class="portal-quick-label">Checked In</div>
+                        <div class="portal-quick-value">{{ checked_in_count }}</div>
+                    </div>
+                </div>
+
+                <div class="portal-quick-card">
+                    <div class="portal-quick-icon icon-purple">👥</div>
+                    <div>
+                        <div class="portal-quick-label">Patients</div>
+                        <div class="portal-quick-value">{{ patient_count }}</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="portal-panel">
+                <div class="portal-panel-header">
+                    <div>
+                        <h3 class="portal-panel-title">Today's Appointments</h3>
+                        <p class="portal-panel-subtitle">Review arrivals, pre-check-in status, and quick access to patient charts.</p>
+                    </div>
+                    <a href="{% url 'staff_appointments' %}" class="portal-outline-btn">Open Appointment View</a>
+                </div>
+
+                {% for appointment in todays_appointments %}
+                <div class="portal-list-item">
+                    <div class="portal-list-left">
+                        <div class="portal-quick-icon portal-quick-icon-sm icon-blue">🗓</div>
+                        <div class="portal-list-details">
+                            <p class="portal-list-title">{{ appointment.patient.user.first_name }} {{ appointment.patient.user.last_name }}</p>
+                            <p class="portal-list-subtitle">Dr. {{ appointment.provider.staff_profile.user.first_name }} {{ appointment.provider.staff_profile.user.last_name }}</p>
+                            <p class="portal-list-meta">{{ appointment.scheduled_start|date:"F j, Y" }} at {{ appointment.scheduled_start|date:"g:i A" }}</p>
+                        </div>
+                    </div>
+
+                    <div class="portal-list-actions">
+                        <span class="portal-badge badge-neutral">{{ appointment.get_status_display }}</span>
+                        {% if appointment.has_pre_check_in %}
+                        <span class="portal-badge badge-success">Pre-check-in complete</span>
+                        {% endif %}
+                        <a href="{% url 'nurse_patient_record_detail' appointment.patient.id %}" class="portal-secondary-btn portal-small-btn">Open Chart</a>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="portal-list-item">
+                    <div>
+                        <p class="portal-list-title">No appointments today</p>
+                        <p class="portal-list-subtitle">Today's visit list will appear here when appointments are scheduled.</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </section>
+        </main>
+    </div>
+</div>
+{% endblock %}

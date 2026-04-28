@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from decimal import Decimal
 
 from apps.profiles.models import PatientProfile
 from apps.scheduling.models import Appointment
@@ -45,3 +46,39 @@ class Invoice(models.Model):
 
     def __str__(self) -> str:
         return self.invoice_number
+
+    def refresh_totals(self) -> None:
+        from .payment import PaymentStatus
+
+        subtotal = sum(
+            (line.line_total for line in self.line_items.all()),
+            Decimal("0.00"),
+        )
+        total_amount = subtotal + self.tax_amount
+        paid_amount = sum(
+            (
+                payment.amount
+                for payment in self.payments.filter(status=PaymentStatus.COMPLETED)
+            ),
+            Decimal("0.00"),
+        )
+        balance_due = total_amount - paid_amount
+
+        if balance_due <= Decimal("0.00"):
+            self.status = InvoiceStatus.PAID
+            balance_due = Decimal("0.00")
+        elif paid_amount > Decimal("0.00"):
+            self.status = InvoiceStatus.PARTIALLY_PAID
+        elif self.status == InvoiceStatus.DRAFT:
+            self.status = InvoiceStatus.ISSUED
+
+        self.subtotal = subtotal
+        self.total_amount = total_amount
+        self.balance_due = balance_due
+        self.save(update_fields=[
+            "status",
+            "subtotal",
+            "total_amount",
+            "balance_due",
+            "updated_at",
+        ])

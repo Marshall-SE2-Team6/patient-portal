@@ -95,6 +95,16 @@ class Appointment(models.Model):
     def can_cancel(self):
         return self.status in {AppointmentStatus.SCHEDULED, AppointmentStatus.CHECKED_IN} and self.scheduled_start > timezone.now()
 
+    @property
+    def can_check_in(self):
+        now = timezone.now()
+        today = timezone.localdate()
+        return (
+            self.status == AppointmentStatus.SCHEDULED
+            and self.scheduled_end >= now
+            and self.scheduled_start.astimezone(timezone.get_current_timezone()).date() == today
+        )
+
     def _release_slot(self) -> None:
         slot = self.availability_slot
         if slot and slot.is_booked:
@@ -209,6 +219,8 @@ class Appointment(models.Model):
         self._release_slot()
 
     def check_in(self, *, actor_label: str = "Front Desk") -> None:
+        if not self.can_check_in:
+            raise ValueError("Patients can only be checked in for scheduled appointments happening today.")
         self.transition_status(AppointmentStatus.CHECKED_IN, actor_label=actor_label)
 
     def complete(self, *, actor_label: str = "Staff") -> None:

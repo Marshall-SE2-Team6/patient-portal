@@ -63,7 +63,6 @@
     <div class="portal-main">
         <div class="portal-topbar">
             <h1 class="portal-topbar-title">Appointment Details</h1>
-            <div class="portal-topbar-date">Review your scheduled visit</div>
         </div>
 
         <main class="portal-content">
@@ -84,9 +83,6 @@
                             Dr. {{ appointment.provider.staff_profile.user.first_name }}
                             {{ appointment.provider.staff_profile.user.last_name }}
                         </h3>
-                        <p class="portal-panel-subtitle">
-                            {{ appointment.provider.specialty|default:"General Practice" }}
-                        </p>
                     </div>
                 </div>
 
