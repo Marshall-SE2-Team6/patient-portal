@@ -313,3 +313,218 @@ class NurseWorkflowTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertTrue(VitalsRecord.objects.filter(patient_record__patient=self.patient_profile).exists())
+
+
+# ---------------------------------------------------------------------------
+# TC-WB-011 through TC-WB-020 — Task 6 Additional Test Cases
+# ---------------------------------------------------------------------------
+
+class SignupPageTests(TestCase):
+    """TC-WB-011: Signup page loads successfully."""
+
+    def test_signup_page_loads(self) -> None:
+        response = self.client.get(reverse("signup"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "signup.html")
+
+
+class PatientSignupTests(TestCase):
+    """TC-WB-012 & TC-WB-013: Successful signup and duplicate-username rejection."""
+
+    def _valid_post_data(self, username: str = "newpatient") -> dict:
+        return {
+            "username": username,
+            "first_name": "Jane",
+            "last_name": "Doe",
+            "password1": "StrongPass!99",
+            "password2": "StrongPass!99",
+            "phone_number": "555-0100",
+            "date_of_birth": "1990-06-15",
+            "address": "123 Main St",
+        }
+
+    def test_successful_patient_signup_creates_user_and_profile(self) -> None:
+        """TC-WB-012"""
+        user_model = get_user_model()
+        response = self.client.post(reverse("signup"), self._valid_post_data())
+
+        # Should redirect to dashboard after successful signup
+        self.assertRedirects(response, reverse("dashboard"))
+
+        # User created with PATIENT role
+        user = user_model.objects.get(username="newpatient")
+        self.assertEqual(user.role, user_model.Role.PATIENT)
+
+        # Associated PatientProfile created
+        self.assertTrue(PatientProfile.objects.filter(user=user).exists())
+
+    def test_signup_with_duplicate_username_returns_form_error(self) -> None:
+        """TC-WB-013"""
+        user_model = get_user_model()
+
+        # Pre-create a user with the target username
+        user_model.objects.create_user(
+            username="duplicate_user",
+            password="SomePass!99",
+        )
+
+        response = self.client.post(reverse("signup"), self._valid_post_data(username="duplicate_user"))
+
+        # Form should re-render (200), not redirect
+        self.assertEqual(response.status_code, 200)
+
+        # Only one user with that username should exist
+        self.assertEqual(user_model.objects.filter(username="duplicate_user").count(), 1)
+
+
+class PatientDashboardTests(TestCase):
+    """TC-WB-014 & TC-WB-015: Authenticated patient dashboard and unauthenticated redirect."""
+
+    def setUp(self) -> None:
+        user_model = get_user_model()
+        self.patient_user = user_model.objects.create_user(
+            username="dashpatient",
+            password="testpass123",
+            first_name="Dave",
+            last_name="Patient",
+        )
+        self.patient_profile = PatientProfile.objects.create(user=self.patient_user)
+
+    def test_authenticated_patient_dashboard_loads_with_correct_context(self) -> None:
+        """TC-WB-014"""
+        self.client.login(username="dashpatient", password="testpass123")
+        response = self.client.get(reverse("dashboard"))
+
+        self.assertEqual(response.status_code, 200)
+
+        expected_keys = [
+            "patient_profile",
+            "upcoming_appointments",
+            "pending_appointment_requests",
+            "recent_lab_results",
+            "open_invoices",
+            "recent_notifications",
+        ]
+        for key in expected_keys:
+            self.assertIn(key, response.context, msg=f"Missing context key: {key}")
+
+    def test_unauthenticated_dashboard_access_redirects_to_login(self) -> None:
+        """TC-WB-015"""
+        response = self.client.get(reverse("dashboard"))
+        # @login_required redirects to the login page
+        login_url = reverse("login")
+        self.assertRedirects(response, f"{login_url}?next={reverse('dashboard')}")
+
+
+class StaffDashboardRedirectTests(TestCase):
+    """TC-WB-016: Staff user dashboard redirects to role-specific dashboard."""
+
+    def setUp(self) -> None:
+        user_model = get_user_model()
+        self.doctor_user = user_model.objects.create_user(
+            username="staffdoctor",
+            password="testpass123",
+            role=user_model.Role.PHYSICIAN,
+        )
+        doctor_staff = StaffProfile.objects.create(
+            user=self.doctor_user,
+            staff_role=StaffRole.PHYSICIAN,
+        )
+        Provider.objects.create(staff_profile=doctor_staff, specialty="General")
+
+    def test_staff_physician_dashboard_redirects_to_doctor_dashboard(self) -> None:
+        """TC-WB-016"""
+        self.client.login(username="staffdoctor", password="testpass123")
+        response = self.client.get(reverse("dashboard"))
+        self.assertRedirects(response, reverse("doctor_dashboard"))
+
+
+class ProfilePageTests(TestCase):
+    """TC-WB-017: Profile page loads for authenticated user."""
+
+    def setUp(self) -> None:
+        user_model = get_user_model()
+        self.user = user_model.objects.create_user(
+            username="profileuser",
+            password="testpass123",
+        )
+
+    def test_profile_page_loads_for_authenticated_user(self) -> None:
+        """TC-WB-017"""
+        self.client.login(username="profileuser", password="testpass123")
+        response = self.client.get(reverse("profile"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "profile.html")
+
+
+class EditProfileTests(TestCase):
+    """TC-WB-018: Edit profile POST updates user fields and redirects to profile."""
+
+    def setUp(self) -> None:
+        user_model = get_user_model()
+        self.user = user_model.objects.create_user(
+            username="editprofileuser",
+            password="testpass123",
+            first_name="Old",
+            last_name="Name",
+            email="old@example.com",
+        )
+
+    def test_edit_profile_post_updates_fields_and_redirects(self) -> None:
+        """TC-WB-018"""
+        self.client.login(username="editprofileuser", password="testpass123")
+        response = self.client.post(
+            reverse("edit_profile"),
+            {
+                "first_name": "New",
+                "last_name": "Name",
+                "email": "new@example.com",
+            },
+        )
+
+        self.assertRedirects(response, reverse("profile"))
+
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.first_name, "New")
+        self.assertEqual(self.user.last_name, "Name")
+
+
+class PasswordChangePageTests(TestCase):
+    """TC-WB-019: Password change page loads for authenticated user."""
+
+    def setUp(self) -> None:
+        user_model = get_user_model()
+        self.user = user_model.objects.create_user(
+            username="pwchangeuser",
+            password="testpass123",
+        )
+
+    def test_password_change_page_loads_for_authenticated_user(self) -> None:
+        """TC-WB-019"""
+        self.client.login(username="pwchangeuser", password="testpass123")
+        response = self.client.get(reverse("password_change"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "registration/password_change_form.html")
+
+
+class ReceptionistAccessControlTests(TestCase):
+    """TC-WB-020: Receptionist cannot access admin dashboard."""
+
+    def setUp(self) -> None:
+        user_model = get_user_model()
+        self.receptionist_user = user_model.objects.create_user(
+            username="receptionistonly",
+            password="testpass123",
+            is_staff=True,
+        )
+        StaffProfile.objects.create(
+            user=self.receptionist_user,
+            staff_role=StaffRole.RECEPTIONIST,
+        )
+
+    def test_receptionist_cannot_access_admin_dashboard(self) -> None:
+        """TC-WB-020"""
+        self.client.login(username="receptionistonly", password="testpass123")
+        response = self.client.get(reverse("admin_dashboard"), follow=True)
+        # Receptionist should be redirected away from admin_dashboard
+        self.assertRedirects(response, reverse("receptionist_dashboard"))
