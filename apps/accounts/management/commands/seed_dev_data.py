@@ -47,6 +47,7 @@ from apps.scheduling.models import (
     AppointmentStatus,
     AvailabilitySlot,
     CheckInRecord,
+    PreCheckInRecord,
     Provider,
 )
 
@@ -137,6 +138,22 @@ class Command(BaseCommand):
             last_name="Lopez",
         )
 
+        diana_user = self._upsert_user(
+            username="diana",
+            email="diana@patientportal.local",
+            password=dev_password,
+            first_name="Diana",
+            last_name="Brooks",
+        )
+
+        ethan_user = self._upsert_user(
+            username="ethan",
+            email="ethan@patientportal.local",
+            password=dev_password,
+            first_name="Ethan",
+            last_name="Reed",
+        )
+
         # ------------------------------------------------------------------
         # Profiles
         # ------------------------------------------------------------------
@@ -179,6 +196,34 @@ class Command(BaseCommand):
                 "postal_code": "26505",
                 "emergency_contact_name": "Mia Lopez",
                 "emergency_contact_phone": "304-555-2003",
+            },
+        )
+
+        diana_profile, _ = PatientProfile.objects.update_or_create(
+            user=diana_user,
+            defaults={
+                "phone_number": "304-555-1004",
+                "date_of_birth": "1991-09-12",
+                "address_line_1": "404 Birch Drive",
+                "city": "Parkersburg",
+                "state": "WV",
+                "postal_code": "26101",
+                "emergency_contact_name": "Noah Brooks",
+                "emergency_contact_phone": "304-555-2004",
+            },
+        )
+
+        ethan_profile, _ = PatientProfile.objects.update_or_create(
+            user=ethan_user,
+            defaults={
+                "phone_number": "304-555-1005",
+                "date_of_birth": "1984-07-30",
+                "address_line_1": "505 Walnut Court",
+                "city": "Wheeling",
+                "state": "WV",
+                "postal_code": "26003",
+                "emergency_contact_name": "Sophia Reed",
+                "emergency_contact_phone": "304-555-2005",
             },
         )
 
@@ -321,6 +366,34 @@ class Command(BaseCommand):
             defaults={"is_booked": False, "notes": "Future open slot"},
         )
 
+        slot_7_start = self._dt(days=0, hour=11)
+        slot_7_end = self._dt(days=0, hour=12)
+        slot_8_start = self._dt(days=3, hour=9)
+        slot_8_end = self._dt(days=3, hour=10)
+        slot_9_start = self._dt(days=6, hour=10)
+        slot_9_end = self._dt(days=6, hour=11)
+
+        slot_7, _ = AvailabilitySlot.objects.update_or_create(
+            provider=dr_lee_provider,
+            start_time=slot_7_start,
+            end_time=slot_7_end,
+            defaults={"is_booked": True, "notes": "Today waiting room slot"},
+        )
+
+        slot_8, _ = AvailabilitySlot.objects.update_or_create(
+            provider=dr_smith_provider,
+            start_time=slot_8_start,
+            end_time=slot_8_end,
+            defaults={"is_booked": False, "notes": "Future open slot"},
+        )
+
+        slot_9, _ = AvailabilitySlot.objects.update_or_create(
+            provider=dr_lee_provider,
+            start_time=slot_9_start,
+            end_time=slot_9_end,
+            defaults={"is_booked": False, "notes": "Future open slot"},
+        )
+
         # ------------------------------------------------------------------
         # Appointment Requests + Appointments
         # ------------------------------------------------------------------
@@ -357,6 +430,54 @@ class Command(BaseCommand):
                 "requested_end": slot_6.end_time,
                 "reason": "New patient consultation request",
                 "status": AppointmentRequestStatus.PENDING,
+            },
+        )
+
+        alice_pending_request, _ = AppointmentRequest.objects.update_or_create(
+            patient=alice_profile,
+            preferred_provider=dr_lee_provider,
+            requested_start=slot_5.start_time,
+            defaults={
+                "requested_slot": slot_5,
+                "requested_end": slot_5.end_time,
+                "reason": "Review persistent fatigue symptoms",
+                "status": AppointmentRequestStatus.PENDING,
+            },
+        )
+
+        alice_followup_request, _ = AppointmentRequest.objects.update_or_create(
+            patient=alice_profile,
+            preferred_provider=dr_lee_provider,
+            requested_start=slot_9.start_time,
+            defaults={
+                "requested_slot": slot_9,
+                "requested_end": slot_9.end_time,
+                "reason": "Lab review and medication follow-up",
+                "status": AppointmentRequestStatus.APPROVED,
+            },
+        )
+
+        diana_request, _ = AppointmentRequest.objects.update_or_create(
+            patient=diana_profile,
+            preferred_provider=dr_lee_provider,
+            requested_start=slot_7.start_time,
+            defaults={
+                "requested_slot": slot_7,
+                "requested_end": slot_7.end_time,
+                "reason": "Follow-up for migraine symptoms",
+                "status": AppointmentRequestStatus.APPROVED,
+            },
+        )
+
+        ethan_rejected_request, _ = AppointmentRequest.objects.update_or_create(
+            patient=ethan_profile,
+            preferred_provider=dr_smith_provider,
+            requested_start=slot_8.start_time,
+            defaults={
+                "requested_slot": slot_8,
+                "requested_end": slot_8.end_time,
+                "reason": "Travel clearance consultation",
+                "status": AppointmentRequestStatus.REJECTED,
             },
         )
 
@@ -401,6 +522,73 @@ class Command(BaseCommand):
             },
         )
 
+        diana_appointment, _ = Appointment.objects.update_or_create(
+            patient=diana_profile,
+            provider=dr_lee_provider,
+            scheduled_start=slot_7.start_time,
+            defaults={
+                "appointment_request": diana_request,
+                "availability_slot": slot_7,
+                "scheduled_end": slot_7.end_time,
+                "reason": "Follow-up for migraine symptoms",
+                "notes": "Patient is in waiting area and chart review is ready.",
+                "status": AppointmentStatus.SCHEDULED,
+            },
+        )
+
+        ethan_no_show_appointment, _ = Appointment.objects.update_or_create(
+            patient=ethan_profile,
+            provider=dr_smith_provider,
+            scheduled_start=self._dt(days=-2, hour=14),
+            defaults={
+                "availability_slot": None,
+                "scheduled_end": self._dt(days=-2, hour=15),
+                "reason": "Travel clearance consultation",
+                "notes": "Seeded missed visit for no-show demo.",
+                "status": AppointmentStatus.NO_SHOW,
+            },
+        )
+
+        alice_cancelled_appointment, _ = Appointment.objects.update_or_create(
+            patient=alice_profile,
+            provider=dr_lee_provider,
+            scheduled_start=self._dt(days=7, hour=10),
+            defaults={
+                "availability_slot": None,
+                "scheduled_end": self._dt(days=7, hour=11),
+                "reason": "Nutrition counseling",
+                "notes": "Seeded cancelled appointment for patient history.",
+                "status": AppointmentStatus.CANCELLED,
+            },
+        )
+
+        alice_followup_appointment, _ = Appointment.objects.update_or_create(
+            patient=alice_profile,
+            provider=dr_lee_provider,
+            scheduled_start=slot_9.start_time,
+            defaults={
+                "appointment_request": alice_followup_request,
+                "availability_slot": slot_9,
+                "scheduled_end": slot_9.end_time,
+                "reason": "Lab review and medication follow-up",
+                "notes": "Seeded future visit with pre-check-in complete for patient demo.",
+                "status": AppointmentStatus.SCHEDULED,
+            },
+        )
+
+        alice_no_show_appointment, _ = Appointment.objects.update_or_create(
+            patient=alice_profile,
+            provider=dr_smith_provider,
+            scheduled_start=self._dt(days=-12, hour=8),
+            defaults={
+                "availability_slot": None,
+                "scheduled_end": self._dt(days=-12, hour=9),
+                "reason": "Missed allergy follow-up",
+                "notes": "Seeded no-show history item for appointment timeline demo.",
+                "status": AppointmentStatus.NO_SHOW,
+            },
+        )
+
         slot_1.is_booked = True
         slot_1.save(update_fields=["is_booked"])
         slot_3.is_booked = True
@@ -413,6 +601,12 @@ class Command(BaseCommand):
         slot_5.save(update_fields=["is_booked"])
         slot_6.is_booked = False
         slot_6.save(update_fields=["is_booked"])
+        slot_7.is_booked = True
+        slot_7.save(update_fields=["is_booked"])
+        slot_8.is_booked = False
+        slot_8.save(update_fields=["is_booked"])
+        slot_9.is_booked = True
+        slot_9.save(update_fields=["is_booked"])
 
         CheckInRecord.objects.update_or_create(
             appointment=alice_appointment,
@@ -427,6 +621,66 @@ class Command(BaseCommand):
             defaults={
                 "checked_in_by": nurse_jane_profile,
                 "notes": "Vitals pending room assignment complete.",
+            },
+        )
+
+        PreCheckInRecord.objects.update_or_create(
+            appointment=bob_appointment,
+            defaults={
+                "phone_number": bob_profile.phone_number,
+                "address_line_1": bob_profile.address_line_1,
+                "city": bob_profile.city,
+                "state": bob_profile.state,
+                "postal_code": bob_profile.postal_code,
+                "emergency_contact_name": bob_profile.emergency_contact_name,
+                "emergency_contact_phone": bob_profile.emergency_contact_phone,
+                "symptoms": "Occasional headaches and elevated home blood pressure readings.",
+                "current_medications": "Lisinopril 10 mg daily",
+                "allergies": "None reported",
+                "insurance_provider": "Mountain State Health",
+                "insurance_member_id": "MSH-BOB-1002",
+                "accommodation_notes": "",
+                "additional_notes": "Would like to discuss medication adjustment.",
+            },
+        )
+
+        PreCheckInRecord.objects.update_or_create(
+            appointment=diana_appointment,
+            defaults={
+                "phone_number": diana_profile.phone_number,
+                "address_line_1": diana_profile.address_line_1,
+                "city": diana_profile.city,
+                "state": diana_profile.state,
+                "postal_code": diana_profile.postal_code,
+                "emergency_contact_name": diana_profile.emergency_contact_name,
+                "emergency_contact_phone": diana_profile.emergency_contact_phone,
+                "symptoms": "Recurring migraines with light sensitivity this week.",
+                "current_medications": "Sumatriptan as needed",
+                "allergies": "Shellfish",
+                "insurance_provider": "Valley Care",
+                "insurance_member_id": "VC-DIANA-1004",
+                "accommodation_notes": "Prefers dimmed room lighting.",
+                "additional_notes": "Missed work twice due to headaches.",
+            },
+        )
+
+        PreCheckInRecord.objects.update_or_create(
+            appointment=alice_followup_appointment,
+            defaults={
+                "phone_number": alice_profile.phone_number,
+                "address_line_1": alice_profile.address_line_1,
+                "city": alice_profile.city,
+                "state": alice_profile.state,
+                "postal_code": alice_profile.postal_code,
+                "emergency_contact_name": alice_profile.emergency_contact_name,
+                "emergency_contact_phone": alice_profile.emergency_contact_phone,
+                "symptoms": "Continuing fatigue in the evenings and mild seasonal congestion.",
+                "current_medications": "Cetirizine 10 mg daily, multivitamin",
+                "allergies": "Penicillin",
+                "insurance_provider": "Appalachian Health Plan",
+                "insurance_member_id": "AHP-ALICE-1001",
+                "accommodation_notes": "Prefers morning follow-up calls if rescheduled.",
+                "additional_notes": "Would like to review recent lab results and next steps.",
             },
         )
 
@@ -466,6 +720,28 @@ class Command(BaseCommand):
             },
         )
 
+        diana_record, _ = PatientRecord.objects.update_or_create(
+            patient=diana_profile,
+            defaults={
+                "primary_provider": dr_lee_provider,
+                "blood_type": "AB+",
+                "allergies": "Shellfish",
+                "chronic_conditions": "Migraine disorder",
+                "general_notes": "Seeded waiting-room patient for nurse and front desk demo.",
+            },
+        )
+
+        ethan_record, _ = PatientRecord.objects.update_or_create(
+            patient=ethan_profile,
+            defaults={
+                "primary_provider": dr_smith_provider,
+                "blood_type": "O-",
+                "allergies": "Ibuprofen",
+                "chronic_conditions": "Mild anxiety",
+                "general_notes": "Seeded no-show and rejected-request patient history.",
+            },
+        )
+
         ClinicalNote.objects.update_or_create(
             patient_record=alice_record,
             title="Annual wellness note",
@@ -474,6 +750,50 @@ class Command(BaseCommand):
                 "author": dr_smith_profile,
                 "note_type": ClinicalNoteType.SOAP,
                 "content": "Patient doing well overall. Routine follow-up in one year.",
+            },
+        )
+
+        ClinicalNote.objects.update_or_create(
+            patient_record=alice_record,
+            title="Lab follow-up planning note",
+            defaults={
+                "appointment": alice_followup_appointment,
+                "author": dr_lee_profile,
+                "note_type": ClinicalNoteType.CONSULT,
+                "content": "Patient requested review of wellness labs and ongoing fatigue. Follow-up visit scheduled with pre-check-in completed.",
+            },
+        )
+
+        ClinicalNote.objects.update_or_create(
+            patient_record=bob_record,
+            title="Hypertension review",
+            defaults={
+                "appointment": bob_appointment,
+                "author": dr_lee_profile,
+                "note_type": ClinicalNoteType.CONSULT,
+                "content": "Patient reports elevated home readings. Review medication adherence and consider dosage increase.",
+            },
+        )
+
+        ClinicalNote.objects.update_or_create(
+            patient_record=charlie_record,
+            title="Asthma same-day assessment",
+            defaults={
+                "appointment": charlie_appointment,
+                "author": dr_smith_profile,
+                "note_type": ClinicalNoteType.SOAP,
+                "content": "Patient checked in for same-day wheezing symptoms. Nebulizer response and discharge plan pending.",
+            },
+        )
+
+        ClinicalNote.objects.update_or_create(
+            patient_record=diana_record,
+            title="Migraine follow-up prep",
+            defaults={
+                "appointment": diana_appointment,
+                "author": dr_lee_profile,
+                "note_type": ClinicalNoteType.GENERAL,
+                "content": "Patient has recurring migraines and pre-check-in mentions light sensitivity. Review triggers and work accommodations.",
             },
         )
 
@@ -495,6 +815,60 @@ class Command(BaseCommand):
             },
         )
 
+        VitalsRecord.objects.update_or_create(
+            patient_record=bob_record,
+            appointment=bob_appointment,
+            recorded_at=self._dt(days=-20, hour=10, minute=20),
+            defaults={
+                "recorded_by": nurse_jane_profile,
+                "height_cm": Decimal("180.20"),
+                "weight_kg": Decimal("88.40"),
+                "temperature_c": Decimal("36.9"),
+                "systolic_bp": 142,
+                "diastolic_bp": 92,
+                "pulse_bpm": 78,
+                "respiratory_rate": 16,
+                "oxygen_saturation": 97,
+                "notes": "Home blood pressure trend is elevated.",
+            },
+        )
+
+        VitalsRecord.objects.update_or_create(
+            patient_record=charlie_record,
+            appointment=charlie_appointment,
+            recorded_at=self._dt(days=0, hour=15, minute=10),
+            defaults={
+                "recorded_by": nurse_jane_profile,
+                "height_cm": Decimal("174.00"),
+                "weight_kg": Decimal("79.60"),
+                "temperature_c": Decimal("37.3"),
+                "systolic_bp": 128,
+                "diastolic_bp": 84,
+                "pulse_bpm": 93,
+                "respiratory_rate": 20,
+                "oxygen_saturation": 95,
+                "notes": "Shortness of breath improved after arrival, monitoring ongoing.",
+            },
+        )
+
+        VitalsRecord.objects.update_or_create(
+            patient_record=diana_record,
+            appointment=diana_appointment,
+            recorded_at=self._dt(days=0, hour=11, minute=5),
+            defaults={
+                "recorded_by": nurse_jane_profile,
+                "height_cm": Decimal("165.00"),
+                "weight_kg": Decimal("59.10"),
+                "temperature_c": Decimal("36.7"),
+                "systolic_bp": 116,
+                "diastolic_bp": 74,
+                "pulse_bpm": 70,
+                "respiratory_rate": 14,
+                "oxygen_saturation": 99,
+                "notes": "Patient seated in waiting room; migraine symptoms active.",
+            },
+        )
+
         alice_lab_order, _ = LabOrder.objects.update_or_create(
             patient_record=alice_record,
             test_name="Complete Blood Count",
@@ -506,6 +880,17 @@ class Command(BaseCommand):
             },
         )
 
+        alice_followup_lab_order, _ = LabOrder.objects.update_or_create(
+            patient_record=alice_record,
+            test_name="Thyroid Stimulating Hormone",
+            defaults={
+                "appointment": alice_followup_appointment,
+                "ordered_by": dr_lee_profile,
+                "instructions": "Follow-up fatigue workup.",
+                "status": LabOrderStatus.ORDERED,
+            },
+        )
+
         LabResult.objects.update_or_create(
             lab_order=alice_lab_order,
             defaults={
@@ -514,6 +899,51 @@ class Command(BaseCommand):
                 "result_value": "Normal",
                 "units": "",
                 "reference_range": "Normal",
+                "status": LabResultStatus.FINAL,
+            },
+        )
+
+        bob_lab_order, _ = LabOrder.objects.update_or_create(
+            patient_record=bob_record,
+            test_name="Lipid Panel",
+            defaults={
+                "appointment": bob_appointment,
+                "ordered_by": dr_lee_profile,
+                "instructions": "Fasting lab order for chronic care follow-up.",
+                "status": LabOrderStatus.ORDERED,
+            },
+        )
+
+        charlie_lab_order, _ = LabOrder.objects.update_or_create(
+            patient_record=charlie_record,
+            test_name="Chest X-Ray Review",
+            defaults={
+                "appointment": charlie_appointment,
+                "ordered_by": dr_smith_profile,
+                "instructions": "Correlate with wheezing symptoms and oxygen saturation.",
+                "status": LabOrderStatus.IN_PROGRESS,
+            },
+        )
+
+        diana_lab_order, _ = LabOrder.objects.update_or_create(
+            patient_record=diana_record,
+            test_name="Vitamin D",
+            defaults={
+                "appointment": diana_appointment,
+                "ordered_by": dr_lee_profile,
+                "instructions": "Rule out deficiency contributing to fatigue and headaches.",
+                "status": LabOrderStatus.COMPLETED,
+            },
+        )
+
+        LabResult.objects.update_or_create(
+            lab_order=diana_lab_order,
+            defaults={
+                "reviewed_by": dr_lee_profile,
+                "result_summary": "Vitamin D mildly low. Consider supplementation.",
+                "result_value": "24",
+                "units": "ng/mL",
+                "reference_range": "30-100",
                 "status": LabResultStatus.FINAL,
             },
         )
@@ -532,6 +962,21 @@ class Command(BaseCommand):
             },
         )
 
+        alice_completed_prescription, _ = Prescription.objects.update_or_create(
+            patient_record=alice_record,
+            medication_name="Amoxicillin",
+            defaults={
+                "appointment": alice_appointment,
+                "prescribed_by": dr_smith_profile,
+                "dosage": "500 mg",
+                "frequency": "Twice daily",
+                "instructions": "Completed prior short course; kept for history demo.",
+                "start_date": timezone.localdate() - timedelta(days=60),
+                "end_date": timezone.localdate() - timedelta(days=53),
+                "status": PrescriptionStatus.COMPLETED,
+            },
+        )
+
         Medication.objects.update_or_create(
             patient_record=alice_record,
             name="Cetirizine",
@@ -541,6 +986,70 @@ class Command(BaseCommand):
                 "frequency": "Once daily",
                 "is_active": True,
                 "notes": "Seeded active medication.",
+            },
+        )
+
+        Medication.objects.update_or_create(
+            patient_record=alice_record,
+            name="Amoxicillin",
+            defaults={
+                "prescription": alice_completed_prescription,
+                "dosage": "500 mg",
+                "frequency": "Twice daily",
+                "is_active": False,
+                "notes": "Seeded completed medication history item.",
+            },
+        )
+
+        bob_prescription, _ = Prescription.objects.update_or_create(
+            patient_record=bob_record,
+            medication_name="Lisinopril",
+            defaults={
+                "appointment": bob_appointment,
+                "prescribed_by": dr_lee_profile,
+                "dosage": "10 mg",
+                "frequency": "Once daily",
+                "instructions": "Take every morning and monitor blood pressure at home.",
+                "start_date": timezone.localdate() - timedelta(days=90),
+                "status": PrescriptionStatus.ACTIVE,
+            },
+        )
+
+        Medication.objects.update_or_create(
+            patient_record=bob_record,
+            name="Lisinopril",
+            defaults={
+                "prescription": bob_prescription,
+                "dosage": "10 mg",
+                "frequency": "Once daily",
+                "is_active": True,
+                "notes": "Seeded chronic blood pressure medication.",
+            },
+        )
+
+        diana_prescription, _ = Prescription.objects.update_or_create(
+            patient_record=diana_record,
+            medication_name="Sumatriptan",
+            defaults={
+                "appointment": diana_appointment,
+                "prescribed_by": dr_lee_profile,
+                "dosage": "50 mg",
+                "frequency": "As needed",
+                "instructions": "Take at migraine onset, no more than 2 doses in 24 hours.",
+                "start_date": timezone.localdate() - timedelta(days=30),
+                "status": PrescriptionStatus.ACTIVE,
+            },
+        )
+
+        Medication.objects.update_or_create(
+            patient_record=diana_record,
+            name="Sumatriptan",
+            defaults={
+                "prescription": diana_prescription,
+                "dosage": "50 mg",
+                "frequency": "As needed",
+                "is_active": True,
+                "notes": "Seeded migraine rescue medication.",
             },
         )
 
@@ -586,6 +1095,22 @@ class Command(BaseCommand):
             patient_record=charlie_record,
             defaults={
                 "summary_text": "Asthma patient with same-day respiratory follow-up.",
+                "last_updated_by": dr_smith_profile,
+            },
+        )
+
+        MedicalSummary.objects.update_or_create(
+            patient_record=diana_record,
+            defaults={
+                "summary_text": "Migraine follow-up patient currently waiting for same-day appointment.",
+                "last_updated_by": dr_lee_profile,
+            },
+        )
+
+        MedicalSummary.objects.update_or_create(
+            patient_record=ethan_record,
+            defaults={
+                "summary_text": "History includes missed visit and previously rejected travel-clearance request.",
                 "last_updated_by": dr_smith_profile,
             },
         )
@@ -638,6 +1163,21 @@ class Command(BaseCommand):
             },
         )
 
+        diana_payment_method, _ = PaymentMethod.objects.update_or_create(
+            patient=diana_profile,
+            nickname="Diana Discover",
+            defaults={
+                "method_type": PaymentMethodType.CREDIT_CARD,
+                "cardholder_name": "Diana Brooks",
+                "brand": "Discover",
+                "last4": "4444",
+                "expiration_month": 9,
+                "expiration_year": 2028,
+                "is_default": True,
+                "is_active": True,
+            },
+        )
+
         alice_invoice, _ = Invoice.objects.update_or_create(
             invoice_number="INV-1001",
             defaults={
@@ -668,6 +1208,28 @@ class Command(BaseCommand):
                 "status": InvoiceStatus.ISSUED,
                 "due_date": timezone.localdate() + timedelta(days=21),
                 "notes": "Seeded checked-in visit invoice preview.",
+            },
+        )
+
+        alice_open_invoice, _ = Invoice.objects.update_or_create(
+            invoice_number="INV-1005",
+            defaults={
+                "patient": alice_profile,
+                "appointment": alice_followup_appointment,
+                "status": InvoiceStatus.ISSUED,
+                "due_date": timezone.localdate() + timedelta(days=10),
+                "notes": "Seeded upcoming visit invoice for patient billing demo.",
+            },
+        )
+
+        diana_invoice, _ = Invoice.objects.update_or_create(
+            invoice_number="INV-1004",
+            defaults={
+                "patient": diana_profile,
+                "appointment": diana_appointment,
+                "status": InvoiceStatus.OVERDUE,
+                "due_date": timezone.localdate() - timedelta(days=5),
+                "notes": "Seeded overdue invoice for front desk follow-up demo.",
             },
         )
 
@@ -715,9 +1277,55 @@ class Command(BaseCommand):
             },
         )
 
+        InvoiceLineItem.objects.update_or_create(
+            invoice=alice_open_invoice,
+            description="Follow-up Office Visit",
+            defaults={
+                "quantity": 1,
+                "unit_price": Decimal("130.00"),
+                "line_total": Decimal("130.00"),
+                "service_date": timezone.localdate() + timedelta(days=6),
+            },
+        )
+
+        InvoiceLineItem.objects.update_or_create(
+            invoice=alice_open_invoice,
+            description="Pending thyroid lab order",
+            defaults={
+                "quantity": 1,
+                "unit_price": Decimal("28.00"),
+                "line_total": Decimal("28.00"),
+                "service_date": timezone.localdate() + timedelta(days=6),
+            },
+        )
+
+        InvoiceLineItem.objects.update_or_create(
+            invoice=diana_invoice,
+            description="Migraine Follow-up Visit",
+            defaults={
+                "quantity": 1,
+                "unit_price": Decimal("135.00"),
+                "line_total": Decimal("135.00"),
+                "service_date": timezone.localdate() - timedelta(days=6),
+            },
+        )
+
+        InvoiceLineItem.objects.update_or_create(
+            invoice=diana_invoice,
+            description="Vitamin D Lab Review",
+            defaults={
+                "quantity": 1,
+                "unit_price": Decimal("45.00"),
+                "line_total": Decimal("45.00"),
+                "service_date": timezone.localdate() - timedelta(days=6),
+            },
+        )
+
         self._refresh_invoice_totals(alice_invoice)
+        self._refresh_invoice_totals(alice_open_invoice)
         self._refresh_invoice_totals(bob_invoice)
         self._refresh_invoice_totals(charlie_invoice)
+        self._refresh_invoice_totals(diana_invoice)
 
         Payment.objects.update_or_create(
             invoice=alice_invoice,
@@ -745,6 +1353,17 @@ class Command(BaseCommand):
 
         self._refresh_invoice_totals(charlie_invoice)
 
+        Payment.objects.update_or_create(
+            invoice=diana_invoice,
+            transaction_reference="TXN-INV-1004-PENDING",
+            defaults={
+                "payment_method": diana_payment_method,
+                "amount": Decimal("25.00"),
+                "status": PaymentStatus.FAILED,
+                "notes": "Seeded failed payment attempt for billing demo.",
+            },
+        )
+
         # ------------------------------------------------------------------
         # Notifications
         # ------------------------------------------------------------------
@@ -760,6 +1379,46 @@ class Command(BaseCommand):
                 "invoice": alice_invoice,
                 "sent_at": timezone.now(),
                 "read_at": timezone.now(),
+            },
+        )
+
+        Notification.objects.update_or_create(
+            recipient=alice_user,
+            subject="Upcoming follow-up appointment confirmed",
+            defaults={
+                "notification_type": NotificationType.APPOINTMENT_STATUS,
+                "channel": NotificationChannel.IN_APP,
+                "status": NotificationStatus.SENT,
+                "message": "Your lab review follow-up with Dr. Maya Lee is scheduled and your pre-check-in is already on file.",
+                "appointment": alice_followup_appointment,
+                "invoice": None,
+                "sent_at": timezone.now(),
+            },
+        )
+
+        Notification.objects.update_or_create(
+            recipient=alice_user,
+            subject="Invoice INV-1005 is ready",
+            defaults={
+                "notification_type": NotificationType.BILLING_UPDATE,
+                "channel": NotificationChannel.IN_APP,
+                "status": NotificationStatus.PENDING,
+                "message": "A new invoice has been added for your follow-up appointment and is available in Billing.",
+                "appointment": alice_followup_appointment,
+                "invoice": alice_open_invoice,
+            },
+        )
+
+        Notification.objects.update_or_create(
+            recipient=alice_user,
+            subject="One appointment request is still pending",
+            defaults={
+                "notification_type": NotificationType.GENERAL,
+                "channel": NotificationChannel.IN_APP,
+                "status": NotificationStatus.PENDING,
+                "message": "Your fatigue-related appointment request is still waiting for staff approval.",
+                "appointment": None,
+                "invoice": None,
             },
         )
 
@@ -806,6 +1465,34 @@ class Command(BaseCommand):
         )
 
         Notification.objects.update_or_create(
+            recipient=diana_user,
+            subject="Today’s appointment is ready for check-in",
+            defaults={
+                "notification_type": NotificationType.APPOINTMENT_STATUS,
+                "channel": NotificationChannel.IN_APP,
+                "status": NotificationStatus.SENT,
+                "message": "Your appointment is on today’s front desk queue and your pre-check-in has already been submitted.",
+                "appointment": diana_appointment,
+                "invoice": None,
+                "sent_at": timezone.now(),
+            },
+        )
+
+        Notification.objects.update_or_create(
+            recipient=ethan_user,
+            subject="Appointment request update",
+            defaults={
+                "notification_type": NotificationType.APPOINTMENT_STATUS,
+                "channel": NotificationChannel.EMAIL,
+                "status": NotificationStatus.SENT,
+                "message": "Your recent travel-clearance appointment request could not be scheduled and needs a different time slot.",
+                "appointment": ethan_no_show_appointment,
+                "invoice": None,
+                "sent_at": timezone.now(),
+            },
+        )
+
+        Notification.objects.update_or_create(
             recipient=frontdesk_user,
             subject="Pending appointment request waiting",
             defaults={
@@ -815,6 +1502,33 @@ class Command(BaseCommand):
                 "message": "Charlie Lopez has a pending appointment request awaiting approval.",
                 "appointment": None,
                 "invoice": None,
+            },
+        )
+
+        Notification.objects.update_or_create(
+            recipient=frontdesk_user,
+            subject="Overdue invoice follow-up available",
+            defaults={
+                "notification_type": NotificationType.BILLING_UPDATE,
+                "channel": NotificationChannel.IN_APP,
+                "status": NotificationStatus.PENDING,
+                "message": "Diana Brooks has an overdue invoice that can be used for billing follow-up in the demo.",
+                "appointment": diana_appointment,
+                "invoice": diana_invoice,
+            },
+        )
+
+        Notification.objects.update_or_create(
+            recipient=nurse_jane_user,
+            subject="Two patients ready for intake review",
+            defaults={
+                "notification_type": NotificationType.GENERAL,
+                "channel": NotificationChannel.IN_APP,
+                "status": NotificationStatus.SENT,
+                "message": "Charlie Lopez is checked in and Diana Brooks is waiting with pre-check-in details available.",
+                "appointment": charlie_appointment,
+                "invoice": None,
+                "sent_at": timezone.now(),
             },
         )
 
@@ -843,9 +1557,23 @@ class Command(BaseCommand):
             },
         )
 
+        Notification.objects.update_or_create(
+            recipient=dr_lee_user,
+            subject="Provider schedule has new demo activity",
+            defaults={
+                "notification_type": NotificationType.GENERAL,
+                "channel": NotificationChannel.IN_APP,
+                "status": NotificationStatus.SENT,
+                "message": "Bob Nguyen is scheduled for follow-up and Diana Brooks is waiting with migraines noted in pre-check-in.",
+                "appointment": diana_appointment,
+                "invoice": None,
+                "sent_at": timezone.now(),
+            },
+        )
+
         self.stdout.write(self.style.SUCCESS("Development data seeded successfully."))
         self.stdout.write(self.style.SUCCESS(f"Demo password for all seeded users: {dev_password}"))
-        self.stdout.write("Seeded users: admin, drsmith, drlee, nursejane, frontdesk, alice, bob, charlie")
+        self.stdout.write("Seeded users: admin, drsmith, drlee, nursejane, frontdesk, alice, bob, charlie, diana, ethan")
         self.stdout.write("Admin login: admin / DevPass123! -> dashboard admin portal -> Django admin link")
 
     def _upsert_user(

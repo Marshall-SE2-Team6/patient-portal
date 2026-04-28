@@ -96,36 +96,48 @@
 
             <div class="portal-page-stack">
                 <section class="portal-quick-grid">
-                    <div class="portal-quick-card">
-                        <div class="portal-quick-icon icon-blue">🗓</div>
-                        <div>
-                            <div class="portal-quick-label">Upcoming</div>
-                            <div class="portal-quick-value">{{ upcoming_count }} Appointments</div>
-                        </div>
-                    </div>
-
-                    <div class="portal-quick-card">
-                        <div class="portal-quick-icon icon-green">👨‍⚕️</div>
-                        <div>
-                            <div class="portal-quick-label">Provider</div>
-                            <div class="portal-quick-value">
-                                Dr. {{ request.user.first_name }} {{ request.user.last_name }}
+                    <a href="{% url 'doctor_appointments' %}#todays-appointments" class="portal-card-link">
+                        <div class="portal-quick-card">
+                            <div class="portal-quick-icon icon-blue">🗓</div>
+                            <div>
+                                <div class="portal-quick-label">Today</div>
+                                <div class="portal-quick-value">{{ todays_appointment_count }} Appointments</div>
                             </div>
                         </div>
-                    </div>
+                    </a>
 
-                    <div class="portal-quick-card">
-                        <div class="portal-quick-icon icon-purple">🏥</div>
-                        <div>
-                            <div class="portal-quick-label">Department</div>
-                            <div class="portal-quick-value">
-                                {{ request.user.staff_profile.department|default:"Medical Staff" }}
+                    <a href="{% url 'doctor_appointments' %}#todays-appointments" class="portal-card-link">
+                        <div class="portal-quick-card">
+                            <div class="portal-quick-icon icon-green">👨‍⚕️</div>
+                            <div>
+                                <div class="portal-quick-label">Checked In</div>
+                                <div class="portal-quick-value">{{ checked_in_count }} Patients</div>
                             </div>
                         </div>
-                    </div>
+                    </a>
+
+                    <a href="{% url 'doctor_appointments' %}#todays-appointments" class="portal-card-link">
+                        <div class="portal-quick-card">
+                            <div class="portal-quick-icon icon-orange">⌛</div>
+                            <div>
+                                <div class="portal-quick-label">Still Waiting</div>
+                                <div class="portal-quick-value">{{ waiting_count }} Patients</div>
+                            </div>
+                        </div>
+                    </a>
+
+                    <a href="#pending-requests" class="portal-card-link">
+                        <div class="portal-quick-card">
+                            <div class="portal-quick-icon icon-purple">⏳</div>
+                            <div>
+                                <div class="portal-quick-label">Pending Requests</div>
+                                <div class="portal-quick-value">{{ pending_request_count }} Requests</div>
+                            </div>
+                        </div>
+                    </a>
                 </section>
 
-            <section class="portal-panel portal-panel-spaced">
+            <section class="portal-panel portal-panel-spaced" id="pending-requests">
                 <div class="portal-panel-header">
                     <div>
                         <h3 class="portal-panel-title">Pending Appointment Requests</h3>

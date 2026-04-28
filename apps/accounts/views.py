@@ -79,6 +79,41 @@ def _staff_portal_context(user):
     }
 
 
+def _split_appointments_by_priority(appointments):
+    now = timezone.now()
+    today = timezone.localdate()
+    today_appointments = []
+    upcoming_appointments = []
+    history_appointments = []
+
+    for appointment in appointments:
+        appointment_date = appointment.scheduled_start.astimezone(
+            timezone.get_current_timezone()
+        ).date()
+        is_historical_status = appointment.status in {
+            AppointmentStatus.COMPLETED,
+            AppointmentStatus.CANCELLED,
+            AppointmentStatus.NO_SHOW,
+        }
+        is_past = (
+            is_historical_status
+            or (appointment.scheduled_end and appointment.scheduled_end < now)
+        )
+
+        if is_past:
+            history_appointments.append(appointment)
+        elif appointment_date == today:
+            today_appointments.append(appointment)
+        else:
+            upcoming_appointments.append(appointment)
+
+    return {
+        "today_appointments": today_appointments,
+        "upcoming_appointments": upcoming_appointments,
+        "history_appointments": history_appointments,
+    }
+
+
 def _staff_can_manage_request(user, appointment_request):
     staff_profile = getattr(user, "staff_profile", None)
     if user.is_superuser:
@@ -109,6 +144,7 @@ def signup(request):
                 user = form.save(commit=False)
                 user.first_name = form.cleaned_data["first_name"]
                 user.last_name = form.cleaned_data["last_name"]
+                user.email = form.cleaned_data.get("email", "")
                 user.role = user.Role.PATIENT
                 user.save()
 
@@ -120,6 +156,7 @@ def signup(request):
                 )
 
                 login(request, user)
+                messages.success(request, "Signed up successfully.")
                 return redirect("dashboard")
     else:
         form = SignUpForm()
@@ -363,7 +400,9 @@ def nurse_dashboard(request):
 
 @login_required
 def profile(request):
-    return render(request, "profile.html")
+    return render(request, "profile.html", {
+        "patient_profile": getattr(request.user, "patient_profile", None),
+    })
 
 
 @login_required
@@ -372,11 +411,15 @@ def edit_profile(request):
         form = ProfileForm(request.POST, instance=request.user)
         if form.is_valid():
             form.save()
+            messages.success(request, "Profile updated successfully.")
             return redirect("profile")
     else:
         form = ProfileForm(instance=request.user)
 
-    return render(request, "edit_profile.html", {"form": form})
+    return render(request, "edit_profile.html", {
+        "form": form,
+        "patient_profile": getattr(request.user, "patient_profile", None),
+    })
 
 @login_required
 def admin_profile(request):
@@ -484,15 +527,27 @@ def doctor_dashboard(request):
         .order_by("requested_start", "created_at")
     )
 
-    upcoming_count = appointments.filter(
-        scheduled_start__gte=timezone.now()
+    today = timezone.localdate()
+    todays_appointments = appointments.filter(scheduled_start__date=today)
+    todays_appointment_count = todays_appointments.exclude(
+        status=AppointmentStatus.CANCELLED
     ).count()
+    checked_in_count = todays_appointments.filter(
+        status=AppointmentStatus.CHECKED_IN
+    ).count()
+    waiting_count = todays_appointments.filter(
+        status=AppointmentStatus.SCHEDULED
+    ).count()
+    pending_request_count = pending_appointment_requests.count()
 
     context = {
         "provider": provider,
         "appointments": appointments,
         "pending_appointment_requests": pending_appointment_requests,
-        "upcoming_count": upcoming_count,
+        "todays_appointment_count": todays_appointment_count,
+        "checked_in_count": checked_in_count,
+        "waiting_count": waiting_count,
+        "pending_request_count": pending_request_count,
         "profile_missing": False,
     }
 
@@ -506,16 +561,19 @@ def doctor_appointments(request):
     appointments = []
 
     if provider:
-        appointments = (
+        appointments = list(
             Appointment.objects
             .filter(provider=provider)
             .select_related("patient__user", "provider__staff_profile__user", "pre_check_in_record")
             .order_by("scheduled_start")
         )
 
+    appointment_sections = _split_appointments_by_priority(appointments)
+
     return render(request, "doctor_appointments.html", {
         "appointments": appointments,
         "provider": provider,
+        **appointment_sections,
     })
 
 

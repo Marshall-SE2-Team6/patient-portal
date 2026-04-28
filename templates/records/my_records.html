@@ -65,6 +65,27 @@
         </div>
 
         <main class="portal-content">
+            {% if patient_record %}
+            <section class="portal-panel">
+                <div class="portal-panel-header">
+                    <div>
+                        <h3 class="portal-panel-title">Medical Record Overview</h3>
+                    </div>
+                    <a href="{% url 'records:patient_record_detail' %}" class="portal-outline-btn">Open Full Chart</a>
+                </div>
+
+                <div class="portal-list-item">
+                    <div class="portal-section-fill">
+                        <p class="portal-list-title">Your record is available</p>
+                        <p class="portal-list-meta">
+                            Open your full chart to review your health profile, allergies, chronic conditions,
+                            latest vitals, prescriptions, doctor notes, and lab history in one place.
+                        </p>
+                    </div>
+                </div>
+            </section>
+            {% endif %}
+
             <section class="portal-panel">
                 <div class="portal-panel-header">
                     <div>
