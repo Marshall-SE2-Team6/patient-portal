@@ -4,22 +4,49 @@
 Install:
 - Git
 - Python 3.x (verify with `python --version`)
-- Docker Desktop (so `docker compose` works)
+- Docker Desktop (so `docker compose` works) or docker CLI
 
 ---
+
+### Run this if you are on MacOS
+#### Docker CLI (macOS) install
+
+If you are on macOS and are unable to install Docker Desktop, you need to use Homebrew to install docker and run from the command line.
+
+#### 1) Installing Homebrew
+Run this command:
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+Visit https://brew.sh/ for more information about Homebrew
+
+#### 2) Installing pre-requisites
+```bash
+brew update && brew upgrade && brew install docker docker-compose colima
+```
+
+After running these commands start Colima to run Docker
+
+#### 3) Running docker
+```bash
+colima start
+```
+
+If Colima fails to run, the download might have failed. Run the command again until Colima starts.
 
 ### First-time setup
 
 > **IMPORTANT:** Run all `python manage.py ...` commands from the project root (the folder that contains `manage.py`).
 
 #### 1) Clone the repo
-```powershell
+```console
 git clone <repo-url>
 cd patient-portal
 ```
 
 #### 2) Create a virtual environment (first time only)
-```powershell
+```console
 python -m venv .venv
 ```
 
@@ -35,6 +62,7 @@ python -m venv .venv
 > If you see **“import pymysql could not be resolved”**, VS Code is almost always using the wrong interpreter.  
 > Select the `.venv` interpreter and reload the window.
 
+#### 3a) Activate using PowerShell (Windows Users)
 Activate in PowerShell:
 ```powershell
 .\.venv\Scripts\Activate.ps1
@@ -48,8 +76,7 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\.venv\Scripts\Activate.ps1
 ```
 
-Activating in Linux & macOS:
-
+#### 3b) Activate using shell (Linux and MacOS)
 ```console
 source .venv\bin\activate
 ```
@@ -57,13 +84,13 @@ source .venv\bin\activate
 After activation you should see `(.venv)` at the left of your prompt.
 
 #### 4) Install Python dependencies
-```powershell
+```console
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
 Quick sanity check:
-```powershell
+```console
 python -c "import django; print(django.get_version())"
 ```
 
@@ -71,7 +98,7 @@ python -c "import django; print(django.get_version())"
 - `.env` is local-only (gitignored).
 - **Do not modify `.env` unless instructed** — the default values work for local development.
 
-```powershell
+```console
 cp .env.example .env
 ```
 
@@ -90,25 +117,25 @@ cp .env.example .env
   ```
 
 #### 6) Start MySQL (Docker)
-```powershell
-docker compose up -d
-docker compose ps
+```console
+docker-compose up -d
+docker-compose ps
 ```
 
 You should see the `mysql` container running.
 
 #### 7) Run migrations (build/update schema)
-```powershell
+```console
 python manage.py migrate
 ```
 
 #### 8) Create an admin user (first time per machine / fresh DB)
-```powershell
+```console
 python manage.py createsuperuser
 ```
 
 #### 9) Run the Django server
-```powershell
+```console
 python manage.py runserver
 ```
 
