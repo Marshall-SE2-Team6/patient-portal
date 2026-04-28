@@ -62,15 +62,23 @@
     <div class="portal-main">
         <div class="portal-topbar">
             <h1 class="portal-topbar-title">Billing & Invoices</h1>
-            <div class="portal-topbar-date">Review your current and past invoices</div>
         </div>
 
         <main class="portal-content">
+            {% if messages %}
+            <div class="portal-messages">
+                {% for message in messages %}
+                <div class="portal-message {% if message.tags == 'success' %}portal-message-success{% elif message.tags == 'error' %}portal-message-error{% else %}portal-message-info{% endif %}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
             <section class="portal-panel">
                 <div class="portal-panel-header">
                     <div>
                         <h3 class="portal-panel-title">My Invoices</h3>
-                        <p class="portal-panel-subtitle">All invoice records tied to your patient account.</p>
                     </div>
                 </div>
 
@@ -81,8 +89,9 @@
                         <p class="portal-list-subtitle">This user does not have a linked patient profile yet.</p>
                     </div>
                 </div>
-                {% elif invoices %}
-                {% for invoice in invoices %}
+                {% elif invoice_rows %}
+                {% for row in invoice_rows %}
+                {% with invoice=row.invoice payment_form=row.payment_form %}
                 <div class="portal-list-item portal-invoice-item">
                     <div class="portal-list-left">
                         <div class="portal-quick-icon icon-orange">💳</div>
@@ -106,9 +115,64 @@
 
                     <div class="portal-invoice-right">
                         <p class="portal-price">${{ invoice.balance_due }}</p>
-                        <a href="#" class="portal-outline-btn portal-small-btn">Pay</a>
+                        {% if invoice.balance_due > 0 %}
+                        <form method="post" action="{% url 'billing:pay_invoice' invoice.id %}" class="portal-billing-form">
+                            {% csrf_token %}
+                            <div class="portal-billing-form-grid">
+                                <div>
+                                    <p class="portal-field-label">Payment Method</p>
+                                    {{ payment_form.payment_method }}
+                                    {% for error in payment_form.payment_method.errors %}
+                                    <p class="portal-field-error">{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                                <div>
+                                    <p class="portal-field-label">Amount</p>
+                                    {{ payment_form.amount }}
+                                    {% for error in payment_form.amount.errors %}
+                                    <p class="portal-field-error">{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="portal-field-group portal-inline-action">
+                                <p class="portal-field-label">Payment Note</p>
+                                {{ payment_form.notes }}
+                                {% for error in payment_form.notes.errors %}
+                                <p class="portal-field-error">{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                            <button type="submit" class="portal-pay-btn portal-small-btn portal-inline-action">Pay Now</button>
+                        </form>
+                        {% else %}
+                        <span class="portal-badge badge-success">Paid in Full</span>
+                        {% endif %}
                     </div>
                 </div>
+
+                <div class="portal-list-item">
+                    <div class="portal-section-fill portal-stack-md">
+                        <p class="portal-list-title">Invoice Details</p>
+                        {% for line in invoice.line_items.all %}
+                        <p class="portal-list-meta">
+                            {{ line.description }} • {{ line.quantity }} x ${{ line.unit_price }} = ${{ line.line_total }}
+                        </p>
+                        {% empty %}
+                        <p class="portal-list-meta">No line items added yet.</p>
+                        {% endfor %}
+
+                        <p class="portal-list-title portal-inline-action">Payment History</p>
+                        {% for payment in invoice.payments.all %}
+                        <p class="portal-list-meta">
+                            ${{ payment.amount }} on {{ payment.payment_date|date:"F j, Y" }}
+                            {% if payment.payment_method %} • {{ payment.payment_method }}{% endif %}
+                            • {{ payment.get_status_display }}
+                        </p>
+                        {% empty %}
+                        <p class="portal-list-meta">No payments recorded yet.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endwith %}
                 {% endfor %}
                 {% else %}
                 <div class="portal-list-item">

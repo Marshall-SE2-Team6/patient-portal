@@ -62,7 +62,6 @@
     <div class="portal-main">
         <div class="portal-topbar">
             <h1 class="portal-topbar-title">My Records</h1>
-            <div class="portal-topbar-date">Review your lab reports and medical record updates</div>
         </div>
 
         <main class="portal-content">
@@ -70,7 +69,6 @@
                 <div class="portal-panel-header">
                     <div>
                         <h3 class="portal-panel-title">Lab Results</h3>
-                        <p class="portal-panel-subtitle">All completed lab reports linked to your account.</p>
                     </div>
                 </div>
 
@@ -121,6 +119,84 @@
                     <div>
                         <p class="portal-list-title">No lab results yet</p>
                         <p class="portal-list-subtitle">Completed lab reports will appear here.</p>
+                    </div>
+                </div>
+                {% endif %}
+            </section>
+
+            <section class="portal-panel">
+                <div class="portal-panel-header">
+                    <div>
+                        <h3 class="portal-panel-title">Prescriptions</h3>
+                    </div>
+                </div>
+
+                {% if not patient_record %}
+                <div class="portal-list-item">
+                    <div>
+                        <p class="portal-list-title">Medical record unavailable</p>
+                        <p class="portal-list-subtitle">A patient record has not been created for this account yet.</p>
+                    </div>
+                </div>
+                {% elif prescriptions %}
+                {% for prescription in prescriptions %}
+                <div class="portal-list-item">
+                    <div class="portal-list-left">
+                        <div class="portal-quick-icon icon-green">💊</div>
+                        <div>
+                            <p class="portal-list-title">{{ prescription.medication_name }}</p>
+                            <p class="portal-list-subtitle">{{ prescription.dosage|default:"No dosage listed" }} • {{ prescription.frequency|default:"No frequency listed" }}</p>
+                            <p class="portal-list-meta">{{ prescription.instructions|default:"No instructions provided." }}</p>
+                            {% if prescription.prescribed_by %}
+                            <p class="portal-list-meta">Prescribed by {{ prescription.prescribed_by.user.first_name }} {{ prescription.prescribed_by.user.last_name }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <span class="portal-badge badge-neutral">{{ prescription.get_status_display }}</span>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="portal-list-item">
+                    <div>
+                        <p class="portal-list-title">No prescriptions yet</p>
+                        <p class="portal-list-subtitle">Prescriptions from your providers will appear here.</p>
+                    </div>
+                </div>
+                {% endif %}
+            </section>
+
+            <section class="portal-panel">
+                <div class="portal-panel-header">
+                    <div>
+                        <h3 class="portal-panel-title">Doctor Notes</h3>
+                    </div>
+                </div>
+
+                {% if not patient_record %}
+                <div class="portal-list-item">
+                    <div>
+                        <p class="portal-list-title">Medical record unavailable</p>
+                        <p class="portal-list-subtitle">A patient record has not been created for this account yet.</p>
+                    </div>
+                </div>
+                {% elif clinical_notes %}
+                {% for note in clinical_notes %}
+                <div class="portal-list-item">
+                    <div>
+                        <p class="portal-list-title">{{ note.title }}</p>
+                        <p class="portal-list-subtitle">{{ note.get_note_type_display }}</p>
+                        <p class="portal-list-meta">{{ note.content }}</p>
+                        {% if note.author %}
+                        <p class="portal-list-meta">By {{ note.author.user.first_name }} {{ note.author.user.last_name }} on {{ note.updated_at|date:"F j, Y" }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="portal-list-item">
+                    <div>
+                        <p class="portal-list-title">No doctor notes yet</p>
+                        <p class="portal-list-subtitle">Clinical notes will appear here after your visits.</p>
                     </div>
                 </div>
                 {% endif %}

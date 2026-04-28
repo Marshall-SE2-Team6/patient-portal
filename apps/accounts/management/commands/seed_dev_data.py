@@ -230,6 +230,18 @@ class Command(BaseCommand):
             },
         )
 
+        StaffProfile.objects.update_or_create(
+            user=admin_user,
+            defaults={
+                "staff_role": StaffRole.ADMIN,
+                "phone_number": "304-555-3000",
+                "department": "Administration",
+                "license_number": "",
+                "employee_id": "EMP-1000",
+                "is_active_staff": True,
+            },
+        )
+
         # ------------------------------------------------------------------
         # Providers
         # ------------------------------------------------------------------
@@ -834,6 +846,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("Development data seeded successfully."))
         self.stdout.write(self.style.SUCCESS(f"Demo password for all seeded users: {dev_password}"))
         self.stdout.write("Seeded users: admin, drsmith, drlee, nursejane, frontdesk, alice, bob, charlie")
+        self.stdout.write("Admin login: admin / DevPass123! -> dashboard admin portal -> Django admin link")
 
     def _upsert_user(
         self,

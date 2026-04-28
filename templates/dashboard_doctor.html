@@ -60,8 +60,9 @@
 
     <div class="portal-main">
         <div class="portal-topbar">
-            <h1 class="portal-topbar-title">Doctor Dashboard</h1>
-            <div class="portal-topbar-date">Welcome to the doctor dashboard</div>
+            <div class="portal-topbar-stack">
+                <h1 class="portal-topbar-title">Doctor Dashboard</h1>
+            </div>
         </div>
 
         <main class="portal-content">
@@ -70,9 +71,6 @@
                 <div class="portal-panel-header">
                     <div>
                         <h3 class="portal-panel-title">Doctor portal unavailable</h3>
-                        <p class="portal-panel-subtitle">
-                            This account does not have a linked staff/provider profile yet.
-                        </p>
                     </div>
                 </div>
             </section>
@@ -95,10 +93,6 @@
                 {{ request.user.username }}
                 {% endif %}
             </h2>
-
-            <p class="portal-page-subtitle">
-                Specialty: {{ provider.specialty|default:"General Practice" }}
-            </p>
 
             <div class="portal-page-stack">
                 <section class="portal-quick-grid">
@@ -135,9 +129,6 @@
                 <div class="portal-panel-header">
                     <div>
                         <h3 class="portal-panel-title">Pending Appointment Requests</h3>
-                        <p class="portal-panel-subtitle">
-                            Review patient requests waiting for your approval.
-                        </p>
                     </div>
                 </div>
 
@@ -145,7 +136,7 @@
                 {% for appointment_request in pending_appointment_requests %}
                 <div class="portal-list-item">
                     <div class="portal-list-left">
-                        <div class="portal-quick-icon icon-orange" style="width:40px;height:40px;font-size:16px;">⏳</div>
+                        <div class="portal-quick-icon portal-quick-icon-sm icon-orange">⏳</div>
                         <div class="portal-list-details">
                             <p class="portal-list-title">
                                 {{ appointment_request.patient.user.first_name }} {{ appointment_request.patient.user.last_name }}
@@ -190,9 +181,6 @@
                 <div class="portal-panel-header">
                     <div>
                         <h3 class="portal-panel-title">Scheduled Patient Appointments</h3>
-                        <p class="portal-panel-subtitle">
-                            Appointments requested by patients will appear here.
-                        </p>
                     </div>
                 </div>
 
@@ -200,7 +188,7 @@
                 {% for appointment in appointments %}
                 <div class="portal-list-item">
                     <div class="portal-list-left">
-                        <div class="portal-quick-icon icon-blue" style="width:40px;height:40px;font-size:16px;">🗓</div>
+                        <div class="portal-quick-icon portal-quick-icon-sm icon-blue">🗓</div>
                         <div class="portal-list-details">
                             <p class="portal-list-title">
                                 {{ appointment.patient.user.first_name }} {{ appointment.patient.user.last_name }}

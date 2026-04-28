@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Admin Billing | Marco's Medical Portal{% endblock %}
+{% block title %}{{ portal_title }} Billing | Marco's Medical Portal{% endblock %}
 
 {% block body %}
 <div class="portal-app-shell">
@@ -8,12 +8,12 @@
             <div class="portal-brand-icon">M</div>
             <div>
                 <p class="portal-brand-title">Marco's Medical</p>
-                <p class="portal-brand-subtitle">Admin Portal</p>
+                <p class="portal-brand-subtitle">{{ portal_label }}</p>
             </div>
         </div>
 
         <nav class="portal-nav">
-            <a class="portal-nav-link" href="{% url 'admin_dashboard' %}">
+            <a class="portal-nav-link" href="{% url home_url %}">
                 <span class="portal-nav-icon">⌂</span>
                 <span>Dashboard</span>
             </a>
@@ -23,10 +23,12 @@
                 <span>Profile</span>
             </a>
 
+            {% if show_admin_link %}
             <a class="portal-nav-link" href="/admin/">
                 <span class="portal-nav-icon">⚙</span>
                 <span>Admin Panel</span>
             </a>
+            {% endif %}
 
             <a class="portal-nav-link active" href="{% url 'admin_billing' %}">
                 <span class="portal-nav-icon">💳</span>
@@ -60,8 +62,7 @@
 
     <div class="portal-main">
         <div class="portal-topbar">
-            <h1 class="portal-topbar-title">Admin Billing</h1>
-            <div class="portal-topbar-date">Manage invoices from the admin portal</div>
+            <h1 class="portal-topbar-title">{{ portal_title }} Billing</h1>
         </div>
 
         <main class="portal-content">
@@ -93,12 +94,14 @@
                     </div>
 
                     <!-- DELETE BUTTON -->
+                    {% if can_delete_invoices %}
                     <form method="post" action="{% url 'admin_delete_invoice' invoice.id %}">
                         {% csrf_token %}
                         <button type="submit" class="portal-outline-btn" style="border-color: red; color: red;">
                             Delete
                         </button>
                     </form>
+                    {% endif %}
                 </div>
                 {% endfor %}
                 {% else %}

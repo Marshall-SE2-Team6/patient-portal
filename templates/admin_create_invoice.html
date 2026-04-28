@@ -8,12 +8,12 @@
             <div class="portal-brand-icon">M</div>
             <div>
                 <p class="portal-brand-title">Marco's Medical</p>
-                <p class="portal-brand-subtitle">Admin Portal</p>
+                <p class="portal-brand-subtitle">{{ portal_label }}</p>
             </div>
         </div>
 
         <nav class="portal-nav">
-            <a class="portal-nav-link" href="{% url 'admin_dashboard' %}">
+            <a class="portal-nav-link" href="{% url home_url %}">
                 <span class="portal-nav-icon">⌂</span>
                 <span>Dashboard</span>
             </a>
@@ -23,10 +23,12 @@
                 <span>Profile</span>
             </a>
 
+            {% if show_admin_link %}
             <a class="portal-nav-link" href="/admin/">
                 <span class="portal-nav-icon">⚙</span>
                 <span>Admin Panel</span>
             </a>
+            {% endif %}
 
             <a class="portal-nav-link active" href="{% url 'admin_billing' %}">
                 <span class="portal-nav-icon">💳</span>
@@ -61,7 +63,6 @@
     <div class="portal-main">
         <div class="portal-topbar">
             <h1 class="portal-topbar-title">Create Invoice</h1>
-            <div class="portal-topbar-date">Add a new invoice from the admin portal</div>
         </div>
 
         <main class="portal-content">

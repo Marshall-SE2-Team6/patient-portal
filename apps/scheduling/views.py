@@ -35,6 +35,33 @@ def _is_non_physician_staff(user):
     )
 
 
+def _can_manage_schedule(user):
+    staff_profile = _staff_profile(user)
+    return bool(
+        user.is_superuser
+        or (
+            staff_profile
+            and staff_profile.staff_role in {
+                StaffRole.RECEPTIONIST,
+                StaffRole.ADMIN,
+            }
+        )
+        or (user.is_staff and not staff_profile)
+    )
+
+
+def _can_mark_no_show(user, appointment):
+    staff_profile = _staff_profile(user)
+    if user.is_superuser:
+        return True
+    if not staff_profile:
+        return bool(user.is_staff)
+    if staff_profile.staff_role == StaffRole.PHYSICIAN:
+        provider = getattr(staff_profile, "provider_profile", None)
+        return provider is not None and appointment.provider_id == provider.id
+    return staff_profile.staff_role in {StaffRole.RECEPTIONIST, StaffRole.ADMIN}
+
+
 def _can_check_in(user):
     staff_profile = _staff_profile(user)
     return bool(
@@ -77,6 +104,36 @@ def _staff_can_access_appointment(user, appointment):
         StaffRole.RECEPTIONIST,
         StaffRole.NURSE,
         StaffRole.ADMIN,
+    }
+
+
+def _can_close_appointment(user, appointment):
+    staff_profile = _staff_profile(user)
+    if user.is_superuser:
+        return True
+    if not staff_profile:
+        return bool(user.is_staff)
+    if staff_profile.staff_role == StaffRole.PHYSICIAN:
+        provider = getattr(staff_profile, "provider_profile", None)
+        return provider is not None and appointment.provider_id == provider.id
+    return staff_profile.staff_role in {StaffRole.RECEPTIONIST, StaffRole.ADMIN}
+
+
+def _staff_portal_meta(user):
+    staff_profile = _staff_profile(user)
+    if staff_profile and staff_profile.staff_role == StaffRole.NURSE:
+        return {
+            "staff_home_url": "nurse_dashboard",
+            "staff_portal_label": "Nurse Portal",
+        }
+    if staff_profile and staff_profile.staff_role == StaffRole.RECEPTIONIST:
+        return {
+            "staff_home_url": "receptionist_dashboard",
+            "staff_portal_label": "Front Desk Portal",
+        }
+    return {
+        "staff_home_url": "admin_dashboard",
+        "staff_portal_label": "Admin Portal" if user.is_superuser else "Staff Portal",
     }
 
 
@@ -202,6 +259,7 @@ def reschedule_appointment(request, appointment_id):
         "appointment": appointment,
         "form": form,
         "is_patient_owner": is_patient_owner,
+        **({} if is_patient_owner else _staff_portal_meta(request.user)),
     })
 
 
@@ -218,7 +276,8 @@ def cancel_appointment(request, appointment_id):
             return redirect("appointment_detail", appointment_id=appointment.id)
         return redirect("staff_appointments")
 
-    if not (is_patient_owner or _staff_can_access_appointment(request.user, appointment)):
+    can_manage_staff_cancel = _can_manage_schedule(request.user) and _staff_can_access_appointment(request.user, appointment)
+    if not (is_patient_owner or can_manage_staff_cancel):
         messages.error(request, "You do not have permission to cancel this appointment.")
         return redirect("dashboard")
 
@@ -245,14 +304,27 @@ def staff_appointments(request):
         .order_by("scheduled_start")
     )
 
+    meta = _staff_portal_meta(request.user)
+    staff_profile = _staff_profile(request.user)
+
     return render(request, "scheduling/staff_appointments.html", {
         "appointments": appointments,
+        **meta,
+        "can_schedule": _can_manage_schedule(request.user),
+        "can_manage_updates": _can_manage_schedule(request.user),
+        "can_complete": bool(
+            request.user.is_superuser
+            or (staff_profile and staff_profile.staff_role == StaffRole.ADMIN)
+        ),
+        "can_mark_no_show": True if request.user.is_superuser else bool(
+            staff_profile and staff_profile.staff_role in {StaffRole.RECEPTIONIST, StaffRole.ADMIN}
+        ),
     })
 
 
 @login_required
 def staff_schedule_appointment(request):
-    if not _is_non_physician_staff(request.user):
+    if not _can_manage_schedule(request.user):
         return redirect("dashboard")
 
     if request.method == "POST":
@@ -266,6 +338,7 @@ def staff_schedule_appointment(request):
 
     return render(request, "scheduling/staff_schedule_appointment.html", {
         "form": form,
+        **_staff_portal_meta(request.user),
     })
 
 
@@ -303,7 +376,7 @@ def complete_appointment(request, appointment_id):
         return redirect("dashboard")
 
     appointment = get_object_or_404(Appointment, id=appointment_id)
-    if not _staff_can_access_appointment(request.user, appointment):
+    if not _can_close_appointment(request.user, appointment):
         messages.error(request, "You do not have permission to update this appointment.")
         return redirect("dashboard")
 
@@ -323,7 +396,7 @@ def mark_no_show_appointment(request, appointment_id):
         return redirect("dashboard")
 
     appointment = get_object_or_404(Appointment, id=appointment_id)
-    if not _staff_can_access_appointment(request.user, appointment):
+    if not _can_mark_no_show(request.user, appointment):
         messages.error(request, "You do not have permission to update this appointment.")
         return redirect("dashboard")
 

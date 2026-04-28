@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Admin Profile | Marco's Medical Portal{% endblock %}
+{% block title %}{{ portal_title }} Profile | Marco's Medical Portal{% endblock %}
 
 {% block body %}
 <div class="portal-app-shell">
@@ -8,12 +8,12 @@
             <div class="portal-brand-icon">M</div>
             <div>
                 <p class="portal-brand-title">Marco's Medical</p>
-                <p class="portal-brand-subtitle">Admin Portal</p>
+                <p class="portal-brand-subtitle">{{ portal_label }}</p>
             </div>
         </div>
 
         <nav class="portal-nav">
-            <a class="portal-nav-link" href="{% url 'admin_dashboard' %}">
+            <a class="portal-nav-link" href="{% url home_url %}">
                 <span class="portal-nav-icon">⌂</span>
                 <span>Dashboard</span>
             </a>
@@ -23,10 +23,12 @@
                 <span>Profile</span>
             </a>
 
+            {% if show_admin_link %}
             <a class="portal-nav-link" href="/admin/">
                 <span class="portal-nav-icon">⚙</span>
                 <span>Admin Panel</span>
             </a>
+            {% endif %}
 
             <a class="portal-nav-link" href="{% url 'admin_billing' %}">
                 <span class="portal-nav-icon">💳</span>
@@ -60,8 +62,7 @@
 
     <div class="portal-main">
         <div class="portal-topbar">
-            <h1 class="portal-topbar-title">Admin Profile</h1>
-            <div class="portal-topbar-date">View administrator account details</div>
+            <h1 class="portal-topbar-title">{{ portal_title }} Profile</h1>
         </div>
 
         <main class="portal-content">
@@ -69,7 +70,7 @@
                 <div class="portal-panel-header">
                     <div>
                         <h3 class="portal-panel-title">Profile Information</h3>
-                        <p class="portal-panel-subtitle">Details for the currently signed in admin user.</p>
+                        <p class="portal-panel-subtitle">Details for the currently signed in portal user.</p>
                     </div>
                 </div>
 
@@ -100,7 +101,7 @@
                     </div>
                 </div>
 
-                <a href="{% url 'admin_dashboard' %}" class="portal-outline-btn">Back to Dashboard</a>
+                <a href="{% url home_url %}" class="portal-outline-btn">Back to Dashboard</a>
             </section>
         </main>
     </div>

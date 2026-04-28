@@ -54,16 +54,18 @@
 
   <div class="portal-main">
     <div class="portal-topbar">
-      <h1 class="portal-topbar-title">Medical Records</h1>
-      <div class="portal-topbar-date">Welcome to the doctor portal</div>
+      <div class="portal-topbar-stack">
+        <h1 class="portal-topbar-title">Doctor Medical Records</h1>
+      </div>
     </div>
 
     <main class="portal-content">
+      <h2 class="portal-page-title">Patient Charts</h2>
+
       <section class="portal-panel">
         <div class="portal-panel-header">
           <div>
             <h3 class="portal-panel-title">Add Patient to Doctor</h3>
-            <p class="portal-panel-subtitle">Assign an existing patient to this doctor.</p>
           </div>
         </div>
 
@@ -79,7 +81,7 @@
               {% endfor %}
             </select>
 
-            <button type="submit" class="portal-primary-btn">Add Patient</button>
+            <button type="submit" class="portal-pay-btn portal-form-submit-btn">Add Patient</button>
           </div>
         </form>
       </section>
@@ -88,7 +90,6 @@
         <div class="portal-panel-header">
           <div>
             <h3 class="portal-panel-title">Patient Records</h3>
-            <p class="portal-panel-subtitle">Patients currently connected to this doctor.</p>
           </div>
         </div>
 

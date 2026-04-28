@@ -51,8 +51,9 @@
 
     <div class="portal-main">
         <div class="portal-topbar">
-            <h1 class="portal-topbar-title">Edit Prescription</h1>
-            <div class="portal-topbar-date">Welcome to the doctor portal</div>
+            <div class="portal-topbar-stack">
+                <h1 class="portal-topbar-title">Edit Prescription</h1>
+            </div>
         </div>
 
         <main class="portal-content">
@@ -61,15 +62,11 @@
                     {{ patient.user.first_name }} {{ patient.user.last_name }}
                 </h2>
 
-                <p class="portal-page-subtitle">
-                    Update this patient's prescription information.
-                </p>
-
                 <form method="post">
                     {% csrf_token %}
 
                     <div class="portal-list-item">
-                        <div style="width: 100%;">
+                        <div class="portal-section-fill portal-form-stack">
                             <p class="portal-list-title">Prescription Information</p>
 
                             <p class="portal-list-subtitle">Medication Name</p>
@@ -102,7 +99,7 @@
                         </div>
                     </div>
 
-                    <div style="display:flex; justify-content:center; gap:16px; margin-top:24px;">
+                    <div class="portal-form-actions">
                         <button type="submit" class="portal-signout-btn appointment-detail-btn">
                             Save Changes
                         </button>

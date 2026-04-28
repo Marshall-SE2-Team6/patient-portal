@@ -10,18 +10,73 @@ from django.urls import reverse_lazy
 from apps.billing.models import Invoice
 from apps.notifications.models import Notification
 from apps.profiles.models import PatientProfile, StaffRole
-from apps.records.models import LabResult, PatientRecord, VitalsRecord, Prescription
-from apps.scheduling.models import Appointment, AppointmentRequest, AppointmentRequestStatus, Provider
-from apps.records.models import PatientRecord
+from apps.records.models import ClinicalNote, LabOrder, LabResult, PatientRecord, VitalsRecord, Prescription
+from apps.scheduling.models import Appointment, AppointmentRequest, AppointmentRequestStatus, AppointmentStatus, Provider
 
-from .forms import SignUpForm, ProfileForm, AdminInvoiceForm
+from .forms import (
+    AdminInvoiceForm,
+    ClinicalNoteForm,
+    LabOrderForm,
+    LabResultForm,
+    ProfileForm,
+    SignUpForm,
+    VitalsRecordForm,
+)
 
 
 def _staff_redirect_name(user):
+    if user.is_superuser:
+        return "admin_dashboard"
     staff_profile = getattr(user, "staff_profile", None)
     if staff_profile and staff_profile.staff_role == StaffRole.PHYSICIAN:
         return "doctor_dashboard"
+    if staff_profile and staff_profile.staff_role == StaffRole.NURSE:
+        return "nurse_dashboard"
+    if staff_profile and staff_profile.staff_role == StaffRole.RECEPTIONIST:
+        return "receptionist_dashboard"
     return "admin_dashboard"
+
+
+def _is_admin_portal_user(user):
+    if user.is_superuser:
+        return True
+    staff_profile = getattr(user, "staff_profile", None)
+    if not staff_profile:
+        return bool(user.is_staff)
+    return staff_profile.staff_role == StaffRole.ADMIN
+
+
+def _is_receptionist_user(user):
+    staff_profile = getattr(user, "staff_profile", None)
+    return bool(staff_profile and staff_profile.staff_role == StaffRole.RECEPTIONIST)
+
+
+def _can_access_staff_billing(user):
+    return _is_admin_portal_user(user) or _is_receptionist_user(user)
+
+
+def _can_delete_staff_invoice(user):
+    return _is_admin_portal_user(user)
+
+
+def _staff_portal_context(user):
+    if _is_receptionist_user(user):
+        return {
+            "portal_label": "Front Desk Portal",
+            "portal_title": "Front Desk",
+            "portal_subtitle": "Manage arrivals, requests, and billing follow-up",
+            "home_url": "receptionist_dashboard",
+            "show_admin_link": False,
+            "can_delete_invoices": False,
+        }
+    return {
+        "portal_label": "Admin Portal",
+        "portal_title": "Administrator",
+        "portal_subtitle": "Manage the portal from an administrator view",
+        "home_url": "admin_dashboard",
+        "show_admin_link": True,
+        "can_delete_invoices": True,
+    }
 
 
 def _staff_can_manage_request(user, appointment_request):
@@ -33,7 +88,7 @@ def _staff_can_manage_request(user, appointment_request):
     if staff_profile.staff_role == StaffRole.PHYSICIAN:
         provider = getattr(staff_profile, "provider_profile", None)
         return provider is not None and appointment_request.preferred_provider_id == provider.id
-    return True
+    return staff_profile.staff_role in {StaffRole.RECEPTIONIST, StaffRole.ADMIN}
 
 
 class PortalPasswordChangeView(PasswordChangeView):
@@ -76,10 +131,8 @@ def signup(request):
 def dashboard(request):
     staff_profile = getattr(request.user, "staff_profile", None)
 
-    if staff_profile:
-        if staff_profile.staff_role == "physician":
-            return redirect("doctor_dashboard")
-        return redirect("admin_dashboard")
+    if staff_profile or request.user.is_staff or request.user.is_superuser:
+        return redirect(_staff_redirect_name(request.user))
 
     patient_profile = getattr(request.user, "patient_profile", None)
 
@@ -206,8 +259,12 @@ def patient_dashboard(request):
 
 @login_required
 def admin_dashboard(request):
-    if not (request.user.is_staff or request.user.is_superuser):
+    if not _is_admin_portal_user(request.user):
         return redirect("dashboard")
+
+    staff_profile = getattr(request.user, "staff_profile", None)
+    if staff_profile and staff_profile.staff_role == StaffRole.NURSE:
+        return redirect("nurse_dashboard")
 
     pending_appointment_requests = (
         AppointmentRequest.objects
@@ -225,9 +282,83 @@ def admin_dashboard(request):
         "admin_user": request.user,
         "pending_appointment_requests": pending_appointment_requests,
         "upcoming_appointments": upcoming_appointments,
+        **_staff_portal_context(request.user),
     }
 
     return render(request, "dashboard_admin.html", context)
+
+
+@login_required
+def receptionist_dashboard(request):
+    if not _is_receptionist_user(request.user):
+        return redirect(_staff_redirect_name(request.user))
+
+    today = timezone.localdate()
+    todays_appointments = (
+        Appointment.objects
+        .filter(scheduled_start__date=today)
+        .select_related("patient__user", "provider__staff_profile__user", "pre_check_in_record")
+        .order_by("scheduled_start")
+    )
+    pending_appointment_requests = (
+        AppointmentRequest.objects
+        .filter(status=AppointmentRequestStatus.PENDING)
+        .select_related("patient__user", "preferred_provider__staff_profile__user")
+        .order_by("requested_start", "created_at")
+    )
+    outstanding_invoices = (
+        Invoice.objects
+        .exclude(status="paid")
+        .select_related("patient__user", "appointment")
+        .order_by("due_date", "-issued_at")[:6]
+    )
+
+    arrival_queue = todays_appointments.exclude(
+        status__in=[AppointmentStatus.COMPLETED, AppointmentStatus.CANCELLED]
+    )
+    checked_in_count = arrival_queue.filter(status=AppointmentStatus.CHECKED_IN).count()
+    waiting_count = arrival_queue.filter(status=AppointmentStatus.SCHEDULED).count()
+
+    return render(request, "dashboard_receptionist.html", {
+        "staff_user": request.user,
+        "arrival_queue": arrival_queue,
+        "checked_in_count": checked_in_count,
+        "waiting_count": waiting_count,
+        "pending_request_count": pending_appointment_requests.count(),
+        "pending_appointment_requests": pending_appointment_requests[:6],
+        "outstanding_invoices": outstanding_invoices,
+    })
+
+
+@login_required
+def nurse_dashboard(request):
+    staff_profile = getattr(request.user, "staff_profile", None)
+    if not staff_profile or staff_profile.staff_role != StaffRole.NURSE:
+        return redirect(_staff_redirect_name(request.user))
+
+    today = timezone.localdate()
+    todays_appointments = (
+        Appointment.objects
+        .filter(scheduled_start__date=today)
+        .select_related("patient__user", "provider__staff_profile__user", "pre_check_in_record")
+        .order_by("scheduled_start")
+    )
+    checked_in_count = todays_appointments.filter(status="checked_in").count()
+    upcoming_count = todays_appointments.exclude(status="cancelled").count()
+    patient_count = (
+        PatientProfile.objects
+        .filter(appointments__scheduled_start__date__gte=today)
+        .distinct()
+        .count()
+    )
+
+    return render(request, "dashboard_nurse.html", {
+        "staff_user": request.user,
+        "todays_appointments": todays_appointments[:8],
+        "checked_in_count": checked_in_count,
+        "upcoming_count": upcoming_count,
+        "patient_count": patient_count,
+    })
 
 
 @login_required
@@ -249,15 +380,18 @@ def edit_profile(request):
 
 @login_required
 def admin_profile(request):
-    if not (request.user.is_staff or request.user.is_superuser):
+    if not _can_access_staff_billing(request.user):
         return redirect("dashboard")
 
-    return render(request, "admin_profile.html", {"admin_user": request.user})
+    return render(request, "admin_profile.html", {
+        "admin_user": request.user,
+        **_staff_portal_context(request.user),
+    })
 
 
 @login_required
 def admin_billing(request):
-    if not (request.user.is_staff or request.user.is_superuser):
+    if not _can_access_staff_billing(request.user):
         return redirect("dashboard")
 
     invoices = (
@@ -268,6 +402,7 @@ def admin_billing(request):
 
     context = {
         "invoices": invoices,
+        **_staff_portal_context(request.user),
     }
 
     return render(request, "admin_billing.html", context)
@@ -275,7 +410,7 @@ def admin_billing(request):
 
 @login_required
 def admin_create_invoice(request):
-    if not (request.user.is_staff or request.user.is_superuser):
+    if not _can_access_staff_billing(request.user):
         return redirect("dashboard")
 
     if request.method == "POST":
@@ -287,14 +422,17 @@ def admin_create_invoice(request):
     else:
         form = AdminInvoiceForm()
 
-    return render(request, "admin_create_invoice.html", {"form": form})
+    return render(request, "admin_create_invoice.html", {
+        "form": form,
+        **_staff_portal_context(request.user),
+    })
 
 from django.shortcuts import get_object_or_404
 
 
 @login_required
 def admin_delete_invoice(request, invoice_id):
-    if not (request.user.is_staff or request.user.is_superuser):
+    if not _can_delete_staff_invoice(request.user):
         return redirect("dashboard")
 
     invoice = get_object_or_404(Invoice, id=invoice_id)
@@ -305,7 +443,8 @@ def admin_delete_invoice(request, invoice_id):
         return redirect("admin_billing")
 
     return render(request, "admin_confirm_delete.html", {
-        "invoice": invoice
+        "invoice": invoice,
+        **_staff_portal_context(request.user),
     })
 
 @login_required
@@ -521,6 +660,110 @@ def doctor_records(request):
         "all_patients": all_patients,
     })
 
+
+@login_required
+def nurse_records(request):
+    staff_profile = getattr(request.user, "staff_profile", None)
+    if not staff_profile or staff_profile.staff_role != StaffRole.NURSE:
+        return redirect(_staff_redirect_name(request.user))
+
+    patients = (
+        PatientProfile.objects
+        .filter(appointments__isnull=False)
+        .select_related("user")
+        .distinct()
+        .order_by("user__last_name", "user__first_name")
+    )
+
+    records = []
+    for patient in patients:
+        patient_record = PatientRecord.objects.filter(patient=patient).first()
+        latest_vitals = patient_record.vitals_records.order_by("-recorded_at").first() if patient_record else None
+        latest_appointment = (
+            patient.appointments
+            .select_related("provider__staff_profile__user", "pre_check_in_record")
+            .exclude(status="cancelled")
+            .order_by("-scheduled_start")
+            .first()
+        )
+        age = None
+        if patient.date_of_birth:
+            today = timezone.now().date()
+            age = today.year - patient.date_of_birth.year - (
+                (today.month, today.day) < (patient.date_of_birth.month, patient.date_of_birth.day)
+            )
+
+        records.append({
+            "patient": patient,
+            "record": patient_record,
+            "latest_vitals": latest_vitals,
+            "latest_appointment": latest_appointment,
+            "age": age,
+        })
+
+    return render(request, "nurse_records.html", {
+        "records": records,
+    })
+
+
+@login_required
+def nurse_patient_record_detail(request, patient_id):
+    staff_profile = getattr(request.user, "staff_profile", None)
+    if not staff_profile or staff_profile.staff_role != StaffRole.NURSE:
+        return redirect(_staff_redirect_name(request.user))
+
+    patient = get_object_or_404(PatientProfile.objects.select_related("user"), id=patient_id)
+    record, _ = PatientRecord.objects.get_or_create(patient=patient)
+
+    vitals_form = VitalsRecordForm(request.POST or None, prefix="vitals")
+    if request.method == "POST":
+        if vitals_form.is_valid():
+            vitals = vitals_form.save(commit=False)
+            vitals.patient_record = record
+            vitals.recorded_by = staff_profile
+            latest_appointment = (
+                patient.appointments
+                .exclude(status="cancelled")
+                .order_by("-scheduled_start")
+                .first()
+            )
+            if latest_appointment:
+                vitals.appointment = latest_appointment
+            vitals.save()
+            messages.success(request, "Vitals recorded successfully.")
+            return redirect("nurse_patient_record_detail", patient_id=patient.id)
+
+    latest_vitals = record.vitals_records.select_related("recorded_by__user").order_by("-recorded_at").first()
+    prescriptions = record.prescriptions.select_related("prescribed_by__user").order_by("-created_at")
+    clinical_notes = record.clinical_notes.select_related("author__user").order_by("-updated_at")
+    lab_orders = record.lab_orders.select_related("ordered_by__user").order_by("-ordered_at")
+    latest_appointment = (
+        patient.appointments
+        .select_related("provider__staff_profile__user", "pre_check_in_record")
+        .exclude(status="cancelled")
+        .order_by("-scheduled_start")
+        .first()
+    )
+
+    age = None
+    if patient.date_of_birth:
+        today = timezone.now().date()
+        age = today.year - patient.date_of_birth.year - (
+            (today.month, today.day) < (patient.date_of_birth.month, patient.date_of_birth.day)
+        )
+
+    return render(request, "nurse_patient_record_detail.html", {
+        "patient": patient,
+        "record": record,
+        "latest_vitals": latest_vitals,
+        "prescriptions": prescriptions,
+        "clinical_notes": clinical_notes,
+        "lab_orders": lab_orders,
+        "latest_appointment": latest_appointment,
+        "vitals_form": vitals_form,
+        "age": age,
+    })
+
 @login_required
 def doctor_patient_record_detail(request, patient_id):
     staff_profile = getattr(request.user, "staff_profile", None)
@@ -539,47 +782,88 @@ def doctor_patient_record_detail(request, patient_id):
         defaults={"primary_provider": provider},
     )
 
+    note_form = ClinicalNoteForm(prefix="note")
+    lab_order_form = LabOrderForm(prefix="lab-order")
+
     if request.method == "POST":
-        date_of_birth = request.POST.get("date_of_birth")
+        action = request.POST.get("action")
 
-        if date_of_birth:
-            patient.date_of_birth = date_of_birth
-            patient.save()
+        if action == "save_record":
+            date_of_birth = request.POST.get("date_of_birth")
 
-        record.blood_type = request.POST.get("blood_type", "")
-        record.allergies = request.POST.get("allergies", "")
-        record.chronic_conditions = request.POST.get("chronic_conditions", "")
-        record.general_notes = request.POST.get("general_notes", "")
-        record.primary_provider = provider
-        record.save()
+            if date_of_birth:
+                patient.date_of_birth = date_of_birth
+                patient.save()
 
-        height_cm = request.POST.get("height_cm")
-        weight_kg = request.POST.get("weight_kg")
+            record.blood_type = request.POST.get("blood_type", "")
+            record.allergies = request.POST.get("allergies", "")
+            record.chronic_conditions = request.POST.get("chronic_conditions", "")
+            record.general_notes = request.POST.get("general_notes", "")
+            record.primary_provider = provider
+            record.save()
 
-        if height_cm or weight_kg:
-            VitalsRecord.objects.create(
-                patient_record=record,
-                recorded_by=staff_profile,
-                height_cm=height_cm or None,
-                weight_kg=weight_kg or None,
-            )
+            height_cm = request.POST.get("height_cm")
+            weight_kg = request.POST.get("weight_kg")
 
-        medication_name = request.POST.get("medication_name")
+            if height_cm or weight_kg:
+                VitalsRecord.objects.create(
+                    patient_record=record,
+                    recorded_by=staff_profile,
+                    height_cm=height_cm or None,
+                    weight_kg=weight_kg or None,
+                )
 
-        if medication_name:
-            Prescription.objects.create(
-                patient_record=record,
-                prescribed_by=staff_profile,
-                medication_name=medication_name,
-                dosage=request.POST.get("dosage", ""),
-                frequency=request.POST.get("frequency", ""),
-                instructions=request.POST.get("instructions", ""),
-            )
+            medication_name = request.POST.get("medication_name")
 
-        return redirect("doctor_patient_record_detail", patient_id=patient.id)
+            if medication_name:
+                Prescription.objects.create(
+                    patient_record=record,
+                    prescribed_by=staff_profile,
+                    medication_name=medication_name,
+                    dosage=request.POST.get("dosage", ""),
+                    frequency=request.POST.get("frequency", ""),
+                    instructions=request.POST.get("instructions", ""),
+                )
+
+            messages.success(request, "Patient record updated.")
+            return redirect("doctor_patient_record_detail", patient_id=patient.id)
+
+        if action == "add_note":
+            note_form = ClinicalNoteForm(request.POST, prefix="note")
+            if note_form.is_valid():
+                note = note_form.save(commit=False)
+                note.patient_record = record
+                note.author = staff_profile
+                note.save()
+                messages.success(request, "Clinical note added.")
+                return redirect("doctor_patient_record_detail", patient_id=patient.id)
+
+        if action == "add_lab_order":
+            lab_order_form = LabOrderForm(request.POST, prefix="lab-order")
+            if lab_order_form.is_valid():
+                lab_order = lab_order_form.save(commit=False)
+                lab_order.patient_record = record
+                lab_order.ordered_by = staff_profile
+                lab_order.save()
+                messages.success(request, "Lab order created.")
+                return redirect("doctor_patient_record_detail", patient_id=patient.id)
+
+        if action == "review_lab_result":
+            lab_order = get_object_or_404(LabOrder, id=request.POST.get("lab_order_id"), patient_record=record)
+            result_instance = getattr(lab_order, "result", None)
+            result_form = LabResultForm(request.POST, instance=result_instance, prefix=f"lab-result-{lab_order.id}")
+            if result_form.is_valid():
+                result = result_form.save(commit=False)
+                result.lab_order = lab_order
+                result.reviewed_by = staff_profile
+                result.save()
+                messages.success(request, "Lab result saved and reviewed.")
+                return redirect("doctor_patient_record_detail", patient_id=patient.id)
 
     latest_vitals = record.vitals_records.order_by("-recorded_at").first()
     prescriptions = record.prescriptions.order_by("-created_at")
+    clinical_notes = record.clinical_notes.select_related("author__user").order_by("-updated_at")
+    lab_orders = record.lab_orders.select_related("ordered_by__user").prefetch_related("result").order_by("-ordered_at")
 
     age = None
     if patient.date_of_birth:
@@ -593,6 +877,11 @@ def doctor_patient_record_detail(request, patient_id):
         "record": record,
         "latest_vitals": latest_vitals,
         "prescriptions": prescriptions,
+        "clinical_notes": clinical_notes,
+        "lab_orders": lab_orders,
+        "note_form": note_form,
+        "lab_order_form": lab_order_form,
+        "lab_result_statuses": LabResult._meta.get_field("status").choices,
         "provider": provider,
         "age": age,
     })
@@ -655,4 +944,38 @@ def doctor_edit_prescription(request, patient_id, prescription_id):
     return render(request, "doctor_edit_prescription.html", {
         "patient": patient,
         "prescription": prescription,
+    })
+
+
+@login_required
+def doctor_edit_clinical_note(request, patient_id, note_id):
+    staff_profile = getattr(request.user, "staff_profile", None)
+    provider = getattr(staff_profile, "provider_profile", None)
+
+    if not provider:
+        return redirect("doctor_dashboard")
+
+    patient = provider.patients.filter(id=patient_id).first()
+    if not patient:
+        return redirect("doctor_records")
+
+    note = ClinicalNote.objects.filter(
+        id=note_id,
+        patient_record__patient=patient,
+    ).first()
+    if not note:
+        return redirect("doctor_patient_record_detail", patient_id=patient.id)
+
+    form = ClinicalNoteForm(request.POST or None, instance=note, prefix="note")
+    if request.method == "POST" and form.is_valid():
+        updated_note = form.save(commit=False)
+        updated_note.author = staff_profile
+        updated_note.save()
+        messages.success(request, "Clinical note updated.")
+        return redirect("doctor_patient_record_detail", patient_id=patient.id)
+
+    return render(request, "doctor_edit_clinical_note.html", {
+        "patient": patient,
+        "note": note,
+        "form": form,
     })

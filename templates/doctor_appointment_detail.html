@@ -56,7 +56,6 @@
     <div class="portal-main">
         <div class="portal-topbar">
             <h1 class="portal-topbar-title">Appointment Details</h1>
-            <div class="portal-topbar-date">Review scheduled patient visit</div>
         </div>
 
         <main class="portal-content">
@@ -65,12 +64,6 @@
                 <h2 class="portal-page-title">
                     {{ appointment.patient.user.first_name }} {{ appointment.patient.user.last_name }}
                 </h2>
-
-                <p class="portal-page-subtitle">
-                    Provider:
-                    Dr. {{ appointment.provider.staff_profile.user.first_name }}
-                    {{ appointment.provider.staff_profile.user.last_name }}
-                </p>
 
                 <div class="portal-list-item">
                     <div>

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Nurse Patient Records | Marco's Medical Portal{% endblock %}
+
+{% block body %}
+<div class="portal-app-shell">
+    <aside class="portal-sidebar">
+        <div class="portal-sidebar-brand">
+            <div class="portal-brand-icon">M</div>
+            <div>
+                <p class="portal-brand-title">Marco's Medical</p>
+                <p class="portal-brand-subtitle">Nurse Portal</p>
+            </div>
+        </div>
+
+        <nav class="portal-nav">
+            <a class="portal-nav-link" href="{% url 'nurse_dashboard' %}">
+                <span class="portal-nav-icon">⌂</span>
+                <span>Dashboard</span>
+            </a>
+            <a class="portal-nav-link" href="{% url 'staff_appointments' %}">
+                <span class="portal-nav-icon">📅</span>
+                <span>Appointments</span>
+            </a>
+            <a class="portal-nav-link active" href="{% url 'nurse_records' %}">
+                <span class="portal-nav-icon">▣</span>
+                <span>Patient Records</span>
+            </a>
+        </nav>
+
+        <div class="portal-sidebar-footer">
+            <div class="portal-user-box">
+                <div class="portal-avatar">
+                    {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                </div>
+                <div>
+                    <p class="portal-user-name">{{ request.user.first_name }} {{ request.user.last_name }}</p>
+                    <p class="portal-user-email">{{ request.user.email|default:"No email added" }}</p>
+                </div>
+            </div>
+
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="portal-signout-btn">Sign Out</button>
+            </form>
+        </div>
+    </aside>
+
+    <div class="portal-main">
+        <div class="portal-topbar">
+            <div class="portal-topbar-stack">
+                <h1 class="portal-topbar-title">Nurse Patient Records</h1>
+            </div>
+        </div>
+
+        <main class="portal-content">
+            <h2 class="portal-page-title">Patient Chart Access</h2>
+
+            <section class="portal-panel">
+                <div class="portal-panel-header">
+                    <div>
+                        <h3 class="portal-panel-title">Patients</h3>
+                        <p class="portal-panel-subtitle">Patients with appointment activity in the system.</p>
+                    </div>
+                </div>
+
+                {% for entry in records %}
+                <div class="portal-list-item">
+                    <div class="portal-list-left">
+                        <div class="portal-list-details">
+                            <p class="portal-list-title">{{ entry.patient.user.first_name }} {{ entry.patient.user.last_name }}</p>
+                            <p class="portal-list-subtitle">Username: {{ entry.patient.user.username }}</p>
+                            <p class="portal-list-meta">Age: {% if entry.age %}{{ entry.age }}{% else %}Not listed{% endif %}</p>
+                            {% if entry.latest_appointment %}
+                            <p class="portal-list-meta">Latest visit: {{ entry.latest_appointment.scheduled_start|date:"F j, Y g:i A" }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="portal-list-actions">
+                        {% if entry.latest_vitals %}
+                        <span class="portal-badge badge-success">Vitals on file</span>
+                        {% else %}
+                        <span class="portal-badge badge-warning">Vitals needed</span>
+                        {% endif %}
+                        <a href="{% url 'nurse_patient_record_detail' entry.patient.id %}" class="portal-secondary-btn portal-small-btn">Open Chart</a>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="portal-list-item">
+                    <div>
+                        <p class="portal-list-title">No patient records available</p>
+                        <p class="portal-list-subtitle">Patients with appointment activity will appear here.</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </section>
+        </main>
+    </div>
+</div>
+{% endblock %}

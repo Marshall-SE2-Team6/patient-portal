@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from apps.billing.models import Invoice
+from apps.records.models import ClinicalNote, LabOrder, LabResult, Prescription, VitalsRecord
 
 User = get_user_model()
 
@@ -59,3 +60,69 @@ class AdminInvoiceForm(forms.ModelForm):
             "due_date": forms.DateInput(attrs={"type": "date"}),
             "notes": forms.Textarea(attrs={"rows": 3}),
         }
+
+
+class ClinicalNoteForm(forms.ModelForm):
+    class Meta:
+        model = ClinicalNote
+        fields = ("title", "note_type", "content")
+        widgets = {
+            "content": forms.Textarea(attrs={"rows": 5}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs.setdefault("class", "portal-form-input")
+
+
+class LabOrderForm(forms.ModelForm):
+    class Meta:
+        model = LabOrder
+        fields = ("test_name", "instructions", "status")
+        widgets = {
+            "instructions": forms.Textarea(attrs={"rows": 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs.setdefault("class", "portal-form-input")
+
+
+class LabResultForm(forms.ModelForm):
+    class Meta:
+        model = LabResult
+        fields = ("result_summary", "result_value", "units", "reference_range", "status")
+        widgets = {
+            "result_summary": forms.Textarea(attrs={"rows": 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs.setdefault("class", "portal-form-input")
+
+
+class VitalsRecordForm(forms.ModelForm):
+    class Meta:
+        model = VitalsRecord
+        fields = (
+            "height_cm",
+            "weight_kg",
+            "temperature_c",
+            "systolic_bp",
+            "diastolic_bp",
+            "pulse_bpm",
+            "respiratory_rate",
+            "oxygen_saturation",
+            "notes",
+        )
+        widgets = {
+            "notes": forms.Textarea(attrs={"rows": 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs.setdefault("class", "portal-form-input")

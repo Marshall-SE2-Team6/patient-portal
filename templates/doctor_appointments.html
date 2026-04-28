@@ -34,22 +34,45 @@
                 <span>Billing</span>
             </a>
         </nav>
+
+        <div class="portal-sidebar-footer">
+            <div class="portal-user-box">
+                <div class="portal-avatar">
+                    {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                </div>
+                <div>
+                    <p class="portal-user-name">
+                        {% if request.user.first_name or request.user.last_name %}
+                        Dr. {{ request.user.first_name }} {{ request.user.last_name }}
+                        {% else %}
+                        {{ request.user.username }}
+                        {% endif %}
+                    </p>
+                    <p class="portal-user-email">{{ request.user.email|default:"No email added" }}</p>
+                </div>
+            </div>
+
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="portal-signout-btn">Sign Out</button>
+            </form>
+        </div>
     </aside>
 
     <div class="portal-main">
         <div class="portal-topbar">
-            <h1 class="portal-topbar-title">Appointments</h1>
-            <div class="portal-topbar-date">Review scheduled patient visits</div>
+            <div class="portal-topbar-stack">
+                <h1 class="portal-topbar-title">Doctor Appointments</h1>
+            </div>
         </div>
 
         <main class="portal-content">
+            <h2 class="portal-page-title">Appointment Schedule</h2>
+
             <section class="portal-panel">
                 <div class="portal-panel-header">
                     <div>
                         <h3 class="portal-panel-title">Scheduled Appointments</h3>
-                        <p class="portal-panel-subtitle">
-                            Review appointments scheduled with your patients.
-                        </p>
                     </div>
                 </div>
 

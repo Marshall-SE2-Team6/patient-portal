@@ -62,7 +62,6 @@
   <div class="portal-main">
     <div class="portal-topbar">
       <h1 class="portal-topbar-title">Dashboard</h1>
-      <div class="portal-topbar-date">Welcome to your patient portal</div>
     </div>
 
     <main class="portal-content">
@@ -74,7 +73,6 @@
           {{ request.user.username }}!
         {% endif %}
       </h2>
-      <p class="portal-page-subtitle">Here is your real account overview</p>
 
       {% if patient_profile %}
       <div class="portal-page-stack">
@@ -97,7 +95,7 @@
           </div>
         </div>
 
-        <a href="{% url 'records:my_records' %}" class="text-decoration-none" style="color: inherit;">
+        <a href="{% url 'records:my_records' %}" class="portal-card-link">
           <div class="portal-quick-card">
             <div class="portal-quick-icon icon-purple">🧪</div>
             <div>
@@ -107,13 +105,15 @@
           </div>
         </a>
 
-        <div class="portal-quick-card">
-          <div class="portal-quick-icon icon-orange">💳</div>
-          <div>
-            <div class="portal-quick-label">Open</div>
-            <div class="portal-quick-value">{{ open_invoices|length }} Invoices</div>
+        <a href="{% url 'billing:invoice_list' %}" class="portal-card-link">
+          <div class="portal-quick-card">
+            <div class="portal-quick-icon icon-orange">💳</div>
+            <div>
+              <div class="portal-quick-label">Open</div>
+              <div class="portal-quick-value">{{ open_invoices|length }} Invoices</div>
+            </div>
           </div>
-        </div>
+        </a>
 
         <div class="portal-quick-card">
           <div class="portal-quick-icon icon-green">👤</div>
@@ -129,7 +129,6 @@
           <div class="portal-panel-header">
             <div>
               <h3 class="portal-panel-title">Upcoming Appointments</h3>
-              <p class="portal-panel-subtitle">Your scheduled visits</p>
             </div>
             <div class="portal-request-appointment-wrap">
               <a href="{% url 'request_appointment' %}" class="portal-outline-btn portal-request-btn">
@@ -140,10 +139,10 @@
 
           {% if upcoming_appointments %}
           {% for appointment in upcoming_appointments %}
-          <a href="{% url 'appointment_detail' appointment.id %}" class="text-decoration-none" style="color: inherit;">
+          <a href="{% url 'appointment_detail' appointment.id %}" class="portal-card-link">
             <div class="portal-list-item">
               <div class="portal-list-left">
-                <div class="portal-quick-icon icon-blue" style="width:40px;height:40px;font-size:16px;">🗓</div>
+                <div class="portal-quick-icon portal-quick-icon-sm icon-blue">🗓</div>
                 <div class="portal-list-details">
                   <p class="portal-list-title">
                     Dr.
@@ -196,7 +195,6 @@
           <div class="portal-panel-header">
             <div>
               <h3 class="portal-panel-title">Recent Lab Results</h3>
-              <p class="portal-panel-subtitle">Latest lab updates</p>
             </div>
           </div>
 
@@ -204,7 +202,7 @@
             {% for result in recent_lab_results %}
               <div class="portal-list-item">
                 <div class="portal-list-left">
-                  <div class="portal-quick-icon icon-purple" style="width:40px;height:40px;font-size:16px;">🧪</div>
+                  <div class="portal-quick-icon portal-quick-icon-sm icon-purple">🧪</div>
                   <div>
                     <p class="portal-list-title">{{ result.lab_order.test_name }}</p>
                     <p class="portal-list-subtitle">{{ result.result_summary }}</p>
@@ -231,7 +229,6 @@
         <div class="portal-panel-header">
           <div>
             <h3 class="portal-panel-title">Pending Appointment Requests</h3>
-            <p class="portal-panel-subtitle">Requests waiting for approval from a doctor or receptionist</p>
           </div>
         </div>
 
@@ -239,7 +236,7 @@
           {% for appointment_request in pending_appointment_requests %}
             <div class="portal-list-item">
               <div class="portal-list-left">
-                <div class="portal-quick-icon icon-orange" style="width:40px;height:40px;font-size:16px;">⏳</div>
+                <div class="portal-quick-icon portal-quick-icon-sm icon-orange">⏳</div>
                 <div class="portal-list-details">
                   <p class="portal-list-title">
                     {% if appointment_request.preferred_provider %}
@@ -272,15 +269,15 @@
         <div class="portal-panel-header">
           <div>
             <h3 class="portal-panel-title">Outstanding Invoices</h3>
-            <p class="portal-panel-subtitle">Invoices that still need attention</p>
           </div>
         </div>
 
         {% if open_invoices %}
           {% for invoice in open_invoices %}
+            <a href="{% url 'billing:invoice_list' %}" class="portal-card-link">
             <div class="portal-list-item">
               <div class="portal-list-left">
-                <div class="portal-quick-icon icon-orange" style="width:40px;height:40px;font-size:16px;">💳</div>
+                <div class="portal-quick-icon portal-quick-icon-sm icon-orange">💳</div>
                 <div>
                   <p class="portal-list-title">{{ invoice.invoice_number }}</p>
                   <p class="portal-list-subtitle">
@@ -300,6 +297,7 @@
                 <span class="portal-price">${{ invoice.balance_due }}</span>
               </div>
             </div>
+            </a>
           {% endfor %}
         {% else %}
           <div class="portal-list-item">
@@ -315,7 +313,6 @@
         <div class="portal-panel-header">
           <div>
             <h3 class="portal-panel-title">Recent Appointment Updates</h3>
-            <p class="portal-panel-subtitle">Scheduling notifications saved to your account.</p>
           </div>
         </div>
 
@@ -347,7 +344,6 @@
           <div class="portal-panel-header">
             <div>
               <h3 class="portal-panel-title">Dashboard unavailable</h3>
-              <p class="portal-panel-subtitle">This dashboard is currently configured for patient accounts.</p>
             </div>
           </div>
 

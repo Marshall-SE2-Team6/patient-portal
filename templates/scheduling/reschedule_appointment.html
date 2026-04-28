@@ -8,12 +8,12 @@
             <div class="portal-brand-icon">M</div>
             <div>
                 <p class="portal-brand-title">Marco's Medical</p>
-                <p class="portal-brand-subtitle">{% if is_patient_owner %}Patient Portal{% else %}Staff Portal{% endif %}</p>
+                <p class="portal-brand-subtitle">{% if is_patient_owner %}Patient Portal{% else %}{{ staff_portal_label }}{% endif %}</p>
             </div>
         </div>
 
         <nav class="portal-nav">
-            <a class="portal-nav-link" href="{% if is_patient_owner %}{% url 'dashboard' %}{% else %}{% url 'admin_dashboard' %}{% endif %}">
+            <a class="portal-nav-link" href="{% if is_patient_owner %}{% url 'dashboard' %}{% else %}{% url staff_home_url %}{% endif %}">
                 <span class="portal-nav-icon">⌂</span>
                 <span>Dashboard</span>
             </a>
@@ -27,7 +27,6 @@
     <div class="portal-main">
         <div class="portal-topbar">
             <h1 class="portal-topbar-title">Reschedule Appointment</h1>
-            <div class="portal-topbar-date">Choose a new available slot</div>
         </div>
 
         <main class="portal-content">
