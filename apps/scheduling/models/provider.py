@@ -23,4 +23,6 @@ class Provider(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self) -> str:
-        return f"Provider<{self.staff_profile.user.username}>"
+        user = self.staff_profile.user
+        full_name = f"{user.first_name} {user.last_name}".strip()
+        return f"Dr. {full_name}" if full_name else user.username

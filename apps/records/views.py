@@ -3,7 +3,7 @@ from datetime import date
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 
-from .models import ClinicalNote, LabResult, Prescription, VitalsRecord
+from .models import ClinicalNote, LabResult, Prescription, PrescriptionStatus, VitalsRecord
 
 
 @login_required
@@ -37,11 +37,16 @@ def my_records(request):
             .order_by("-updated_at")
         )
 
+    active_prescriptions = [p for p in prescriptions if p.status == PrescriptionStatus.ACTIVE] if patient_record else []
+    prescription_history = [p for p in prescriptions if p.status != PrescriptionStatus.ACTIVE] if patient_record else []
+
     context = {
         "patient_profile": patient_profile,
         "patient_record": patient_record,
         "lab_results": lab_results,
         "prescriptions": prescriptions,
+        "active_prescriptions": active_prescriptions,
+        "prescription_history": prescription_history,
         "clinical_notes": clinical_notes,
     }
     return render(request, "records/my_records.html", context)
@@ -99,11 +104,16 @@ def patient_record_detail(request):
             .order_by("-resulted_at")
         )
 
+    active_prescriptions = [p for p in prescriptions if p.status == PrescriptionStatus.ACTIVE] if patient_record else []
+    prescription_history = [p for p in prescriptions if p.status != PrescriptionStatus.ACTIVE] if patient_record else []
+
     context = {
         "patient_profile": patient_profile,
         "patient_record": patient_record,
         "latest_vitals": latest_vitals,
         "prescriptions": prescriptions,
+        "active_prescriptions": active_prescriptions,
+        "prescription_history": prescription_history,
         "clinical_notes": clinical_notes,
         "lab_results": lab_results,
         "age": age,

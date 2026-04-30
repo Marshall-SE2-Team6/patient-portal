@@ -372,6 +372,20 @@ class Command(BaseCommand):
         slot_8_end = self._dt(days=3, hour=10)
         slot_9_start = self._dt(days=6, hour=10)
         slot_9_end = self._dt(days=6, hour=11)
+        slot_10_start = self._dt(days=0, hour=16)
+        slot_10_end = self._dt(days=0, hour=17)
+        slot_11_start = self._dt(days=1, hour=11)
+        slot_11_end = self._dt(days=1, hour=12)
+        slot_12_start = self._dt(days=2, hour=9)
+        slot_12_end = self._dt(days=2, hour=10)
+        slot_13_start = self._dt(days=3, hour=11)
+        slot_13_end = self._dt(days=3, hour=12)
+        slot_14_start = self._dt(days=4, hour=14)
+        slot_14_end = self._dt(days=4, hour=15)
+        slot_15_start = self._dt(days=5, hour=9)
+        slot_15_end = self._dt(days=5, hour=10)
+        slot_16_start = self._dt(days=6, hour=13)
+        slot_16_end = self._dt(days=6, hour=14)
 
         slot_7, _ = AvailabilitySlot.objects.update_or_create(
             provider=dr_lee_provider,
@@ -391,6 +405,55 @@ class Command(BaseCommand):
             provider=dr_lee_provider,
             start_time=slot_9_start,
             end_time=slot_9_end,
+            defaults={"is_booked": False, "notes": "Future open slot"},
+        )
+
+        slot_10, _ = AvailabilitySlot.objects.update_or_create(
+            provider=dr_smith_provider,
+            start_time=slot_10_start,
+            end_time=slot_10_end,
+            defaults={"is_booked": True, "notes": "Today scheduled follow-up slot"},
+        )
+
+        slot_11, _ = AvailabilitySlot.objects.update_or_create(
+            provider=dr_smith_provider,
+            start_time=slot_11_start,
+            end_time=slot_11_end,
+            defaults={"is_booked": False, "notes": "Future open slot"},
+        )
+
+        slot_12, _ = AvailabilitySlot.objects.update_or_create(
+            provider=dr_smith_provider,
+            start_time=slot_12_start,
+            end_time=slot_12_end,
+            defaults={"is_booked": False, "notes": "Future open slot"},
+        )
+
+        slot_13, _ = AvailabilitySlot.objects.update_or_create(
+            provider=dr_lee_provider,
+            start_time=slot_13_start,
+            end_time=slot_13_end,
+            defaults={"is_booked": False, "notes": "Future open slot"},
+        )
+
+        slot_14, _ = AvailabilitySlot.objects.update_or_create(
+            provider=dr_lee_provider,
+            start_time=slot_14_start,
+            end_time=slot_14_end,
+            defaults={"is_booked": False, "notes": "Future open slot"},
+        )
+
+        slot_15, _ = AvailabilitySlot.objects.update_or_create(
+            provider=dr_smith_provider,
+            start_time=slot_15_start,
+            end_time=slot_15_end,
+            defaults={"is_booked": False, "notes": "Future open slot"},
+        )
+
+        slot_16, _ = AvailabilitySlot.objects.update_or_create(
+            provider=dr_lee_provider,
+            start_time=slot_16_start,
+            end_time=slot_16_end,
             defaults={"is_booked": False, "notes": "Future open slot"},
         )
 
@@ -453,6 +516,18 @@ class Command(BaseCommand):
                 "requested_slot": slot_9,
                 "requested_end": slot_9.end_time,
                 "reason": "Lab review and medication follow-up",
+                "status": AppointmentRequestStatus.APPROVED,
+            },
+        )
+
+        alice_today_request, _ = AppointmentRequest.objects.update_or_create(
+            patient=alice_profile,
+            preferred_provider=dr_smith_provider,
+            requested_start=slot_10.start_time,
+            defaults={
+                "requested_slot": slot_10,
+                "requested_end": slot_10.end_time,
+                "reason": "Same-day fatigue follow-up and care plan review",
                 "status": AppointmentRequestStatus.APPROVED,
             },
         )
@@ -576,6 +651,33 @@ class Command(BaseCommand):
             },
         )
 
+        alice_today_appointment, _ = Appointment.objects.update_or_create(
+            patient=alice_profile,
+            provider=dr_smith_provider,
+            scheduled_start=slot_10.start_time,
+            defaults={
+                "appointment_request": alice_today_request,
+                "availability_slot": slot_10,
+                "scheduled_end": slot_10.end_time,
+                "reason": "Same-day fatigue follow-up and care plan review",
+                "notes": "Seeded same-day appointment so patient and doctor dashboards both show an active visit.",
+                "status": AppointmentStatus.SCHEDULED,
+            },
+        )
+
+        ethan_future_appointment, _ = Appointment.objects.update_or_create(
+            patient=ethan_profile,
+            provider=dr_smith_provider,
+            scheduled_start=slot_8.start_time,
+            defaults={
+                "availability_slot": slot_8,
+                "scheduled_end": slot_8.end_time,
+                "reason": "Post-travel wellness clearance follow-up",
+                "notes": "Seeded upcoming appointment for doctor schedule depth.",
+                "status": AppointmentStatus.SCHEDULED,
+            },
+        )
+
         alice_no_show_appointment, _ = Appointment.objects.update_or_create(
             patient=alice_profile,
             provider=dr_smith_provider,
@@ -603,10 +705,24 @@ class Command(BaseCommand):
         slot_6.save(update_fields=["is_booked"])
         slot_7.is_booked = True
         slot_7.save(update_fields=["is_booked"])
-        slot_8.is_booked = False
+        slot_8.is_booked = True
         slot_8.save(update_fields=["is_booked"])
         slot_9.is_booked = True
         slot_9.save(update_fields=["is_booked"])
+        slot_10.is_booked = True
+        slot_10.save(update_fields=["is_booked"])
+        slot_11.is_booked = False
+        slot_11.save(update_fields=["is_booked"])
+        slot_12.is_booked = False
+        slot_12.save(update_fields=["is_booked"])
+        slot_13.is_booked = False
+        slot_13.save(update_fields=["is_booked"])
+        slot_14.is_booked = False
+        slot_14.save(update_fields=["is_booked"])
+        slot_15.is_booked = False
+        slot_15.save(update_fields=["is_booked"])
+        slot_16.is_booked = False
+        slot_16.save(update_fields=["is_booked"])
 
         CheckInRecord.objects.update_or_create(
             appointment=alice_appointment,
@@ -681,6 +797,26 @@ class Command(BaseCommand):
                 "insurance_member_id": "AHP-ALICE-1001",
                 "accommodation_notes": "Prefers morning follow-up calls if rescheduled.",
                 "additional_notes": "Would like to review recent lab results and next steps.",
+            },
+        )
+
+        PreCheckInRecord.objects.update_or_create(
+            appointment=alice_today_appointment,
+            defaults={
+                "phone_number": alice_profile.phone_number,
+                "address_line_1": alice_profile.address_line_1,
+                "city": alice_profile.city,
+                "state": alice_profile.state,
+                "postal_code": alice_profile.postal_code,
+                "emergency_contact_name": alice_profile.emergency_contact_name,
+                "emergency_contact_phone": alice_profile.emergency_contact_phone,
+                "symptoms": "Fatigue over the last week with mild dizziness in the afternoon.",
+                "current_medications": "Cetirizine 10 mg daily, multivitamin",
+                "allergies": "Penicillin",
+                "insurance_provider": "Appalachian Health Plan",
+                "insurance_member_id": "AHP-ALICE-1001",
+                "accommodation_notes": "Prefers printed after-visit summary.",
+                "additional_notes": "Would like to review whether more labs are needed before the weekend.",
             },
         )
 
@@ -1398,6 +1534,20 @@ class Command(BaseCommand):
 
         Notification.objects.update_or_create(
             recipient=alice_user,
+            subject="Today's care plan follow-up is scheduled",
+            defaults={
+                "notification_type": NotificationType.APPOINTMENT_STATUS,
+                "channel": NotificationChannel.IN_APP,
+                "status": NotificationStatus.SENT,
+                "message": "Your same-day follow-up with Dr. John Smith is on today's schedule and your pre-check-in details are ready.",
+                "appointment": alice_today_appointment,
+                "invoice": None,
+                "sent_at": timezone.now(),
+            },
+        )
+
+        Notification.objects.update_or_create(
+            recipient=alice_user,
             subject="Invoice INV-1005 is ready",
             defaults={
                 "notification_type": NotificationType.BILLING_UPDATE,
@@ -1547,12 +1697,14 @@ class Command(BaseCommand):
 
         Notification.objects.update_or_create(
             recipient=dr_smith_user,
-            subject="Daily seeded system notice",
+            subject="Today's doctor schedule is ready",
             defaults={
-                "notification_type": NotificationType.SYSTEM,
+                "notification_type": NotificationType.GENERAL,
                 "channel": NotificationChannel.IN_APP,
                 "status": NotificationStatus.SENT,
-                "message": "This is a seeded system notification for staff demo purposes.",
+                "message": "Charlie Lopez is checked in, Alice Carter is still waiting today, and Ethan Reed has a future follow-up scheduled.",
+                "appointment": alice_today_appointment,
+                "invoice": None,
                 "sent_at": timezone.now(),
             },
         )

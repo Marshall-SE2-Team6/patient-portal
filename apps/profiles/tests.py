@@ -22,8 +22,10 @@ def test_patient_profile_string_representation(self) -> None:
     user = get_user_model().objects.create_user(
         username="patientprofileuser",
         password="testpass123",
+        first_name="Alice",
+        last_name="Jones",
     )
 
     profile = PatientProfile.objects.create(user=user)
 
-    self.assertEqual(str(profile), "PatientProfile<patientprofileuser>")
+    self.assertEqual(str(profile), "Alice Jones")

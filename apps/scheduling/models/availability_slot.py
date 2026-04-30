@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 from .provider import Provider
 
@@ -24,4 +25,6 @@ class AvailabilitySlot(models.Model):
         ]
 
     def __str__(self) -> str:
-        return f"{self.provider} | {self.start_time} - {self.end_time}"
+        start_local = timezone.localtime(self.start_time).strftime("%Y-%m-%d %I:%M %p")
+        end_local = timezone.localtime(self.end_time).strftime("%I:%M %p")
+        return f"{self.provider} | {start_local} - {end_local}"

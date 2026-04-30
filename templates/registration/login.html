@@ -2,46 +2,62 @@
 {% block title %}Sign In | Marco's Medical Portal{% endblock %}
 
 {% block body %}
-<div class="portal-auth-body">
-  <div class="portal-auth-card">
-    <div class="portal-logo-circle">∿</div>
-
-    <h1 class="portal-auth-title">Marco's Medical Portal</h1>
-    <p class="portal-auth-subtitle">Sign in to access your healthcare dashboard</p>
-
-    <form method="post" novalidate>
-      {% csrf_token %}
-      {% if next %}
-        <input type="hidden" name="next" value="{{ next }}">
-      {% endif %}
-
-      {% if form.errors %}
-        <div class="alert alert-danger portal-alert">
-          Invalid username or password.
+<div class="portal-auth-body portal-auth-body-login">
+  <div class="portal-auth-card portal-auth-split-card">
+    <div class="portal-auth-split-layout">
+      <section class="portal-auth-showcase-panel">
+        <div class="portal-auth-showcase-mark">M</div>
+        <div class="portal-auth-eyebrow portal-auth-showcase-eyebrow">Marco's Medical</div>
+        <h1 class="portal-auth-showcase-title">Healthcare portal built for every role.</h1>
+        <div class="portal-auth-showcase-points">
+          <div class="portal-auth-showcase-point">Appointment scheduling and pre-check-in</div>
+          <div class="portal-auth-showcase-point">Clinical records, prescriptions, and labs</div>
+          <div class="portal-auth-showcase-point">Billing, front desk workflow, and admin access</div>
         </div>
-      {% endif %}
+      </section>
 
-      <div class="mb-3">
-        <label class="portal-label" for="id_username">Username</label>
-        <input class="form-control portal-input" type="text" name="username" id="id_username" placeholder="Your Username" autofocus required>
-      </div>
+      <section class="portal-auth-form-side">
+        <div class="portal-auth-form-header">
+          <div class="portal-auth-form-brand">Marco's Medical Portal</div>
+          <h2 class="portal-auth-form-title">Login</h2>
+          <p class="portal-auth-form-subtitle">Access your patient or staff dashboard.</p>
+        </div>
 
-      <div class="mb-3">
-        <label class="portal-label" for="id_password">Password</label>
-        <input class="form-control portal-input" type="password" name="password" id="id_password" placeholder="••••••••" required>
-      </div>
+        <form method="post" novalidate class="portal-auth-form-shell">
+          {% csrf_token %}
+          {% if next %}
+            <input type="hidden" name="next" value="{{ next }}">
+          {% endif %}
 
-      <div class="portal-forgot">
-        <a class="portal-inline-link" href="{% url 'password_reset' %}">Forgot password?</a>
-      </div>
+          {% if form.errors %}
+            <div class="alert alert-danger portal-alert">
+              Invalid username or password.
+            </div>
+          {% endif %}
 
-      <button class="portal-btn-primary" type="submit">Sign In</button>
+          <div class="mb-3">
+            <label class="portal-label" for="id_username">Username</label>
+            <input class="form-control portal-input" type="text" name="username" id="id_username" placeholder="Username" autofocus required autocomplete="username">
+          </div>
 
-      <div class="portal-link-row">
-        Don't have an account?
-        <a href="{% url 'signup' %}">Register here</a>
-      </div>
-    </form>
+          <div class="mb-3">
+            <label class="portal-label" for="id_password">Password</label>
+            <input class="form-control portal-input" type="password" name="password" id="id_password" placeholder="Password" required autocomplete="current-password">
+          </div>
+
+          <div class="portal-auth-form-row portal-auth-form-row-end">
+            <a class="portal-inline-link" href="{% url 'password_reset' %}">Forgot password?</a>
+          </div>
+
+          <button class="portal-btn-primary" type="submit">Login to Portal</button>
+
+          <div class="portal-link-row">
+            Don't have an account?
+            <a href="{% url 'signup' %}">Register here</a>
+          </div>
+        </form>
+      </section>
+    </div>
   </div>
 </div>
 {% endblock %}

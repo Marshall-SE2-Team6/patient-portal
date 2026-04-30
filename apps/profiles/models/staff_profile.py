@@ -31,4 +31,7 @@ class StaffProfile(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self) -> str:
-        return f"StaffProfile<{self.user.username}>"
+        full_name = f"{self.user.first_name} {self.user.last_name}".strip()
+        if full_name:
+            return full_name
+        return self.user.username

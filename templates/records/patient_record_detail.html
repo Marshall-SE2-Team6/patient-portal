@@ -206,26 +206,56 @@
                 </div>
 
                 {% if prescriptions %}
-                {% for prescription in prescriptions %}
-                <div class="portal-list-item">
-                    <div class="portal-section-fill">
-                        <p class="portal-list-title">{{ prescription.medication_name }}</p>
-                        <p class="portal-list-subtitle">{{ prescription.dosage|default:"No dosage listed" }} • {{ prescription.frequency|default:"No frequency listed" }}</p>
-                        <p class="portal-list-meta">{{ prescription.instructions|default:"No instructions provided." }}</p>
-                        {% if prescription.prescribed_by %}
-                        <p class="portal-list-meta">Prescribed by {{ prescription.prescribed_by.user.first_name }} {{ prescription.prescribed_by.user.last_name }}</p>
-                        {% endif %}
-                    </div>
-                    <span class="portal-badge badge-neutral">{{ prescription.get_status_display }}</span>
+                <div class="portal-tab-bar" role="tablist" aria-label="Full chart prescription status view">
+                    <button type="button" class="portal-tab-btn active" data-tab-target="chart-prescription-tab-active" aria-selected="true">Active</button>
+                    <button type="button" class="portal-tab-btn" data-tab-target="chart-prescription-tab-history" aria-selected="false">Completed / Cancelled</button>
                 </div>
+
+                <div class="portal-tab-panel active" id="chart-prescription-tab-active">
+                {% for prescription in active_prescriptions %}
+                    <div class="portal-list-item">
+                        <div class="portal-section-fill">
+                            <p class="portal-list-title">{{ prescription.medication_name }}</p>
+                            <p class="portal-list-subtitle">{{ prescription.dosage|default:"No dosage listed" }} • {{ prescription.frequency|default:"No frequency listed" }}</p>
+                            <p class="portal-list-meta">{{ prescription.instructions|default:"No instructions provided." }}</p>
+                            {% if prescription.prescribed_by %}
+                            <p class="portal-list-meta">Prescribed by {{ prescription.prescribed_by.user.first_name }} {{ prescription.prescribed_by.user.last_name }}</p>
+                            {% endif %}
+                        </div>
+                        <span class="portal-badge badge-neutral">{{ prescription.get_status_display }}</span>
+                    </div>
                 {% empty %}
-                <div class="portal-list-item">
-                    <div>
-                        <p class="portal-list-title">No prescriptions yet</p>
-                        <p class="portal-list-subtitle">Prescriptions from your providers will appear here.</p>
+                    <div class="portal-list-item">
+                        <div>
+                            <p class="portal-list-title">No active prescriptions</p>
+                            <p class="portal-list-subtitle">Current prescriptions from your providers will appear here.</p>
+                        </div>
                     </div>
-                </div>
                 {% endfor %}
+                </div>
+
+                <div class="portal-tab-panel" id="chart-prescription-tab-history">
+                {% for prescription in prescription_history %}
+                    <div class="portal-list-item">
+                        <div class="portal-section-fill">
+                            <p class="portal-list-title">{{ prescription.medication_name }}</p>
+                            <p class="portal-list-subtitle">{{ prescription.dosage|default:"No dosage listed" }} • {{ prescription.frequency|default:"No frequency listed" }}</p>
+                            <p class="portal-list-meta">{{ prescription.instructions|default:"No instructions provided." }}</p>
+                            {% if prescription.prescribed_by %}
+                            <p class="portal-list-meta">Prescribed by {{ prescription.prescribed_by.user.first_name }} {{ prescription.prescribed_by.user.last_name }}</p>
+                            {% endif %}
+                        </div>
+                        <span class="portal-badge badge-neutral">{{ prescription.get_status_display }}</span>
+                    </div>
+                {% empty %}
+                    <div class="portal-list-item">
+                        <div>
+                            <p class="portal-list-title">No completed or cancelled prescriptions</p>
+                            <p class="portal-list-subtitle">Prescription history will appear here.</p>
+                        </div>
+                    </div>
+                {% endfor %}
+                </div>
                 {% endif %}
             </section>
 
@@ -295,4 +325,42 @@
         </main>
     </div>
 </div>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const tabBars = document.querySelectorAll(".portal-tab-bar");
+
+  tabBars.forEach((tabBar) => {
+    const tabButtons = tabBar.querySelectorAll(".portal-tab-btn");
+    const panelIds = Array.from(tabButtons).map((button) => button.getAttribute("data-tab-target"));
+    const tabPanels = panelIds.map((id) => document.getElementById(id)).filter(Boolean);
+
+    if (!tabButtons.length || !tabPanels.length) {
+      return;
+    }
+
+    tabButtons.forEach((button) => {
+      button.addEventListener("click", function () {
+        const targetId = button.getAttribute("data-tab-target");
+
+        tabButtons.forEach((tab) => {
+          tab.classList.remove("active");
+          tab.setAttribute("aria-selected", "false");
+        });
+
+        tabPanels.forEach((panel) => {
+          panel.classList.remove("active");
+        });
+
+        button.classList.add("active");
+        button.setAttribute("aria-selected", "true");
+
+        const targetPanel = document.getElementById(targetId);
+        if (targetPanel) {
+          targetPanel.classList.add("active");
+        }
+      });
+    });
+  });
+});
+</script>
 {% endblock %}

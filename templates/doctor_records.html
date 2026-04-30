@@ -93,8 +93,20 @@
           </div>
         </div>
 
+        <div class="portal-form-row" style="margin-bottom: 18px;">
+          <input
+            type="text"
+            id="doctor-record-search"
+            class="portal-form-input"
+            placeholder="Search patient by name, username, phone, age, or date of birth"
+          >
+        </div>
+
         {% for record in records %}
-        <div class="portal-list-item">
+        <div
+          class="portal-list-item doctor-record-item"
+          data-record-search="{{ record.patient.user.first_name }} {{ record.patient.user.last_name }} {{ record.patient.user.username }} {{ record.patient.phone_number|default:'Not listed' }} {% if record.age %}{{ record.age }}{% else %}Not listed{% endif %} {{ record.patient.date_of_birth|date:'F j, Y' }} {{ record.patient.date_of_birth|date:'Y-m-d' }}"
+        >
           <div>
             <p class="portal-list-title">
               {{ record.patient.user.first_name }} {{ record.patient.user.last_name }}
@@ -148,8 +160,42 @@
           </div>
         </div>
         {% endfor %}
+
+        <div class="portal-list-item" id="doctor-record-empty-search" style="display: none;">
+          <div>
+            <p class="portal-list-title">No matching patient records</p>
+            <p class="portal-list-subtitle">Try a different patient name, username, phone number, age, or date of birth.</p>
+          </div>
+        </div>
       </section>
     </main>
   </div>
 </div>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const recordSearchInput = document.getElementById("doctor-record-search");
+  const recordItems = document.querySelectorAll(".doctor-record-item");
+  const recordEmptyState = document.getElementById("doctor-record-empty-search");
+
+  if (recordSearchInput) {
+    recordSearchInput.addEventListener("input", function () {
+      const query = recordSearchInput.value.trim().toLowerCase();
+      let visibleCount = 0;
+
+      recordItems.forEach((item) => {
+        const haystack = (item.getAttribute("data-record-search") || "").toLowerCase();
+        const matches = !query || haystack.includes(query);
+        item.style.display = matches ? "" : "none";
+        if (matches) {
+          visibleCount += 1;
+        }
+      });
+
+      if (recordEmptyState) {
+        recordEmptyState.style.display = visibleCount === 0 ? "" : "none";
+      }
+    });
+  }
+});
+</script>
 {% endblock %}

@@ -67,80 +67,114 @@
         </div>
 
         <main class="portal-content">
-            <h2 class="portal-page-title">Appointment Schedule</h2>
+            {% if messages %}
+            <div class="portal-messages">
+                {% for message in messages %}
+                <div class="portal-message {% if message.tags == 'success' %}portal-message-success{% elif message.tags == 'error' %}portal-message-error{% else %}portal-message-info{% endif %}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
 
-            <section class="portal-panel" id="todays-appointments">
+            <div class="portal-tab-bar" role="tablist" aria-label="Doctor appointments view">
+                <button type="button" class="portal-tab-btn active" data-tab-target="doctor-tab-today" aria-selected="true">Today Queue</button>
+                <button type="button" class="portal-tab-btn" data-tab-target="doctor-tab-upcoming" aria-selected="false">Upcoming</button>
+                <button type="button" class="portal-tab-btn" data-tab-target="doctor-tab-pending" aria-selected="false">Pending Requests</button>
+                <button type="button" class="portal-tab-btn" data-tab-target="doctor-tab-history" aria-selected="false">History</button>
+            </div>
+
+            <div class="portal-tab-panel active" id="doctor-tab-today">
+            <section class="portal-panel" id="checked-in-now">
                 <div class="portal-panel-header">
                     <div>
-                        <h3 class="portal-panel-title">Today’s Appointments</h3>
+                        <h3 class="portal-panel-title">Checked In Now</h3>
                     </div>
                 </div>
 
-                {% for appointment in today_appointments %}
+                {% for appointment in checked_in_appointments %}
                 <div class="portal-list-item">
                     <div class="portal-list-left">
                         <div class="portal-list-details">
-                            <p class="portal-list-title">
-                                {{ appointment.patient.user.first_name }}
-                                {{ appointment.patient.user.last_name }}
-                            </p>
-
-                            <p class="portal-list-subtitle">
-                                {{ appointment.scheduled_start|date:"F j, Y" }}
-                                at
-                                {{ appointment.scheduled_start|date:"g:i A" }}
-                            </p>
-
-                            <p class="portal-list-meta">
-                                Reason: {{ appointment.reason|default:"No reason provided" }}
-                            </p>
-
-                            <p class="portal-list-meta">
-                                {% if appointment.has_pre_check_in %}Pre-check-in complete{% else %}Pre-check-in pending{% endif %}
-                            </p>
+                            <p class="portal-list-title">{{ appointment.patient.user.first_name }} {{ appointment.patient.user.last_name }}</p>
+                            <p class="portal-list-subtitle">Today at {{ appointment.scheduled_start|date:"g:i A" }}</p>
+                            <p class="portal-list-meta">Reason: {{ appointment.reason|default:"No reason provided" }}</p>
+                            <p class="portal-list-meta">{% if appointment.has_pre_check_in %}Pre-check-in complete{% else %}Pre-check-in pending{% endif %}</p>
                         </div>
                     </div>
 
                     <div class="portal-list-actions">
-                        {% if appointment.has_pre_check_in %}
-                        <span class="portal-badge badge-success">Pre-check-in complete</span>
-                        {% else %}
-                        <span class="portal-badge badge-warning">Pre-check-in pending</span>
-                        {% endif %}
-                        {% if appointment.status == "scheduled" or appointment.status == "checked_in" %}
+                        <span class="portal-badge badge-success">Checked In</span>
+                        <a href="{% url 'doctor_patient_record_detail' appointment.patient.id %}" class="portal-pay-btn">Open Chart</a>
+                        <a href="{% url 'doctor_appointment_detail' appointment.id %}" class="portal-secondary-btn">View Appointment</a>
                         <form method="post" action="{% url 'complete_appointment' appointment.id %}">
                             {% csrf_token %}
-                            <button type="submit" class="portal-secondary-btn">Complete</button>
+                            <button type="submit" class="portal-outline-btn portal-small-btn">Complete</button>
                         </form>
                         <form method="post" action="{% url 'mark_no_show_appointment' appointment.id %}">
                             {% csrf_token %}
                             <button type="submit" class="portal-outline-btn portal-small-btn">No-Show</button>
                         </form>
-                        {% endif %}
-                        <a
-                                href="{% url 'doctor_appointment_detail' appointment.id %}"
-                                class="portal-secondary-btn"
-                        >
-                            View Details
-                        </a>
                     </div>
                 </div>
                 {% empty %}
                 <div class="portal-list-item">
                     <div>
-                        <p class="portal-list-title">No appointments today</p>
-                        <p class="portal-list-subtitle">
-                            Today’s provider schedule will appear here first.
-                        </p>
+                        <p class="portal-list-title">No patients checked in right now</p>
+                        <p class="portal-list-subtitle">Checked-in visits will appear here first.</p>
                     </div>
                 </div>
                 {% endfor %}
             </section>
 
+            <section class="portal-panel" id="waiting-today">
+                <div class="portal-panel-header">
+                    <div>
+                        <h3 class="portal-panel-title">Waiting / Scheduled Today</h3>
+                    </div>
+                </div>
+
+                {% for appointment in waiting_today_appointments %}
+                <div class="portal-list-item">
+                    <div class="portal-list-left">
+                        <div class="portal-list-details">
+                            <p class="portal-list-title">{{ appointment.patient.user.first_name }} {{ appointment.patient.user.last_name }}</p>
+                            <p class="portal-list-subtitle">Today at {{ appointment.scheduled_start|date:"g:i A" }}</p>
+                            <p class="portal-list-meta">Reason: {{ appointment.reason|default:"No reason provided" }}</p>
+                            <p class="portal-list-meta">{% if appointment.has_pre_check_in %}Pre-check-in complete{% else %}Pre-check-in pending{% endif %}</p>
+                        </div>
+                    </div>
+
+                    <div class="portal-list-actions">
+                        <span class="portal-badge badge-warning">Waiting</span>
+                        <a href="{% url 'doctor_patient_record_detail' appointment.patient.id %}" class="portal-pay-btn">Open Chart</a>
+                        <a href="{% url 'doctor_appointment_detail' appointment.id %}" class="portal-secondary-btn">View Appointment</a>
+                        <form method="post" action="{% url 'complete_appointment' appointment.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="portal-outline-btn portal-small-btn">Complete</button>
+                        </form>
+                        <form method="post" action="{% url 'mark_no_show_appointment' appointment.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="portal-outline-btn portal-small-btn">No-Show</button>
+                        </form>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="portal-list-item">
+                    <div>
+                        <p class="portal-list-title">No scheduled patients waiting</p>
+                        <p class="portal-list-subtitle">Today's scheduled visits that still need attention will appear here.</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </section>
+            </div>
+
+            <div class="portal-tab-panel" id="doctor-tab-upcoming">
             <section class="portal-panel" id="upcoming-appointments">
                 <div class="portal-panel-header">
                     <div>
-                        <h3 class="portal-panel-title">Upcoming Appointments</h3>
+                        <h3 class="portal-panel-title">Upcoming</h3>
                     </div>
                 </div>
 
@@ -148,24 +182,10 @@
                 <div class="portal-list-item">
                     <div class="portal-list-left">
                         <div class="portal-list-details">
-                            <p class="portal-list-title">
-                                {{ appointment.patient.user.first_name }}
-                                {{ appointment.patient.user.last_name }}
-                            </p>
-
-                            <p class="portal-list-subtitle">
-                                {{ appointment.scheduled_start|date:"F j, Y" }}
-                                at
-                                {{ appointment.scheduled_start|date:"g:i A" }}
-                            </p>
-
-                            <p class="portal-list-meta">
-                                Reason: {{ appointment.reason|default:"No reason provided" }}
-                            </p>
-
-                            <p class="portal-list-meta">
-                                {% if appointment.has_pre_check_in %}Pre-check-in complete{% else %}Pre-check-in pending{% endif %}
-                            </p>
+                            <p class="portal-list-title">{{ appointment.patient.user.first_name }} {{ appointment.patient.user.last_name }}</p>
+                            <p class="portal-list-subtitle">{{ appointment.scheduled_start|date:"F j, Y" }} at {{ appointment.scheduled_start|date:"g:i A" }}</p>
+                            <p class="portal-list-meta">Reason: {{ appointment.reason|default:"No reason provided" }}</p>
+                            <p class="portal-list-meta">{% if appointment.has_pre_check_in %}Pre-check-in complete{% else %}Pre-check-in pending{% endif %}</p>
                         </div>
                     </div>
 
@@ -175,36 +195,74 @@
                         {% else %}
                         <span class="portal-badge badge-warning">Pre-check-in pending</span>
                         {% endif %}
-                        {% if appointment.status == "scheduled" or appointment.status == "checked_in" %}
+                        <a href="{% url 'doctor_patient_record_detail' appointment.patient.id %}" class="portal-outline-btn portal-small-btn">Open Chart</a>
+                        <a href="{% url 'doctor_appointment_detail' appointment.id %}" class="portal-secondary-btn">View Appointment</a>
                         <form method="post" action="{% url 'complete_appointment' appointment.id %}">
                             {% csrf_token %}
-                            <button type="submit" class="portal-secondary-btn">Complete</button>
+                            <button type="submit" class="portal-outline-btn portal-small-btn">Complete</button>
                         </form>
                         <form method="post" action="{% url 'mark_no_show_appointment' appointment.id %}">
                             {% csrf_token %}
                             <button type="submit" class="portal-outline-btn portal-small-btn">No-Show</button>
                         </form>
-                        {% endif %}
-                        <a
-                                href="{% url 'doctor_appointment_detail' appointment.id %}"
-                                class="portal-secondary-btn"
-                        >
-                            View Details
-                        </a>
                     </div>
                 </div>
                 {% empty %}
                 <div class="portal-list-item">
                     <div>
                         <p class="portal-list-title">No future appointments scheduled</p>
-                        <p class="portal-list-subtitle">
-                            Future patient visits will appear here after today’s queue.
-                        </p>
+                        <p class="portal-list-subtitle">Future patient visits will appear here after today's queue.</p>
                     </div>
                 </div>
                 {% endfor %}
             </section>
+            </div>
 
+            <div class="portal-tab-panel" id="doctor-tab-pending">
+            <section class="portal-panel" id="pending-requests">
+                <div class="portal-panel-header">
+                    <div>
+                        <h3 class="portal-panel-title">Pending Requests</h3>
+                    </div>
+                </div>
+
+                {% for appointment_request in pending_appointment_requests %}
+                <div class="portal-list-item">
+                    <div class="portal-list-left">
+                        <div class="portal-list-details">
+                            <p class="portal-list-title">{{ appointment_request.patient.user.first_name }} {{ appointment_request.patient.user.last_name }}</p>
+                            <p class="portal-list-subtitle">{{ appointment_request.requested_start|date:"F j, Y" }} at {{ appointment_request.requested_start|date:"g:i A" }}</p>
+                            <p class="portal-list-meta">Reason: {{ appointment_request.reason|default:"No reason provided" }}</p>
+                        </div>
+                    </div>
+
+                    <div class="portal-list-actions">
+                        <span class="portal-badge badge-warning">{{ appointment_request.get_status_display }}</span>
+                        <a href="{% url 'doctor_patient_record_detail' appointment_request.patient.id %}" class="portal-outline-btn portal-small-btn">Open Chart</a>
+                        <form method="post" action="{% url 'approve_appointment_request' appointment_request.id %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.path }}">
+                            <button type="submit" class="portal-pay-btn portal-small-btn">Approve</button>
+                        </form>
+                        <form method="post" action="{% url 'reject_appointment_request' appointment_request.id %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.path }}">
+                            <button type="submit" class="portal-signout-btn portal-small-btn">Reject</button>
+                        </form>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="portal-list-item">
+                    <div>
+                        <p class="portal-list-title">No pending requests</p>
+                        <p class="portal-list-subtitle">New patient requests waiting for your approval will appear here.</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </section>
+            </div>
+
+            <div class="portal-tab-panel" id="doctor-tab-history">
             <section class="portal-panel" id="appointment-history">
                 <div class="portal-panel-header">
                     <div>
@@ -212,49 +270,100 @@
                     </div>
                 </div>
 
+                <div class="portal-form-row" style="margin-bottom: 18px;">
+                    <input
+                        type="text"
+                        id="doctor-history-search"
+                        class="portal-form-input"
+                        placeholder="Search history by patient, reason, date, or status"
+                    >
+                </div>
+
                 {% for appointment in history_appointments %}
-                <div class="portal-list-item">
+                <div
+                    class="portal-list-item doctor-history-item"
+                    data-history-search="{{ appointment.patient.user.first_name }} {{ appointment.patient.user.last_name }} {{ appointment.scheduled_start|date:'F j, Y g:i A' }} {{ appointment.reason|default:'No reason provided' }} {{ appointment.get_status_display }}"
+                >
                     <div class="portal-list-left">
                         <div class="portal-list-details">
-                            <p class="portal-list-title">
-                                {{ appointment.patient.user.first_name }}
-                                {{ appointment.patient.user.last_name }}
-                            </p>
-
-                            <p class="portal-list-subtitle">
-                                {{ appointment.scheduled_start|date:"F j, Y" }}
-                                at
-                                {{ appointment.scheduled_start|date:"g:i A" }}
-                            </p>
-
-                            <p class="portal-list-meta">
-                                Reason: {{ appointment.reason|default:"No reason provided" }}
-                            </p>
+                            <p class="portal-list-title">{{ appointment.patient.user.first_name }} {{ appointment.patient.user.last_name }}</p>
+                            <p class="portal-list-subtitle">{{ appointment.scheduled_start|date:"F j, Y" }} at {{ appointment.scheduled_start|date:"g:i A" }}</p>
+                            <p class="portal-list-meta">Reason: {{ appointment.reason|default:"No reason provided" }}</p>
                         </div>
                     </div>
 
                     <div class="portal-list-actions">
                         <span class="portal-badge badge-neutral">{{ appointment.get_status_display }}</span>
-                        <a
-                                href="{% url 'doctor_appointment_detail' appointment.id %}"
-                                class="portal-outline-btn portal-small-btn"
-                        >
-                            View Details
-                        </a>
+                        <a href="{% url 'doctor_patient_record_detail' appointment.patient.id %}" class="portal-outline-btn portal-small-btn">Open Chart</a>
+                        <a href="{% url 'doctor_appointment_detail' appointment.id %}" class="portal-outline-btn portal-small-btn">View Appointment</a>
                     </div>
                 </div>
                 {% empty %}
                 <div class="portal-list-item">
                     <div>
                         <p class="portal-list-title">No appointment history yet</p>
-                        <p class="portal-list-subtitle">
-                            Completed, cancelled, and no-show visits will appear here.
-                        </p>
+                        <p class="portal-list-subtitle">Completed, cancelled, and no-show visits will appear here.</p>
                     </div>
                 </div>
                 {% endfor %}
+
+                <div class="portal-list-item" id="doctor-history-empty-search" style="display: none;">
+                    <div>
+                        <p class="portal-list-title">No matching history appointments</p>
+                        <p class="portal-list-subtitle">Try a different patient name, date, reason, or status.</p>
+                    </div>
+                </div>
             </section>
+            </div>
         </main>
     </div>
 </div>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const tabButtons = document.querySelectorAll(".portal-tab-btn");
+  const tabPanels = document.querySelectorAll(".portal-tab-panel");
+  const historySearchInput = document.getElementById("doctor-history-search");
+  const historyItems = document.querySelectorAll(".doctor-history-item");
+  const historyEmptyState = document.getElementById("doctor-history-empty-search");
+
+  tabButtons.forEach((button) => {
+    button.addEventListener("click", function () {
+      const targetId = button.getAttribute("data-tab-target");
+
+      tabButtons.forEach((tab) => {
+        tab.classList.remove("active");
+        tab.setAttribute("aria-selected", "false");
+      });
+
+      tabPanels.forEach((panel) => {
+        panel.classList.remove("active");
+      });
+
+      button.classList.add("active");
+      button.setAttribute("aria-selected", "true");
+      document.getElementById(targetId).classList.add("active");
+    });
+  });
+
+  if (historySearchInput) {
+    historySearchInput.addEventListener("input", function () {
+      const query = historySearchInput.value.trim().toLowerCase();
+      let visibleCount = 0;
+
+      historyItems.forEach((item) => {
+        const haystack = (item.getAttribute("data-history-search") || "").toLowerCase();
+        const matches = !query || haystack.includes(query);
+        item.style.display = matches ? "" : "none";
+        if (matches) {
+          visibleCount += 1;
+        }
+      });
+
+      if (historyEmptyState) {
+        historyEmptyState.style.display = visibleCount === 0 ? "" : "none";
+      }
+    });
+  }
+});
+</script>
 {% endblock %}

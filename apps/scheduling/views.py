@@ -345,6 +345,15 @@ def staff_appointments(request):
 
     meta = _staff_portal_meta(request.user)
     staff_profile = _staff_profile(request.user)
+    can_open_chart = bool(
+        staff_profile and staff_profile.staff_role == StaffRole.NURSE
+    )
+    checked_in_count = len(
+        [appointment for appointment in appointment_sections["today_appointments"] if appointment.status == AppointmentStatus.CHECKED_IN]
+    )
+    waiting_count = len(
+        [appointment for appointment in appointment_sections["today_appointments"] if appointment.status == AppointmentStatus.SCHEDULED]
+    )
 
     return render(request, "scheduling/staff_appointments.html", {
         "appointments": appointments,
@@ -358,6 +367,11 @@ def staff_appointments(request):
         "can_mark_no_show": True if request.user.is_superuser else bool(
             staff_profile and staff_profile.staff_role in {StaffRole.RECEPTIONIST, StaffRole.ADMIN}
         ),
+        "can_open_chart": can_open_chart,
+        "today_appointment_count": len(appointment_sections["today_appointments"]),
+        "checked_in_count": checked_in_count,
+        "waiting_count": waiting_count,
+        "upcoming_count": len(appointment_sections["upcoming_appointments"]),
         **appointment_sections,
     })
 

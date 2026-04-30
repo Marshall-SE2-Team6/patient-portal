@@ -130,7 +130,10 @@
                     <div class="portal-list-left">
                         <div class="portal-quick-icon portal-quick-icon-sm icon-blue">⌚</div>
                         <div class="portal-list-details">
-                            <p class="portal-list-title">{{ appointment.provider }}</p>
+                            <p class="portal-list-title">
+                                Dr. {{ appointment.provider.staff_profile.user.first_name }} {{ appointment.provider.staff_profile.user.last_name }}
+                            </p>
+                            <p class="portal-list-meta">{{ appointment.provider.specialty|default:"General Practice" }}</p>
                             <p class="portal-list-subtitle">Today at {{ appointment.scheduled_start|date:"g:i A" }}</p>
                             <p class="portal-list-meta">{{ appointment.reason|default:"No reason provided." }}</p>
                         </div>
@@ -171,7 +174,10 @@
                     <div class="portal-list-left">
                         <div class="portal-quick-icon portal-quick-icon-sm icon-blue">⌚</div>
                         <div class="portal-list-details">
-                            <p class="portal-list-title">{{ appointment.provider }}</p>
+                            <p class="portal-list-title">
+                                Dr. {{ appointment.provider.staff_profile.user.first_name }} {{ appointment.provider.staff_profile.user.last_name }}
+                            </p>
+                            <p class="portal-list-meta">{{ appointment.provider.specialty|default:"General Practice" }}</p>
                             <p class="portal-list-subtitle">{{ appointment.scheduled_start|date:"F j, Y" }} at {{ appointment.scheduled_start|date:"g:i A" }}</p>
                             <p class="portal-list-meta">{{ appointment.reason|default:"No reason provided." }}</p>
                         </div>
@@ -223,7 +229,10 @@
                     <div class="portal-list-left">
                         <div class="portal-quick-icon portal-quick-icon-sm icon-purple">🗂</div>
                         <div class="portal-list-details">
-                            <p class="portal-list-title">{{ appointment.provider }}</p>
+                            <p class="portal-list-title">
+                                Dr. {{ appointment.provider.staff_profile.user.first_name }} {{ appointment.provider.staff_profile.user.last_name }}
+                            </p>
+                            <p class="portal-list-meta">{{ appointment.provider.specialty|default:"General Practice" }}</p>
                             <p class="portal-list-subtitle">{{ appointment.scheduled_start|date:"F j, Y" }} at {{ appointment.scheduled_start|date:"g:i A" }}</p>
                             <p class="portal-list-meta">{{ appointment.reason|default:"No reason provided." }}</p>
                         </div>
