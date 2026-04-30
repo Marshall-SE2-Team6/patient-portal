@@ -317,8 +317,14 @@ class Command(BaseCommand):
         slot_2_end = self._dt(days=1, hour=11)
         slot_3_start = self._dt(days=2, hour=13)
         slot_3_end = self._dt(days=2, hour=14)
-        slot_4_start = self._dt(days=0, hour=15)
-        slot_4_end = self._dt(days=0, hour=16)
+        today_demo_anchor = (timezone.now() + timedelta(minutes=45)).replace(
+            minute=0,
+            second=0,
+            microsecond=0,
+        )
+
+        slot_4_start = today_demo_anchor + timedelta(hours=1)
+        slot_4_end = slot_4_start + timedelta(hours=1)
         slot_5_start = self._dt(days=4, hour=11)
         slot_5_end = self._dt(days=4, hour=12)
         slot_6_start = self._dt(days=5, hour=14)
@@ -366,14 +372,14 @@ class Command(BaseCommand):
             defaults={"is_booked": False, "notes": "Future open slot"},
         )
 
-        slot_7_start = self._dt(days=0, hour=11)
-        slot_7_end = self._dt(days=0, hour=12)
+        slot_7_start = today_demo_anchor
+        slot_7_end = slot_7_start + timedelta(hours=1)
         slot_8_start = self._dt(days=3, hour=9)
         slot_8_end = self._dt(days=3, hour=10)
         slot_9_start = self._dt(days=6, hour=10)
         slot_9_end = self._dt(days=6, hour=11)
-        slot_10_start = self._dt(days=0, hour=16)
-        slot_10_end = self._dt(days=0, hour=17)
+        slot_10_start = today_demo_anchor + timedelta(hours=2)
+        slot_10_end = slot_10_start + timedelta(hours=1)
         slot_11_start = self._dt(days=1, hour=11)
         slot_11_end = self._dt(days=1, hour=12)
         slot_12_start = self._dt(days=2, hour=9)
@@ -386,6 +392,10 @@ class Command(BaseCommand):
         slot_15_end = self._dt(days=5, hour=10)
         slot_16_start = self._dt(days=6, hour=13)
         slot_16_end = self._dt(days=6, hour=14)
+        slot_17_start = today_demo_anchor + timedelta(hours=3)
+        slot_17_end = slot_17_start + timedelta(hours=1)
+        slot_18_start = today_demo_anchor + timedelta(hours=4)
+        slot_18_end = slot_18_start + timedelta(hours=1)
 
         slot_7, _ = AvailabilitySlot.objects.update_or_create(
             provider=dr_lee_provider,
@@ -455,6 +465,20 @@ class Command(BaseCommand):
             start_time=slot_16_start,
             end_time=slot_16_end,
             defaults={"is_booked": False, "notes": "Future open slot"},
+        )
+
+        slot_17, _ = AvailabilitySlot.objects.update_or_create(
+            provider=dr_lee_provider,
+            start_time=slot_17_start,
+            end_time=slot_17_end,
+            defaults={"is_booked": True, "notes": "Today checked-in follow-up slot"},
+        )
+
+        slot_18, _ = AvailabilitySlot.objects.update_or_create(
+            provider=dr_smith_provider,
+            start_time=slot_18_start,
+            end_time=slot_18_end,
+            defaults={"is_booked": False, "notes": "Today open demo slot"},
         )
 
         # ------------------------------------------------------------------
@@ -553,6 +577,18 @@ class Command(BaseCommand):
                 "requested_end": slot_8.end_time,
                 "reason": "Travel clearance consultation",
                 "status": AppointmentRequestStatus.REJECTED,
+            },
+        )
+
+        bob_today_request, _ = AppointmentRequest.objects.update_or_create(
+            patient=bob_profile,
+            preferred_provider=dr_lee_provider,
+            requested_start=slot_17.start_time,
+            defaults={
+                "requested_slot": slot_17,
+                "requested_end": slot_17.end_time,
+                "reason": "Same-day blood pressure recheck and medication review",
+                "status": AppointmentRequestStatus.APPROVED,
             },
         )
 
@@ -665,6 +701,20 @@ class Command(BaseCommand):
             },
         )
 
+        bob_today_appointment, _ = Appointment.objects.update_or_create(
+            patient=bob_profile,
+            provider=dr_lee_provider,
+            scheduled_start=slot_17.start_time,
+            defaults={
+                "appointment_request": bob_today_request,
+                "availability_slot": slot_17,
+                "scheduled_end": slot_17.end_time,
+                "reason": "Same-day blood pressure recheck and medication review",
+                "notes": "Seeded same-day checked-in follow-up for nurse and doctor demos.",
+                "status": AppointmentStatus.CHECKED_IN,
+            },
+        )
+
         ethan_future_appointment, _ = Appointment.objects.update_or_create(
             patient=ethan_profile,
             provider=dr_smith_provider,
@@ -723,6 +773,10 @@ class Command(BaseCommand):
         slot_15.save(update_fields=["is_booked"])
         slot_16.is_booked = False
         slot_16.save(update_fields=["is_booked"])
+        slot_17.is_booked = True
+        slot_17.save(update_fields=["is_booked"])
+        slot_18.is_booked = False
+        slot_18.save(update_fields=["is_booked"])
 
         CheckInRecord.objects.update_or_create(
             appointment=alice_appointment,
@@ -737,6 +791,14 @@ class Command(BaseCommand):
             defaults={
                 "checked_in_by": nurse_jane_profile,
                 "notes": "Vitals pending room assignment complete.",
+            },
+        )
+
+        CheckInRecord.objects.update_or_create(
+            appointment=bob_today_appointment,
+            defaults={
+                "checked_in_by": nurse_jane_profile,
+                "notes": "Same-day follow-up patient checked in for blood pressure recheck.",
             },
         )
 
@@ -817,6 +879,26 @@ class Command(BaseCommand):
                 "insurance_member_id": "AHP-ALICE-1001",
                 "accommodation_notes": "Prefers printed after-visit summary.",
                 "additional_notes": "Would like to review whether more labs are needed before the weekend.",
+            },
+        )
+
+        PreCheckInRecord.objects.update_or_create(
+            appointment=bob_today_appointment,
+            defaults={
+                "phone_number": bob_profile.phone_number,
+                "address_line_1": bob_profile.address_line_1,
+                "city": bob_profile.city,
+                "state": bob_profile.state,
+                "postal_code": bob_profile.postal_code,
+                "emergency_contact_name": bob_profile.emergency_contact_name,
+                "emergency_contact_phone": bob_profile.emergency_contact_phone,
+                "symptoms": "Higher blood pressure readings at home and intermittent headaches.",
+                "current_medications": "Lisinopril 10 mg daily",
+                "allergies": "None reported",
+                "insurance_provider": "Mountain State Health",
+                "insurance_member_id": "MSH-BOB-1002",
+                "accommodation_notes": "",
+                "additional_notes": "Would like to confirm whether dosage adjustment is still needed.",
             },
         )
 
