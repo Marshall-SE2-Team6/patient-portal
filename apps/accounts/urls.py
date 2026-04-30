@@ -8,6 +8,7 @@ urlpatterns = [
     path("dashboard/front-desk/", views.receptionist_dashboard, name="receptionist_dashboard"),
     path("dashboard/doctor/", views.doctor_dashboard, name="doctor_dashboard"),
     path("dashboard/nurse/", views.nurse_dashboard, name="nurse_dashboard"),
+    path("dashboard/nurse/profile/", views.nurse_profile, name="nurse_profile"),
     path("dashboard/appointment-requests/<int:request_id>/approve/", views.approve_appointment_request, name="approve_appointment_request"),
     path("dashboard/appointment-requests/<int:request_id>/reject/", views.reject_appointment_request, name="reject_appointment_request"),
     path("dashboard/doctor/appointments/", views.doctor_appointments, name="doctor_appointments"),

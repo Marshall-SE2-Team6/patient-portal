@@ -17,6 +17,12 @@
                 <span class="portal-nav-icon">⌂</span>
                 <span>Dashboard</span>
             </a>
+            {% if can_open_chart %}
+            <a class="portal-nav-link" href="{% url 'nurse_profile' %}">
+                <span class="portal-nav-icon">👤</span>
+                <span>Profile</span>
+            </a>
+            {% endif %}
             <a class="portal-nav-link active" href="{% url 'staff_appointments' %}">
                 <span class="portal-nav-icon">📅</span>
                 <span>Appointments</span>

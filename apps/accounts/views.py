@@ -399,6 +399,18 @@ def nurse_dashboard(request):
 
 
 @login_required
+def nurse_profile(request):
+    staff_profile = getattr(request.user, "staff_profile", None)
+    if not staff_profile or staff_profile.staff_role != StaffRole.NURSE:
+        return redirect(_staff_redirect_name(request.user))
+
+    return render(request, "nurse_profile.html", {
+        "staff_user": request.user,
+        "staff_profile": staff_profile,
+    })
+
+
+@login_required
 def profile(request):
     return render(request, "profile.html", {
         "patient_profile": getattr(request.user, "patient_profile", None),
