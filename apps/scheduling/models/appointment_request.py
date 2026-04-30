@@ -46,7 +46,10 @@ class AppointmentRequest(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self) -> str:
-        return f"AppointmentRequest<{self.patient.user.username}>"
+        patient_name = str(self.patient)
+        if self.preferred_provider:
+            return f"{patient_name} request with {self.preferred_provider}"
+        return f"{patient_name} appointment request"
 
     def approve(self):
         from .appointment import Appointment, AppointmentStatus
@@ -86,7 +89,7 @@ class AppointmentRequest(models.Model):
             subject="Appointment Approved",
             message=(
                 f"Your appointment request for "
-                f"{appointment.scheduled_start.strftime('%B %d, %Y at %I:%M %p')} "
+                f"{timezone.localtime(appointment.scheduled_start).strftime('%B %d, %Y at %I:%M %p')} "
                 f"has been approved."
             ),
             notification_type="appointment_status",

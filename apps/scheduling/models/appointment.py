@@ -60,7 +60,11 @@ class Appointment(models.Model):
         ordering = ["scheduled_start"]
 
     def __str__(self) -> str:
-        return f"Appointment<{self.patient.user.username} with {self.provider}>"
+        patient_name = str(self.patient)
+        return (
+            f"{patient_name} with {self.provider} on "
+            f"{timezone.localtime(self.scheduled_start).strftime('%b %d, %Y at %I:%M %p')}"
+        )
 
     @property
     def is_upcoming(self):
@@ -170,7 +174,7 @@ class Appointment(models.Model):
             subject=f"Appointment {AppointmentStatus(new_status).label}",
             message=(
                 f"{actor_label} updated your appointment on "
-                f"{self.scheduled_start.strftime('%B %d, %Y at %I:%M %p')} "
+                f"{timezone.localtime(self.scheduled_start).strftime('%B %d, %Y at %I:%M %p')} "
                 f"to {AppointmentStatus(new_status).label}."
             ),
             notification_type="appointment_status",
@@ -205,8 +209,8 @@ class Appointment(models.Model):
             subject="Appointment Rescheduled",
             message=(
                 f"{actor_label} moved your appointment from "
-                f"{old_start.strftime('%B %d, %Y at %I:%M %p')} to "
-                f"{self.scheduled_start.strftime('%B %d, %Y at %I:%M %p')}."
+                f"{timezone.localtime(old_start).strftime('%B %d, %Y at %I:%M %p')} to "
+                f"{timezone.localtime(self.scheduled_start).strftime('%B %d, %Y at %I:%M %p')}."
             ),
             notification_type="appointment_status",
         )

@@ -39,4 +39,5 @@ class VitalsRecord(models.Model):
     notes = models.TextField(blank=True)
 
     def __str__(self) -> str:
-        return f"VitalsRecord<{self.patient_record.patient.user.username} @ {self.recorded_at}>"
+        recorded_local = timezone.localtime(self.recorded_at).strftime("%Y-%m-%d %I:%M %p")
+        return f"Vitals for {self.patient_record.patient} at {recorded_local}"

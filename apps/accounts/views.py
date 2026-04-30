@@ -516,6 +516,13 @@ def doctor_dashboard(request):
         .select_related("patient__user", "provider__staff_profile__user", "pre_check_in_record")
         .order_by("scheduled_start")
     )
+    upcoming_dashboard_appointments = appointments.filter(
+        scheduled_start__gte=timezone.now(),
+        status__in=[
+            AppointmentStatus.SCHEDULED,
+            AppointmentStatus.CHECKED_IN,
+        ],
+    )
 
     pending_appointment_requests = (
         AppointmentRequest.objects
@@ -542,7 +549,7 @@ def doctor_dashboard(request):
 
     context = {
         "provider": provider,
-        "appointments": appointments,
+        "appointments": upcoming_dashboard_appointments,
         "pending_appointment_requests": pending_appointment_requests,
         "todays_appointment_count": todays_appointment_count,
         "checked_in_count": checked_in_count,
@@ -559,6 +566,12 @@ def doctor_appointments(request):
     provider = getattr(staff_profile, "provider_profile", None)
 
     appointments = []
+    pending_appointment_requests = []
+    checked_in_appointments = []
+    waiting_today_appointments = []
+    today_appointment_count = 0
+    checked_in_count = 0
+    waiting_count = 0
 
     if provider:
         appointments = list(
@@ -567,12 +580,37 @@ def doctor_appointments(request):
             .select_related("patient__user", "provider__staff_profile__user", "pre_check_in_record")
             .order_by("scheduled_start")
         )
+        pending_appointment_requests = (
+            AppointmentRequest.objects
+            .filter(
+                preferred_provider=provider,
+                status=AppointmentRequestStatus.PENDING,
+            )
+            .select_related("patient__user", "preferred_provider__staff_profile__user")
+            .order_by("requested_start", "created_at")
+        )
 
     appointment_sections = _split_appointments_by_priority(appointments)
+    for appointment in appointment_sections["today_appointments"]:
+        if appointment.status == AppointmentStatus.CHECKED_IN:
+            checked_in_appointments.append(appointment)
+        elif appointment.status == AppointmentStatus.SCHEDULED:
+            waiting_today_appointments.append(appointment)
+
+    today_appointment_count = len(checked_in_appointments) + len(waiting_today_appointments)
+    checked_in_count = len(checked_in_appointments)
+    waiting_count = len(waiting_today_appointments)
 
     return render(request, "doctor_appointments.html", {
         "appointments": appointments,
         "provider": provider,
+        "checked_in_appointments": checked_in_appointments,
+        "waiting_today_appointments": waiting_today_appointments,
+        "pending_appointment_requests": pending_appointment_requests,
+        "today_appointment_count": today_appointment_count,
+        "checked_in_count": checked_in_count,
+        "waiting_count": waiting_count,
+        "pending_request_count": pending_appointment_requests.count() if provider else 0,
         **appointment_sections,
     })
 
@@ -792,9 +830,19 @@ def nurse_patient_record_detail(request, patient_id):
             return redirect("nurse_patient_record_detail", patient_id=patient.id)
 
     latest_vitals = record.vitals_records.select_related("recorded_by__user").order_by("-recorded_at").first()
+    vitals_history = list(
+        record.vitals_records
+        .select_related("recorded_by__user")
+        .order_by("-recorded_at")[1:6]
+    )
     prescriptions = record.prescriptions.select_related("prescribed_by__user").order_by("-created_at")
     clinical_notes = record.clinical_notes.select_related("author__user").order_by("-updated_at")
     lab_orders = record.lab_orders.select_related("ordered_by__user").order_by("-ordered_at")
+    appointment_history = (
+        patient.appointments
+        .select_related("provider__staff_profile__user")
+        .order_by("-scheduled_start")[:8]
+    )
     latest_appointment = (
         patient.appointments
         .select_related("provider__staff_profile__user", "pre_check_in_record")
@@ -817,6 +865,8 @@ def nurse_patient_record_detail(request, patient_id):
         "prescriptions": prescriptions,
         "clinical_notes": clinical_notes,
         "lab_orders": lab_orders,
+        "appointment_history": appointment_history,
+        "vitals_history": vitals_history,
         "latest_appointment": latest_appointment,
         "vitals_form": vitals_form,
         "age": age,
@@ -871,9 +921,14 @@ def doctor_patient_record_detail(request, patient_id):
                     weight_kg=weight_kg or None,
                 )
 
-            medication_name = request.POST.get("medication_name")
+            messages.success(request, "Patient record updated.")
+            return redirect("doctor_patient_record_detail", patient_id=patient.id)
 
-            if medication_name:
+        if action == "add_prescription":
+            medication_name = request.POST.get("medication_name", "").strip()
+            if not medication_name:
+                messages.error(request, "Medication name is required to add a prescription.")
+            else:
                 Prescription.objects.create(
                     patient_record=record,
                     prescribed_by=staff_profile,
@@ -882,9 +937,8 @@ def doctor_patient_record_detail(request, patient_id):
                     frequency=request.POST.get("frequency", ""),
                     instructions=request.POST.get("instructions", ""),
                 )
-
-            messages.success(request, "Patient record updated.")
-            return redirect("doctor_patient_record_detail", patient_id=patient.id)
+                messages.success(request, "Prescription added.")
+                return redirect("doctor_patient_record_detail", patient_id=patient.id)
 
         if action == "add_note":
             note_form = ClinicalNoteForm(request.POST, prefix="note")
@@ -919,9 +973,21 @@ def doctor_patient_record_detail(request, patient_id):
                 return redirect("doctor_patient_record_detail", patient_id=patient.id)
 
     latest_vitals = record.vitals_records.order_by("-recorded_at").first()
+    vitals_history = list(
+        record.vitals_records
+        .select_related("recorded_by__user")
+        .order_by("-recorded_at")[1:6]
+    )
     prescriptions = record.prescriptions.order_by("-created_at")
+    active_prescriptions = prescriptions.filter(status=Prescription.Status.ACTIVE if hasattr(Prescription, "Status") else "active")
+    prescription_history = prescriptions.exclude(status=Prescription.Status.ACTIVE if hasattr(Prescription, "Status") else "active")
     clinical_notes = record.clinical_notes.select_related("author__user").order_by("-updated_at")
     lab_orders = record.lab_orders.select_related("ordered_by__user").prefetch_related("result").order_by("-ordered_at")
+    appointment_history = (
+        patient.appointments
+        .select_related("provider__staff_profile__user")
+        .order_by("-scheduled_start")[:8]
+    )
 
     age = None
     if patient.date_of_birth:
@@ -934,9 +1000,12 @@ def doctor_patient_record_detail(request, patient_id):
         "patient": patient,
         "record": record,
         "latest_vitals": latest_vitals,
-        "prescriptions": prescriptions,
+        "active_prescriptions": active_prescriptions,
+        "prescription_history": prescription_history,
         "clinical_notes": clinical_notes,
         "lab_orders": lab_orders,
+        "appointment_history": appointment_history,
+        "vitals_history": vitals_history,
         "note_form": note_form,
         "lab_order_form": lab_order_form,
         "lab_result_statuses": LabResult._meta.get_field("status").choices,

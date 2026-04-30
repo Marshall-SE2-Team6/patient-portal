@@ -252,6 +252,54 @@
                 </div>
                 {% endfor %}
             </section>
+
+            <section class="portal-panel">
+                <div class="portal-panel-header">
+                    <div>
+                        <h3 class="portal-panel-title">Previous Records</h3>
+                    </div>
+                </div>
+
+                <div class="portal-detail-grid">
+                    <div class="portal-detail-card">
+                        <p class="portal-list-title">Recent Appointment History</p>
+                        {% for appointment in appointment_history %}
+                        <div class="portal-list-item">
+                            <div class="portal-section-fill">
+                                <p class="portal-list-title">{{ appointment.scheduled_start|date:"F j, Y g:i A" }}</p>
+                                <p class="portal-list-subtitle">Dr. {{ appointment.provider.staff_profile.user.first_name }} {{ appointment.provider.staff_profile.user.last_name }}</p>
+                                <p class="portal-list-meta">{{ appointment.reason|default:"No reason provided." }}</p>
+                            </div>
+                            <span class="portal-badge badge-neutral">{{ appointment.get_status_display }}</span>
+                        </div>
+                        {% empty %}
+                        <p class="portal-list-meta">No prior appointment history yet.</p>
+                        {% endfor %}
+                    </div>
+
+                    <div class="portal-detail-card">
+                        <p class="portal-list-title">Earlier Vitals</p>
+                        {% for vitals in vitals_history %}
+                        <div class="portal-list-item">
+                            <div class="portal-section-fill">
+                                <p class="portal-list-title">{{ vitals.recorded_at|date:"F j, Y g:i A" }}</p>
+                                <p class="portal-list-subtitle">
+                                    BP {{ vitals.systolic_bp|default:"-" }}/{{ vitals.diastolic_bp|default:"-" }}
+                                    • Pulse {{ vitals.pulse_bpm|default:"-" }}
+                                </p>
+                                <p class="portal-list-meta">
+                                    Temp {{ vitals.temperature_c|default:"-" }} C •
+                                    Weight {{ vitals.weight_kg|default:"-" }} kg •
+                                    O2 {{ vitals.oxygen_saturation|default:"-" }}%
+                                </p>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="portal-list-meta">No earlier vitals history yet.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
 </div>

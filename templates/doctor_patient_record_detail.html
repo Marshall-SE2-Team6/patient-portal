@@ -149,8 +149,27 @@
                             </div>
                         </div>
 
-                        <div class="portal-detail-card portal-section-stack">
-                            <p class="portal-list-title">Add Prescription</p>
+                    </div>
+
+                    <button type="submit" class="portal-secondary-btn appointment-detail-btn">
+                        Save Record
+                    </button>
+                </form>
+            </section>
+
+            <section class="portal-panel">
+                <div class="portal-panel-header">
+                    <div>
+                        <h3 class="portal-panel-title">Prescriptions</h3>
+                    </div>
+                </div>
+
+                <form method="post" class="portal-section-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="add_prescription">
+                    <div class="portal-list-item">
+                        <div class="portal-section-fill portal-form-stack">
+                            <p class="portal-list-title">New Prescription</p>
                             <div class="portal-field-group">
                                 <p class="portal-field-label">Medication Name</p>
                                 <input class="portal-form-input" type="text" name="medication_name">
@@ -169,21 +188,16 @@
                             </div>
                         </div>
                     </div>
-
-                    <button type="submit" class="portal-secondary-btn appointment-detail-btn">
-                        Save Record
-                    </button>
+                    <button type="submit" class="portal-pay-btn appointment-detail-btn">Add Prescription</button>
                 </form>
-            </section>
 
-            <section class="portal-panel">
-                <div class="portal-panel-header">
-                    <div>
-                        <h3 class="portal-panel-title">Prescriptions</h3>
-                    </div>
+                <div class="portal-tab-bar portal-section-gap" role="tablist" aria-label="Prescription status view">
+                    <button type="button" class="portal-tab-btn active" data-tab-target="prescription-tab-active" aria-selected="true">Active</button>
+                    <button type="button" class="portal-tab-btn" data-tab-target="prescription-tab-history" aria-selected="false">Completed / Cancelled</button>
                 </div>
 
-                {% for prescription in prescriptions %}
+                <div class="portal-tab-panel active" id="prescription-tab-active">
+                {% for prescription in active_prescriptions %}
                     <div class="portal-list-item">
                         <div class="portal-section-fill">
                             <p class="portal-list-title">{{ prescription.medication_name }}</p>
@@ -206,15 +220,51 @@
                     <span class="portal-badge badge-neutral">
                             {{ prescription.get_status_display }}
                         </span>
-                </div>
+                    </div>
                 {% empty %}
                 <div class="portal-list-item">
                     <div>
-                        <p class="portal-list-title">No prescriptions yet</p>
-                        <p class="portal-list-subtitle">Use the form above to add one.</p>
+                        <p class="portal-list-title">No active prescriptions</p>
+                        <p class="portal-list-subtitle">Current medications will appear here.</p>
                     </div>
                 </div>
                 {% endfor %}
+                </div>
+
+                <div class="portal-tab-panel" id="prescription-tab-history">
+                {% for prescription in prescription_history %}
+                    <div class="portal-list-item">
+                        <div class="portal-section-fill">
+                            <p class="portal-list-title">{{ prescription.medication_name }}</p>
+
+                            <p class="portal-list-subtitle">
+                                {{ prescription.dosage|default:"No dosage listed" }}
+                                —
+                                {{ prescription.frequency|default:"No frequency listed" }}
+                            </p>
+
+                            <p class="portal-list-meta">
+                                {{ prescription.instructions|default:"No instructions listed" }}
+                            </p>
+
+                            <a href="{% url 'doctor_edit_prescription' patient.id prescription.id %}" class="portal-outline-btn portal-small-btn portal-inline-action">
+                                View / Edit
+                            </a>
+                        </div>
+
+                        <span class="portal-badge badge-neutral">
+                            {{ prescription.get_status_display }}
+                        </span>
+                    </div>
+                {% empty %}
+                <div class="portal-list-item">
+                    <div>
+                        <p class="portal-list-title">No completed or cancelled prescriptions</p>
+                        <p class="portal-list-subtitle">Prescription history will appear here.</p>
+                    </div>
+                </div>
+                {% endfor %}
+                </div>
             </section>
 
             <section class="portal-panel">
@@ -224,7 +274,7 @@
                     </div>
                 </div>
 
-                <form method="post">
+                <form method="post" class="portal-section-form">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="add_note">
                     <div class="portal-list-item">
@@ -248,7 +298,7 @@
                 </form>
 
                 {% for note in clinical_notes %}
-                <div class="portal-list-item">
+                <div class="portal-list-item {% if forloop.first %}portal-section-gap-sm{% endif %}">
                     <div class="portal-section-fill">
                         <p class="portal-list-title">{{ note.title }}</p>
                         <p class="portal-list-subtitle">{{ note.get_note_type_display }}</p>
@@ -279,7 +329,7 @@
                     </div>
                 </div>
 
-                <form method="post">
+                <form method="post" class="portal-section-form">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="add_lab_order">
                     <div class="portal-list-item">
@@ -365,6 +415,54 @@
                 {% endfor %}
             </section>
 
+            <section class="portal-panel">
+                <div class="portal-panel-header">
+                    <div>
+                        <h3 class="portal-panel-title">Previous Records</h3>
+                    </div>
+                </div>
+
+                <div class="portal-detail-grid">
+                    <div class="portal-detail-card">
+                        <p class="portal-list-title">Recent Appointment History</p>
+                        {% for appointment in appointment_history %}
+                        <div class="portal-list-item">
+                            <div class="portal-section-fill">
+                                <p class="portal-list-title">{{ appointment.scheduled_start|date:"F j, Y g:i A" }}</p>
+                                <p class="portal-list-subtitle">Dr. {{ appointment.provider.staff_profile.user.first_name }} {{ appointment.provider.staff_profile.user.last_name }}</p>
+                                <p class="portal-list-meta">{{ appointment.reason|default:"No reason provided." }}</p>
+                            </div>
+                            <span class="portal-badge badge-neutral">{{ appointment.get_status_display }}</span>
+                        </div>
+                        {% empty %}
+                        <p class="portal-list-meta">No prior appointment history yet.</p>
+                        {% endfor %}
+                    </div>
+
+                    <div class="portal-detail-card">
+                        <p class="portal-list-title">Earlier Vitals</p>
+                        {% for vitals in vitals_history %}
+                        <div class="portal-list-item">
+                            <div class="portal-section-fill">
+                                <p class="portal-list-title">{{ vitals.recorded_at|date:"F j, Y g:i A" }}</p>
+                                <p class="portal-list-subtitle">
+                                    BP {{ vitals.systolic_bp|default:"-" }}/{{ vitals.diastolic_bp|default:"-" }}
+                                    • Pulse {{ vitals.pulse_bpm|default:"-" }}
+                                </p>
+                                <p class="portal-list-meta">
+                                    Temp {{ vitals.temperature_c|default:"-" }} C •
+                                    Weight {{ vitals.weight_kg|default:"-" }} kg •
+                                    O2 {{ vitals.oxygen_saturation|default:"-" }}%
+                                </p>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="portal-list-meta">No earlier vitals history yet.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+
             <div class="portal-form-actions">
                 <a href="{% url 'doctor_records' %}" class="portal-outline-btn appointment-detail-btn">
                     Back to Medical Records
@@ -377,4 +475,44 @@
         </main>
     </div>
 </div>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const tabBars = document.querySelectorAll(".portal-tab-bar");
+
+  tabBars.forEach((tabBar) => {
+    const tabButtons = tabBar.querySelectorAll(".portal-tab-btn");
+    const panelIds = Array.from(tabButtons).map((button) => button.getAttribute("data-tab-target"));
+    const tabPanels = panelIds
+      .map((id) => document.getElementById(id))
+      .filter(Boolean);
+
+    if (!tabButtons.length || !tabPanels.length) {
+      return;
+    }
+
+    tabButtons.forEach((button) => {
+      button.addEventListener("click", function () {
+        const targetId = button.getAttribute("data-tab-target");
+
+        tabButtons.forEach((tab) => {
+          tab.classList.remove("active");
+          tab.setAttribute("aria-selected", "false");
+        });
+
+        tabPanels.forEach((panel) => {
+          panel.classList.remove("active");
+        });
+
+        button.classList.add("active");
+        button.setAttribute("aria-selected", "true");
+
+        const targetPanel = document.getElementById(targetId);
+        if (targetPanel) {
+          targetPanel.classList.add("active");
+        }
+      });
+    });
+  });
+});
+</script>
 {% endblock %}

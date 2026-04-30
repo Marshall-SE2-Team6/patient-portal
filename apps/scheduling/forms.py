@@ -58,7 +58,7 @@ class AppointmentRequestForm(forms.ModelForm):
             lambda slot: (
                 f"Dr. {slot.provider.staff_profile.user.first_name} "
                 f"{slot.provider.staff_profile.user.last_name} - "
-                f"{slot.start_time.strftime('%b %d, %Y %I:%M %p')}"
+                f"{timezone.localtime(slot.start_time).strftime('%b %d, %Y %I:%M %p')}"
             )
         )
         self.fields["requested_slot"].empty_label = "Select an available time"
@@ -126,7 +126,7 @@ class AppointmentRescheduleForm(forms.Form):
             lambda slot: (
                 f"Dr. {slot.provider.staff_profile.user.first_name} "
                 f"{slot.provider.staff_profile.user.last_name} - "
-                f"{slot.start_time.strftime('%b %d, %Y %I:%M %p')}"
+                f"{timezone.localtime(slot.start_time).strftime('%b %d, %Y %I:%M %p')}"
             )
         )
 
@@ -154,7 +154,7 @@ class StaffScheduleAppointmentForm(forms.Form):
             lambda slot: (
                 f"Dr. {slot.provider.staff_profile.user.first_name} "
                 f"{slot.provider.staff_profile.user.last_name} - "
-                f"{slot.start_time.strftime('%b %d, %Y %I:%M %p')}"
+                f"{timezone.localtime(slot.start_time).strftime('%b %d, %Y %I:%M %p')}"
             )
         )
 
@@ -185,7 +185,7 @@ class StaffScheduleAppointmentForm(forms.Form):
             subject="Appointment Scheduled",
             message=(
                 f"Your appointment is scheduled for "
-                f"{appointment.scheduled_start.strftime('%B %d, %Y at %I:%M %p')}."
+                f"{timezone.localtime(appointment.scheduled_start).strftime('%B %d, %Y at %I:%M %p')}."
             ),
             notification_type="appointment_status",
         )
